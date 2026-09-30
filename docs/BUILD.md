@@ -61,3 +61,42 @@ debug output uses package `com.shihab.diplay.hudtest` and the local Android debu
 can coexist with the release app but cannot update it. The release-signing private key is never
 contained in an APK; rebuilding an update for `com.shihab.diplay` requires the original Android
 keystore and the four `ANDROID_KEYSTORE_*` inputs described above.
+
+## Keeping the fork current
+
+Keep `main` aligned with the original project and maintain the XPENG/Now Playing changes on
+`xpeng-now-playing`. Configure the original repository once and disable accidental pushes to it:
+
+```sh
+git remote add upstream https://github.com/shihabal3amri/DiPlay.git
+git remote set-url --push upstream DISABLED
+git fetch upstream --prune
+```
+
+Before updating, commit or stash tracked work. Fast-forward the fork's `main`, then replay the
+feature commits on top:
+
+```sh
+git switch main
+git fetch upstream --prune
+git merge --ff-only upstream/main
+git push origin main
+
+git switch xpeng-now-playing
+git rebase main
+```
+
+Resolve any rebase conflicts, keeping both upstream behavior and the iAP2 artwork path. Run the
+full source check before publishing:
+
+```sh
+ANDROID_HOME=/absolute/path/to/Android/sdk \
+  ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest \
+  :mobile:lintDebug :mobile:assembleDebug
+python3 scripts/check_public_tree.py
+git push --force-with-lease origin xpeng-now-playing
+```
+
+Use `--force-with-lease`, never an unconditional force push: rebasing changes commit IDs, while
+the lease prevents overwriting unexpected remote work. Rebuild `assembleStandaloneDebug` with the
+external authentication directory only after the source checks pass.
