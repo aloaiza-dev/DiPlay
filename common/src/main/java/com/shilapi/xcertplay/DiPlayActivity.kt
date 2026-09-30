@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.content.res.Configuration
+import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
@@ -65,6 +66,7 @@ class DiPlayActivity : ComponentActivity() {
     private var exportButton: Button? = null
     private var adbStatus: TextView? = null
     private var adbCheckGeneration = 0
+    private var carButtonCard: LinearLayout? = null
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         connect(notificationTransport)
     }
@@ -79,6 +81,14 @@ class DiPlayActivity : ComponentActivity() {
         AirPlayPersistence.saveLocationReportingEnabled(this, false)
         render()
         permissionHelp(getString(R.string.location), getString(R.string.allow_precise_location_for_diplay_in_the_head_unit_s_app_p))
+    }
+    private val iconPicker = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) iconCrop.launch(Intent(this, ImageCropActivity::class.java).setData(uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
+    }
+    private val iconCrop = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode != RESULT_OK) return@registerForActivityResult
+        refreshCarButton()
+        reconnectForCarButton()
     }
     private val export = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
         if (uri != null) exportDiagnostics(uri)
@@ -160,7 +170,7 @@ class DiPlayActivity : ComponentActivity() {
     override fun onPause() { handler.removeCallbacks(tick); super.onPause() }
 
     private fun render() {
-        status = null; connectButton = null; disconnectButton = null; lastRunning = null
+        status = null; connectButton = null; disconnectButton = null; lastRunning = null; carButtonCard = null
         val scroll = ScrollView(this).apply { setBackgroundColor(BG); isFillViewport = true; clipToPadding = false }
         val content = column().apply { setPadding(dp(32), dp(24), dp(32), dp(32)) }
         scroll.addView(content)
@@ -292,6 +302,7 @@ class DiPlayActivity : ComponentActivity() {
                 AirPlayPersistence.saveHideTopBar(this, it); AirPlayPersistence.saveHideBottomBar(this, it)
             }
         }
+        section(content, getString(R.string.car_button_in_carplay)) { card -> carButtonCard = card; carButtonControls(card) }
         section(content, getString(R.string.audio_routing)) { card ->
             toggle(card, getString(R.string.contrib_audio_home_toggle_audio_focus), getString(R.string.contrib_audio_home_toggle_audio_focus_desc), AirPlayPersistence.loadAudioFocusEnabled(this)) { AirPlayPersistence.saveAudioFocusEnabled(this, it) }
             if (resources.getBoolean(R.bool.config_advanced_audio_channel_mapping)) {
@@ -856,6 +867,52 @@ class DiPlayActivity : ComponentActivity() {
         AlertDialog.Builder(this).setTitle(title).setView(input)
             .setPositiveButton(getString(R.string.save)) { _, _ -> save(input.text.toString().let { if (secret) it else it.trim() }) }
             .setNegativeButton(getString(R.string.cancel), null).show()
+    }
+
+    private fun carButtonControls(parent: LinearLayout) {
+        val custom = AirPlayPersistence.loadCustomAirPlayIconFile(this)?.let { BitmapFactory.decodeFile(it.absolutePath) }
+        val preview = row().apply { gravity = Gravity.CENTER_VERTICAL }
+        preview.addView(ImageView(this).apply {
+            setImageBitmap(custom ?: BitmapFactory.decodeResource(resources, R.raw.ic_car_home))
+            scaleType = ImageView.ScaleType.CENTER_CROP
+            background = rounded(SURFACE, BORDER)
+            clipToOutline = true
+            importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
+        }, LinearLayout.LayoutParams(dp(72), dp(72)).apply { marginEnd = dp(16) })
+        val text = column()
+        text.addView(label(getString(R.string.car_button_icon), 18, TEXT, true))
+        text.addView(label(getString(if (custom != null) R.string.car_button_icon_custom else R.string.default_icon), 14, MUTED).apply { setPadding(0, dp(6), 0, 0) })
+        preview.addView(text, LinearLayout.LayoutParams(0, -2, 1f))
+        parent.addView(preview)
+        parent.addView(button(getString(R.string.choose_image), false) {
+            runCatching { iconPicker.launch("image/*") }.onFailure { toast(getString(R.string.this_head_unit_has_no_image_picker)) }
+        }, matchButton(16, 60))
+        if (custom != null) parent.addView(button(getString(R.string.default_icon), false) {
+            AirPlayPersistence.clearCustomAirPlayIcon(this)
+            refreshCarButton()
+            reconnectForCarButton()
+        }, matchButton(10, 60))
+        val name = AirPlayPersistence.loadOemLabel(this)
+        parent.addView(button("${getString(R.string.car_button_name)} · $name", false) {
+            textInput(getString(R.string.car_button_name), name, secret = false) {
+                AirPlayPersistence.saveOemLabel(this, it)
+                refreshCarButton()
+                reconnectForCarButton()
+            }
+        }, matchButton(10, 60))
+        parent.addView(label(getString(R.string.car_button_description), 14, MUTED).apply { setPadding(0, dp(12), 0, 0) })
+    }
+
+    // Rebuilds only this card: render() would scroll the page back to the top.
+    private fun refreshCarButton() {
+        val card = carButtonCard ?: return
+        card.removeViews(1, card.childCount - 1)
+        carButtonControls(card)
+    }
+
+    // The icon and name are part of the AirPlay info sent at connection time.
+    private fun reconnectForCarButton() {
+        if (CarPlayBackgroundSession.hasSession()) connect(AirPlayPersistence.loadWirelessEnabled(this))
     }
 
     private fun carPlaySizeControl(parent: LinearLayout) {

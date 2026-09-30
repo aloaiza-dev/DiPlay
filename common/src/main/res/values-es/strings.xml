@@ -465,4 +465,10 @@
     <string name="center_map_no_permission_screen">Esta unidad principal no tiene pantalla de ajustes para este permiso. Permítelo por ADB.</string>
     <string name="launcher_map_sharing">Compartir el mapa en vivo con otros launchers</string>
     <string name="launcher_map_sharing_description">Los launchers compatibles con DiPlay pueden mostrar el mapa en vivo del panel de instrumentos en su propia pantalla de inicio. Desactivado por defecto, porque entonces cualquier aplicación de la unidad principal podría pedir el mapa. Consulta docs/LAUNCHER_INTEGRATION.md.</string>
+    <string name="car_button_in_carplay">Botón del coche en CarPlay</string>
+    <string name="car_button_icon">Icono</string>
+    <string name="car_button_icon_custom">Icono personalizado</string>
+    <string name="car_button_name">Nombre</string>
+    <string name="car_button_description">CarPlay muestra este icono y este nombre en su lista de apps. Tócalo para volver a la pantalla del coche. Los cambios se aplican la próxima vez que CarPlay se conecte.</string>
+    <string name="this_head_unit_has_no_image_picker">Esta unidad principal no tiene selector de imágenes.</string>
 </resources>

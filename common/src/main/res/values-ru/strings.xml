@@ -465,4 +465,10 @@
     <string name="center_map_no_permission_screen">На этом головном устройстве нет экрана настроек для этого разрешения. Разрешите его через ADB.</string>
     <string name="launcher_map_sharing">Делиться живой картой с другими лаунчерами</string>
     <string name="launcher_map_sharing_description">Лаунчеры с поддержкой DiPlay смогут показывать живую карту приборной панели на своём главном экране. Выключено по умолчанию, потому что тогда карту сможет запросить любое приложение на головном устройстве. Подробнее: docs/LAUNCHER_INTEGRATION.md.</string>
+    <string name="car_button_in_carplay">Кнопка автомобиля в CarPlay</string>
+    <string name="car_button_icon">Значок</string>
+    <string name="car_button_icon_custom">Свой значок</string>
+    <string name="car_button_name">Название</string>
+    <string name="car_button_description">CarPlay показывает этот значок и название в списке приложений. Нажмите его, чтобы вернуться на экран автомобиля. Изменения применятся при следующем подключении CarPlay.</string>
+    <string name="this_head_unit_has_no_image_picker">На этом головном устройстве нет выбора изображений.</string>
 </resources>
