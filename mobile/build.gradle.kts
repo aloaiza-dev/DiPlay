@@ -48,6 +48,18 @@ android {
             }
             signingConfig = signingConfigs.getByName("release")
         }
+        // Release-mode/R8 car-test build that can update this machine's debug-signed HUD package.
+        // It is not an official release: that requires the separate DiPlay release keystore.
+        create("optimized") {
+            initWith(getByName("release"))
+            applicationIdSuffix = ".hudtest"
+            versionNameSuffix = "-optimized"
+            optimization {
+                enable = true
+            }
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -117,4 +129,9 @@ tasks.register("assembleStandaloneDebug") {
     group = "build"
     description = "Build a standalone car-test APK with explicitly provisioned authentication."
     dependsOn(verifyStandaloneAuthentication, "assembleDebug")
+}
+tasks.register("assembleStandaloneOptimized") {
+    group = "build"
+    description = "Build an optimized standalone car-test APK with explicitly provisioned authentication."
+    dependsOn(verifyStandaloneAuthentication, "assembleOptimized")
 }

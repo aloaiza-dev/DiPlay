@@ -62,6 +62,24 @@ can coexist with the release app but cannot update it. The release-signing priva
 contained in an APK; rebuilding an update for `com.shihab.diplay` requires the original Android
 keystore and the four `ANDROID_KEYSTORE_*` inputs described above.
 
+### Optimized car-test APK
+
+After validating behavior with the debug build, produce the smaller R8/resource-shrunk variant:
+
+```sh
+DIPLAY_AUTH_ASSETS_DIR=/absolute/path/to/runtime-assets \
+  ANDROID_HOME=/absolute/path/to/Android/sdk \
+  ./gradlew :mobile:lintOptimized :mobile:assembleStandaloneOptimized
+```
+
+Output: `mobile/build/outputs/apk/optimized/mobile-optimized.apk`. It keeps package
+`com.shihab.diplay.hudtest`, label `DiPlay`, and the local Android debug signer, so it can update a
+test APK built on the same machine. It is production-optimized but is not an official release and
+cannot update `com.shihab.diplay`. Preserve `mobile/build/outputs/mapping/optimized/mapping.txt`
+with the APK so optimized crash traces can be decoded. Verify the packaged authentication assets,
+APK signer and application ID before installing, then repeat physical-car testing because code
+shrinking can expose reflection or native-integration issues that a successful build cannot detect.
+
 ## Keeping the fork current
 
 Keep `main` aligned with the original project and maintain the XPENG/Now Playing changes on
