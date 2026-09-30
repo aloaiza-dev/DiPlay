@@ -37,3 +37,27 @@ source/CI build when the explicit asset input is absent; do not install that out
 standalone car-test package. Before delivery, verify both `assets/offline-mfi/identity.pk8`
 and `assets/offline-mfi/certificate.p7b` in the APK against the selected local inputs.
 Update the existing test app without uninstalling it to preserve its settings.
+
+### Reusing the preview APK identity
+
+The preview APK intentionally contains its experimental iAP2 accessory identity. For local testing,
+extract only the two expected assets into an ignored directory:
+
+```sh
+mkdir -p .private/diplay-auth
+unzip -q DiPlay-0.2.8.apk \
+  assets/offline-mfi/identity.pk8 \
+  assets/offline-mfi/certificate.p7b \
+  -d .private/diplay-auth
+chmod 600 .private/diplay-auth/assets/offline-mfi/*
+
+DIPLAY_AUTH_ASSETS_DIR="$PWD/.private/diplay-auth/assets" \
+  ANDROID_HOME=/absolute/path/to/Android/sdk \
+  ./gradlew :mobile:assembleStandaloneDebug
+```
+
+Confirm that the resulting APK contains byte-identical copies of both assets before testing. The
+debug output uses package `com.shihab.diplay.hudtest` and the local Android debug signature, so it
+can coexist with the release app but cannot update it. The release-signing private key is never
+contained in an APK; rebuilding an update for `com.shihab.diplay` requires the original Android
+keystore and the four `ANDROID_KEYSTORE_*` inputs described above.

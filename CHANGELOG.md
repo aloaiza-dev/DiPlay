@@ -18,6 +18,10 @@ See [0.2.9 release notes](docs/RELEASE-NOTES-0.2.9.md) for the merged changes an
 
 # DiPlay 0.2.8 — 2026-09-30
 
+- Publish the iPhone's Now Playing title, artist, album, source app, duration and playback state through Android's media session.
+- Receive iAP2 session-12 artwork transfers, correlate them with the Now Playing artwork identifier and publish bounded album art to the car.
+- Preserve the iPhone's elapsed-time update timestamp so unrelated media-session refreshes do not make the displayed position jump backward.
+- Keep reused artwork transfer identifiers fresh in the bounded cache and make playback-edge updates atomic with session teardown.
 - Keep iPhone location reporting active across the wireless Bluetooth-to-Wi-Fi CarPlay handoff; limit location updates to one per second on wireless and USB.
 - Add optional ADB wheel-speed and gear reporting for iPhone dead reckoning when GPS is unavailable. Tunnel use has not yet been verified.
 - Add optional iOS 27 video playback on the car screen while parked, with iPhone, touchscreen and steering-wheel controls; close playback when leaving P.
