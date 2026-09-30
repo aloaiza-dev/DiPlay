@@ -66,7 +66,9 @@ class DiPlayActivity : ComponentActivity() {
     private var exportButton: Button? = null
     private var adbStatus: TextView? = null
     private var adbCheckGeneration = 0
-    private var carButtonCard: LinearLayout? = null
+    private var scrollView: ScrollView? = null
+    private var renderedPage: String? = null
+    private var pendingScrollY: Int? = null
     private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) {
         connect(notificationTransport)
     }
@@ -87,7 +89,7 @@ class DiPlayActivity : ComponentActivity() {
     }
     private val iconCrop = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode != RESULT_OK) return@registerForActivityResult
-        refreshCarButton()
+        render()
         reconnectForCarButton()
     }
     private val export = registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
@@ -170,7 +172,9 @@ class DiPlayActivity : ComponentActivity() {
     override fun onPause() { handler.removeCallbacks(tick); super.onPause() }
 
     private fun render() {
-        status = null; connectButton = null; disconnectButton = null; lastRunning = null; carButtonCard = null
+        status = null; connectButton = null; disconnectButton = null; lastRunning = null
+        // Returning from another screen re-renders the same page, sometimes twice before the posted scroll runs.
+        val keepScrollY = if (renderedPage == page) pendingScrollY ?: scrollView?.scrollY ?: 0 else 0
         val scroll = ScrollView(this).apply { setBackgroundColor(BG); isFillViewport = true; clipToPadding = false }
         val content = column().apply { setPadding(dp(32), dp(24), dp(32), dp(32)) }
         scroll.addView(content)
@@ -190,6 +194,9 @@ class DiPlayActivity : ComponentActivity() {
             else -> home(content)
         }
         setContentView(scroll)
+        pendingScrollY = keepScrollY.takeIf { it > 0 }
+        if (keepScrollY > 0) scroll.post { scroll.scrollTo(0, keepScrollY); if (scrollView === scroll) pendingScrollY = null }
+        scrollView = scroll; renderedPage = page
         refreshStatus()
     }
 
@@ -302,7 +309,7 @@ class DiPlayActivity : ComponentActivity() {
                 AirPlayPersistence.saveHideTopBar(this, it); AirPlayPersistence.saveHideBottomBar(this, it)
             }
         }
-        section(content, getString(R.string.car_button_in_carplay)) { card -> carButtonCard = card; carButtonControls(card) }
+        section(content, getString(R.string.car_button_in_carplay)) { card -> carButtonControls(card) }
         section(content, getString(R.string.audio_routing)) { card ->
             toggle(card, getString(R.string.contrib_audio_home_toggle_audio_focus), getString(R.string.contrib_audio_home_toggle_audio_focus_desc), AirPlayPersistence.loadAudioFocusEnabled(this)) { AirPlayPersistence.saveAudioFocusEnabled(this, it) }
             if (resources.getBoolean(R.bool.config_advanced_audio_channel_mapping)) {
@@ -889,25 +896,18 @@ class DiPlayActivity : ComponentActivity() {
         }, matchButton(16, 60))
         if (custom != null) parent.addView(button(getString(R.string.default_icon), false) {
             AirPlayPersistence.clearCustomAirPlayIcon(this)
-            refreshCarButton()
+            render()
             reconnectForCarButton()
         }, matchButton(10, 60))
         val name = AirPlayPersistence.loadOemLabel(this)
         parent.addView(button("${getString(R.string.car_button_name)} · $name", false) {
             textInput(getString(R.string.car_button_name), name, secret = false) {
                 AirPlayPersistence.saveOemLabel(this, it)
-                refreshCarButton()
+                render()
                 reconnectForCarButton()
             }
         }, matchButton(10, 60))
         parent.addView(label(getString(R.string.car_button_description), 14, MUTED).apply { setPadding(0, dp(12), 0, 0) })
-    }
-
-    // Rebuilds only this card: render() would scroll the page back to the top.
-    private fun refreshCarButton() {
-        val card = carButtonCard ?: return
-        card.removeViews(1, card.childCount - 1)
-        carButtonControls(card)
     }
 
     // The icon and name are part of the AirPlay info sent at connection time.
