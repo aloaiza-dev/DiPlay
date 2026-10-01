@@ -275,11 +275,28 @@ class DiPlayActivity : ComponentActivity() {
     private fun settings(content: LinearLayout) {
         content.addView(label(getString(R.string.your_drive_your_way), 34, TEXT, true))
         content.addView(label(getString(R.string.apply_reconnects_carplay_for_size_resolution_music_buffer), 17, MUTED).apply { setPadding(0, dp(8), 0, dp(24)) })
-        section(content, getString(R.string.connection_setup), R.drawable.ic_dp_connection) { card ->
+        // Wide head units get two independent columns, so cards of different heights leave no gaps.
+        // The everyday column sits on the driver's side.
+        val (driver, passenger) = if (resources.configuration.screenWidthDp >= 850) {
+            // GridLayout, not a row: its FILL cells stretch both columns to the taller one's height.
+            val columns = GridLayout(this).apply { columnCount = 2 }
+            val driverColumn = column(); val passengerColumn = column()
+            val rightHandDrive = AirPlayPersistence.loadRightHandDrive(this)
+            listOf(if (rightHandDrive) passengerColumn else driverColumn, if (rightHandDrive) driverColumn else passengerColumn)
+                .forEachIndexed { index, column ->
+                    columns.addView(column, GridLayout.LayoutParams(GridLayout.spec(0, GridLayout.FILL), GridLayout.spec(index, 1f)).apply {
+                        width = 0
+                        if (index == 1) marginStart = dp(18)
+                    })
+                }
+            content.addView(columns, LinearLayout.LayoutParams(-1, -2))
+            driverColumn to passengerColumn
+        } else content to content
+        section(driver, getString(R.string.connection_setup), R.drawable.ic_dp_connection) { card ->
             card.addView(label(getString(R.string.choose_how_to_connect_follow_the_setup_steps_and_save_your), 16, MUTED))
             card.addView(button(getString(R.string.open_connection_setup), false) { page = "connection"; render() }, matchButton(12, 60))
         }
-        section(content, getString(R.string.diagnostics), R.drawable.ic_dp_diagnostics) { card ->
+        section(passenger, getString(R.string.diagnostics), R.drawable.ic_dp_diagnostics) { card ->
             exportButton = button(if (exportInProgress) getString(R.string.saving_report) else getString(R.string.save_diagnostic_report), false) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) exportDiagnostics()
                 else chooseReportDestination()
@@ -289,12 +306,12 @@ class DiPlayActivity : ComponentActivity() {
             val destination = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) getString(R.string.reports_save_to_downloads_diplay) else getString(R.string.choose_where_to_save_your_report)
             card.addView(label(destination + getString(R.string.nothing_is_sent_automatically_protocol_payloads_and_creden), 14, MUTED).apply { setPadding(0, dp(12), 0, 0) })
         }
-        section(content, getString(R.string.automatic_connection), R.drawable.ic_dp_automation) { card ->
+        section(driver, getString(R.string.automatic_connection), R.drawable.ic_dp_automation) { card ->
             toggle(card, getString(R.string.connect_when_diplay_opens), getString(R.string.use_your_last_connection_type_and_selected_iphone), DiPlayPreferences.autoConnect(this)) { DiPlayPreferences.saveAutoConnect(this, it) }
             toggle(card, getString(R.string.open_after_the_car_starts), getString(R.string.availability_depends_on_your_head_unit_s_startup_settings), AirPlayPersistence.loadAutoStartOnBoot(this)) { AirPlayPersistence.saveAutoStartOnBoot(this, it) }
             card.addView(button("${getString(R.string.choose_iphone_prefix)}${DiPlayPreferences.phoneName(this)}", false) { choosePhone() }, matchButton(12, 60))
         }
-        section(content, getString(R.string.display_and_performance), R.drawable.ic_dp_display) { card ->
+        section(driver, getString(R.string.display_and_performance), R.drawable.ic_dp_display) { card ->
             carPlaySizeControl(card)
             choice(card, getString(R.string.resolution), listOf(getString(R.string.resolution_native), getString(R.string.s_80_lighter_load), getString(R.string.s_60_lightest_load)), listOf(10, 8, 6).indexOf(AirPlayPersistence.loadDisplayScaleTenths(this)).coerceAtLeast(0)) { AirPlayPersistence.saveDisplayScaleTenths(this, listOf(10, 8, 6)[it]) }
             val bufferPresets = com.shilapi.xcertplay.media.MediaAudioBuffer.presets
@@ -304,13 +321,13 @@ class DiPlayActivity : ComponentActivity() {
             }
             choice(card, getString(R.string.frame_rate), listOf(getString(R.string.s_30_fps_lighter_load), getString(R.string.s_60_fps_smoother_motion)), if (AirPlayPersistence.loadFps(this) == 60) 1 else 0) { AirPlayPersistence.saveFps(this, if (it == 1) 60 else 30) }
             toggle(card, getString(R.string.efficient_video), getString(R.string.use_hevc_leave_off_for_the_widest_head_unit_compatibility), AirPlayPersistence.loadHevcEnabled(this)) { AirPlayPersistence.saveHevcEnabled(this, it) }
-            toggle(card, getString(R.string.right_hand_drive), getString(R.string.place_carplay_s_controls_closer_to_the_driver), AirPlayPersistence.loadRightHandDrive(this)) { AirPlayPersistence.saveRightHandDrive(this, it) }
+            toggle(card, getString(R.string.right_hand_drive), getString(R.string.place_carplay_s_controls_closer_to_the_driver), AirPlayPersistence.loadRightHandDrive(this)) { AirPlayPersistence.saveRightHandDrive(this, it); render() }
             toggle(card, getString(R.string.full_screen), getString(R.string.hide_the_car_s_system_bars_while_carplay_is_open), AirPlayPersistence.loadHideTopBar(this) && AirPlayPersistence.loadHideBottomBar(this)) {
                 AirPlayPersistence.saveHideTopBar(this, it); AirPlayPersistence.saveHideBottomBar(this, it)
             }
         }
-        section(content, getString(R.string.car_button_in_carplay)) { card -> carButtonControls(card) }
-        section(content, getString(R.string.audio_routing)) { card ->
+        section(driver, getString(R.string.car_button_in_carplay), R.drawable.ic_dp_car) { card -> carButtonControls(card) }
+        section(passenger, getString(R.string.audio_routing), R.drawable.ic_dp_audio) { card ->
             toggle(card, getString(R.string.contrib_audio_home_toggle_audio_focus), getString(R.string.contrib_audio_home_toggle_audio_focus_desc), AirPlayPersistence.loadAudioFocusEnabled(this)) { AirPlayPersistence.saveAudioFocusEnabled(this, it) }
             if (resources.getBoolean(R.bool.config_advanced_audio_channel_mapping)) {
                 toggle(card, getString(R.string.advanced_audio_channel_mapping),
@@ -322,7 +339,7 @@ class DiPlayActivity : ComponentActivity() {
             mediaChannelControl(card)
             navigationChannelControl(card)
         }
-        section(content, getString(R.string.location), R.drawable.ic_dp_navigation) { card ->
+        section(passenger, getString(R.string.location), R.drawable.ic_dp_navigation) { card ->
             toggle(card, getString(R.string.report_location_to_iphone),
                 getString(R.string.sends_precise_android_location_as_carplay_gps_data_when_th),
                 AirPlayPersistence.loadLocationReportingEnabled(this)) {
@@ -334,7 +351,7 @@ class DiPlayActivity : ComponentActivity() {
                 }
             }
         }
-        if (com.shilapi.xcertplay.hud.BydOutputSettings.available(this)) section(content, getString(R.string.byd_navigation), R.drawable.ic_dp_navigation) { card ->
+        if (com.shilapi.xcertplay.hud.BydOutputSettings.available(this)) section(passenger, getString(R.string.byd_navigation), R.drawable.ic_dp_navigation) { card ->
             toggle(card, getString(R.string.navigation_on_hud_and_instrument_cluster),
                 getString(R.string.show_phone_navigation_arrows_distance_and_street_names_on),
                 com.shilapi.xcertplay.hud.BydOutputSettings.enabled(this)) { com.shilapi.xcertplay.hud.BydOutputSettings.setEnabled(this, it) }
@@ -489,16 +506,20 @@ class DiPlayActivity : ComponentActivity() {
                 }
             }, matchButton(10, 56))
         }
-        section(content, getString(R.string.permissions_and_connection_help), R.drawable.ic_dp_permissions) { card ->
+        section(passenger, getString(R.string.permissions_and_connection_help), R.drawable.ic_dp_permissions) { card ->
             card.addView(label(getString(R.string.nearby_devices_connects_your_iphone_microphone_enables_sir), 16, MUTED))
             card.addView(button(getString(R.string.app_permissions), false) { openSystem(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName"))) }, matchButton(16, 60))
             card.addView(button(getString(R.string.bluetooth_settings), false) { openSystem(Intent(Settings.ACTION_BLUETOOTH_SETTINGS)) }, matchButton(10, 60))
             card.addView(button(getString(R.string.wireless_connection_help), false) { wirelessHelp() }, matchButton(10, 60))
         }
-        section(content, getString(R.string.about), R.drawable.ic_dp_about) { card ->
+        section(passenger, getString(R.string.about), R.drawable.ic_dp_about) { card ->
             card.addView(button(getString(R.string.about_diplay), false) { page = "about"; render() }, matchButton(0, 60))
         }
-        languageSettings(content)
+        languageSettings(passenger)
+        // The last card of each column fills the rest, so both columns end on the same line.
+        if (driver !== passenger) for (column in listOf(driver, passenger)) {
+            column.getChildAt(column.childCount - 1)?.layoutParams = LinearLayout.LayoutParams(-1, 0, 1f).apply { bottomMargin = dp(18) }
+        }
     }
 
     private fun about(content: LinearLayout) {
@@ -1230,7 +1251,7 @@ class DiPlayActivity : ComponentActivity() {
     }
     private fun version() = packageManager.getPackageInfo(packageName, 0).versionName ?: "0.1.0-beta.1"
     private fun languageSettings(content: LinearLayout) {
-        section(content, getString(R.string.language_section_title)) { card ->
+        section(content, getString(R.string.language_section_title), R.drawable.ic_dp_language) { card ->
             card.addView(label(getString(R.string.language_hint), 14, MUTED))
             val current = AppLocale.preference(this)
             val languageButton = button("${getString(R.string.language_app_language)} · ${AppLocale.displayName(this, current)}", false) { }
