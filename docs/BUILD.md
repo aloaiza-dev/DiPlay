@@ -57,7 +57,7 @@ DIPLAY_AUTH_ASSETS_DIR="$PWD/.private/diplay-auth/assets" \
 ```
 
 Confirm that the resulting APK contains byte-identical copies of both assets before testing. The
-debug output uses package `com.shihab.diplay.xpeng` and the local Android debug signature, so it
+debug output uses package `com.shihab.diplay.xpeng` and the car-test signer (see below), so it
 can coexist with the release app but cannot update it. The release-signing private key is never
 contained in an APK; rebuilding an update for `com.shihab.diplay` requires the original Android
 keystore and the four `ANDROID_KEYSTORE_*` inputs described above.
@@ -73,12 +73,36 @@ DIPLAY_AUTH_ASSETS_DIR=/absolute/path/to/runtime-assets \
 ```
 
 Output: `mobile/build/outputs/apk/optimized/mobile-optimized.apk`. It keeps package
-`com.shihab.diplay.xpeng`, label `DiPlay`, and the local Android debug signer, so it can update a
-test APK built on the same machine. It is production-optimized but is not an official release and
+`com.shihab.diplay.xpeng`, label `DiPlay`, and the car-test signer, so it can update a debug
+test APK from the same signer. It is production-optimized but is not an official release and
 cannot update `com.shihab.diplay`. Preserve `mobile/build/outputs/mapping/optimized/mapping.txt`
 with the APK so optimized crash traces can be decoded. Verify the packaged authentication assets,
 APK signer and application ID before installing, then repeat physical-car testing because code
 shrinking can expose reflection or native-integration issues that a successful build cannot detect.
+
+### Car-test signer
+
+Debug and optimized builds use the XPENG car-test keystore when `XPENG_KEYSTORE_PATH` is set.
+Without it they use the local Android debug key, so CI and source builds need no secret. The
+keystore is PKCS12, alias `xpeng`, with one password for the store and the key. It lives outside
+the repository and its password is in the macOS Keychain:
+
+```sh
+XPENG_KEYSTORE_PATH=~/.android/diplay-xpeng.jks \
+  XPENG_KEYSTORE_PASSWORD="$(security find-generic-password -s diplay-xpeng-keystore -w)" \
+  DIPLAY_AUTH_ASSETS_DIR=/absolute/path/to/runtime-assets \
+  ANDROID_HOME=/absolute/path/to/Android/sdk \
+  ./gradlew :mobile:assembleStandaloneDebug
+```
+
+Certificate: `CN=DiPlay, OU=Private Beta, O=DiPlay XPENG`, SHA-256
+`6688f122b3a0afea86bab39b1eda8fc40dd3d497a91c6943c187ebb69c990283`. Android installs an update only
+from the same signer. Back up the keystore and its password: if either is lost, each later build
+needs an uninstall, which deletes the app's settings. Check the signer before installing:
+
+```sh
+$ANDROID_HOME/build-tools/<version>/apksigner verify --print-certs <apk>
+```
 
 ## Keeping the fork current
 
