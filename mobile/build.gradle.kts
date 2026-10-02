@@ -7,6 +7,10 @@ plugins {
 val localAuthenticationAssets = providers.environmentVariable("DIPLAY_AUTH_ASSETS_DIR")
     .orNull?.let { file(it).canonicalFile }
 
+// Optional local-only signer for car-test builds; without it they use the Android debug key.
+val xpengKeystore = providers.environmentVariable("XPENG_KEYSTORE_PATH")
+    .orNull?.let { file(it).canonicalFile }
+
 android {
     namespace = "com.shilapi.xcertplay"
     compileSdk {
@@ -35,12 +39,21 @@ android {
             keyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").getOrElse("")
             keyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").getOrElse("")
         }
+        if (xpengKeystore != null) create("xpeng") {
+            storeFile = xpengKeystore
+            // PKCS12 keeps one password for the store and the key.
+            storePassword = providers.environmentVariable("XPENG_KEYSTORE_PASSWORD").getOrElse("")
+            keyAlias = providers.environmentVariable("XPENG_KEY_ALIAS").getOrElse("xpeng")
+            keyPassword = storePassword
+        }
     }
+    val carTestSigning = signingConfigs.findByName("xpeng") ?: signingConfigs.getByName("debug")
 
     buildTypes {
         debug {
             applicationIdSuffix = ".xpeng"
             versionNameSuffix = "-xpeng"
+            signingConfig = carTestSigning
         }
         release {
             optimization {
@@ -48,7 +61,7 @@ android {
             }
             signingConfig = signingConfigs.getByName("release")
         }
-        // Release-mode/R8 car-test build that can update this machine's debug-signed XPENG package.
+        // Release-mode/R8 car-test build that can update a debug build from the same signer.
         // It is not an official release: that requires the separate DiPlay release keystore.
         create("optimized") {
             initWith(getByName("release"))
@@ -57,7 +70,7 @@ android {
             optimization {
                 enable = true
             }
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = carTestSigning
             matchingFallbacks += listOf("release")
         }
     }
