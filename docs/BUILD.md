@@ -57,7 +57,7 @@ DIPLAY_AUTH_ASSETS_DIR="$PWD/.private/diplay-auth/assets" \
 ```
 
 Confirm that the resulting APK contains byte-identical copies of both assets before testing. The
-debug output uses package `com.shihab.diplay.hudtest` and the local Android debug signature, so it
+debug output uses package `com.shihab.diplay.xpeng` and the local Android debug signature, so it
 can coexist with the release app but cannot update it. The release-signing private key is never
 contained in an APK; rebuilding an update for `com.shihab.diplay` requires the original Android
 keystore and the four `ANDROID_KEYSTORE_*` inputs described above.
@@ -73,7 +73,7 @@ DIPLAY_AUTH_ASSETS_DIR=/absolute/path/to/runtime-assets \
 ```
 
 Output: `mobile/build/outputs/apk/optimized/mobile-optimized.apk`. It keeps package
-`com.shihab.diplay.hudtest`, label `DiPlay`, and the local Android debug signer, so it can update a
+`com.shihab.diplay.xpeng`, label `DiPlay`, and the local Android debug signer, so it can update a
 test APK built on the same machine. It is production-optimized but is not an official release and
 cannot update `com.shihab.diplay`. Preserve `mobile/build/outputs/mapping/optimized/mapping.txt`
 with the APK so optimized crash traces can be decoded. Verify the packaged authentication assets,

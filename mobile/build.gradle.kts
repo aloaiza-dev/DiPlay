@@ -39,8 +39,8 @@ android {
 
     buildTypes {
         debug {
-            applicationIdSuffix = ".hudtest"
-            versionNameSuffix = "-hud-test"
+            applicationIdSuffix = ".xpeng"
+            versionNameSuffix = "-xpeng"
         }
         release {
             optimization {
@@ -48,11 +48,11 @@ android {
             }
             signingConfig = signingConfigs.getByName("release")
         }
-        // Release-mode/R8 car-test build that can update this machine's debug-signed HUD package.
+        // Release-mode/R8 car-test build that can update this machine's debug-signed XPENG package.
         // It is not an official release: that requires the separate DiPlay release keystore.
         create("optimized") {
             initWith(getByName("release"))
-            applicationIdSuffix = ".hudtest"
+            applicationIdSuffix = ".xpeng"
             versionNameSuffix = "-optimized"
             optimization {
                 enable = true
