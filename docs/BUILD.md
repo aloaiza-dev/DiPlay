@@ -106,8 +106,8 @@ $ANDROID_HOME/build-tools/<version>/apksigner verify --print-certs <apk>
 
 ## Keeping the fork current
 
-Keep `main` aligned with the original project and maintain the XPENG/Now Playing changes on
-`xpeng-now-playing`. Configure the original repository once and disable accidental pushes to it:
+`main` holds the XPENG fork: the original project plus the XPENG changes. `upstream/main` is the
+original project. Configure the original repository once and disable accidental pushes to it:
 
 ```sh
 git remote add upstream https://github.com/shihabal3amri/DiPlay.git
@@ -115,30 +115,31 @@ git remote set-url --push upstream DISABLED
 git fetch upstream --prune
 ```
 
-Before updating, commit or stash tracked work. Fast-forward the fork's `main`, then replay the
-feature commits on top:
+Before updating, commit or stash tracked work. Merge the original project into `main`; never
+rebase it, because published commits must keep their IDs:
 
 ```sh
 git switch main
 git fetch upstream --prune
-git merge --ff-only upstream/main
-git push origin main
-
-git switch xpeng-now-playing
-git rebase main
+git merge upstream/main
 ```
 
-Resolve any rebase conflicts, keeping both upstream behavior and the iAP2 artwork path. Run the
-full source check before publishing:
+Resolve any conflicts, keeping both upstream behavior and the XPENG changes. Run the full source
+check before publishing:
 
 ```sh
 ANDROID_HOME=/absolute/path/to/Android/sdk \
   ./gradlew :shared:testDebugUnitTest :common:testDebugUnitTest \
   :mobile:lintDebug :mobile:assembleDebug
 python3 scripts/check_public_tree.py
-git push --force-with-lease origin xpeng-now-playing
+git push origin main
 ```
 
-Use `--force-with-lease`, never an unconditional force push: rebasing changes commit IDs, while
-the lease prevents overwriting unexpected remote work. Rebuild `assembleStandaloneDebug` with the
-external authentication directory only after the source checks pass.
+On GitHub, never use "Sync fork" → "Discard commits": it resets `main` to the original project and
+drops the XPENG changes. Rebuild `assembleStandaloneDebug` with the external authentication
+directory only after the source checks pass.
+
+### Contributing back
+
+Start each change for the original project from `upstream/main`, not from `main`, so the pull
+request carries no XPENG commits. Merge the branch into `main` to use it before upstream accepts it.
