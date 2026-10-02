@@ -7,6 +7,10 @@ import android.view.KeyEvent
 import com.shilapi.xcertplay.airplay.CarPlayMediaButton
 import com.shilapi.xcertplay.media.CarPlayNowPlaying
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -71,6 +75,25 @@ class CarPlayMediaCallbackTest {
         assertEquals(257_000, metadata.getLong(MediaMetadata.METADATA_KEY_DURATION))
         assertEquals(artwork, metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART))
         assertEquals(artwork, metadata.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON))
+    }
+
+    @Test
+    fun aPendingArtworkTransferKeepsThePreviousArt() {
+        val previous = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
+        val cached = Bitmap.createBitmap(2, 2, Bitmap.Config.ARGB_8888)
+
+        assertSame(previous, CarPlayMediaKeys.nextArtwork(7, emptyMap(), previous))
+        assertSame(cached, CarPlayMediaKeys.nextArtwork(7, mapOf(7 to cached), previous))
+        assertNull(CarPlayMediaKeys.nextArtwork(7, mapOf(7 to null), previous))
+        assertNull(CarPlayMediaKeys.nextArtwork(null, mapOf(7 to cached), previous))
+    }
+
+    @Test
+    fun playbackOnlyChangesKeepTheMetadata() {
+        val song = CarPlayNowPlaying(title = "Dreams", artworkTransferId = 1, elapsedMillis = 0, playing = false)
+
+        assertTrue(CarPlayMediaKeys.sameMetadata(song, song.copy(elapsedMillis = 9_000, playing = true, artworkTransferId = 2)))
+        assertFalse(CarPlayMediaKeys.sameMetadata(song, song.copy(title = "Gypsy")))
     }
 
     private fun press(keyCode: Int, repeat: Int = 0) {
