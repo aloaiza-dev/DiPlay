@@ -17,6 +17,7 @@ object BydNavigationOutputs {
         // DiLink 3 creates its cluster map display only once the cluster has projected.
         if (BydOutputSettings.enabled(context)) BydClusterBridge.prepareProjectionDisplay(context.applicationContext)
     }
+    fun xpengClusterReport(context: Context): String = XpengClusterBridge.report(context)
     fun setDiagnosticHold(hold: Boolean) { BydStandaloneHudOutput.syntheticHold = hold }
     @Volatile private var useStandalone = false
     @Volatile private var overlayListener: ((ClusterTurnGuidance?) -> Unit)? = null
@@ -31,6 +32,7 @@ object BydNavigationOutputs {
     private val hud = NavigationOutputWorker("diplay-hud-output", BydHudBridge::clear)
     private val cluster = NavigationOutputWorker("diplay-cluster-output", BydClusterBridge::clear)
     private val fceCluster = NavigationOutputWorker("diplay-fce-cluster-output", FceClusterBridge::clear)
+    private val xpengCluster = NavigationOutputWorker("diplay-xpeng-cluster-output", XpengClusterBridge::clear)
 
     /** The host reports whether its CarPlay map window is on the cluster (see [BydClusterMapPause]). */
     fun setClusterMapShown(shown: Boolean) {
@@ -76,6 +78,7 @@ object BydNavigationOutputs {
             cluster.start { BydClusterBridge.initialize(app) }
         }
         if (FceClusterBridge.available()) fceCluster.start { FceClusterBridge.initialize(app) }
+        if (XpengClusterBridge.available(app)) xpengCluster.start { XpengClusterBridge.initialize(app) }
         BydClusterMapPause.initialize(app)
         BydClusterSong.attach(app)
         BydCarPlayCall.attach(app)
@@ -95,6 +98,7 @@ object BydNavigationOutputs {
         val owned = frame // Iap2Frame is immutable and defensively copies its payload.
         updateOverlay(owned)
         fceCluster.submit { FceClusterBridge.onFrame(owned) }
+        xpengCluster.submit { XpengClusterBridge.onFrame(owned) }
         if (useStandalone) standalone.submit { BydStandaloneNavigationBridge.onFrame(owned) }
         else {
             hud.submit { BydHudBridge.onFrame(owned) }
@@ -156,7 +160,7 @@ object BydNavigationOutputs {
 
     /** Best effort while alive; Android does not guarantee callbacks before force-stop. */
     fun endNow(preserveTurnOverlay: Boolean = false) {
-        standalone.clear(); hud.clear(); cluster.clear(); fceCluster.clear(); BydClusterSong.end(); BydCarPlayCall.end()
+        standalone.clear(); hud.clear(); cluster.clear(); fceCluster.clear(); xpengCluster.clear(); BydClusterSong.end(); BydCarPlayCall.end()
         // Only a wireless session replacement retains the card. Explicit controller close
         // and wired disconnect still clear it immediately.
         if (!preserveTurnOverlay) {

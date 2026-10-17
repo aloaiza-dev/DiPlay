@@ -176,6 +176,7 @@ class CarPlayController(
             "A location provider is required when location reporting is enabled"
         }
         WifiScanPause.restoreIfNeeded(context.applicationContext)
+        com.shilapi.xcertplay.transport.Iap2RxLog.configure(context.applicationContext)
         BydNavigationOutputs.start(context.applicationContext)
         BydNavigationOutputs.setClusterStreamControl(::applyClusterUi)
     }
@@ -799,6 +800,7 @@ class CarPlayController(
 
     // HUD (SOME/IP) and cluster (AMap broadcast) keep separate state so one failing cannot stall the other.
     private fun onRouteFrame(frame: com.shilapi.xcertplay.iap2.wire.Iap2Frame) {
+        com.shilapi.xcertplay.transport.Iap2RxLog.trace(frame.messageId) { frame.payload }
         BydNavigationOutputs.onFrame(frame)
         com.shilapi.xcertplay.glance.CarPlayGlance.onFrame(frame)
         synchronized(playbackStatus) {

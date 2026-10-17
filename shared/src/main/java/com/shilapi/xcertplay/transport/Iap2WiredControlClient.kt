@@ -90,6 +90,7 @@ class Iap2WiredControlClient(
                     continue
                 }
 
+                Iap2RxLog.trace(incoming.messageId) { incoming.payload }
                 when (incoming.messageId) {
                     CARPLAY_AVAILABILITY -> {
                         onProgress("iap2 rx=0x4300 carplay-availability")

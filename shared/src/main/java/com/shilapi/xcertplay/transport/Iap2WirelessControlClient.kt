@@ -123,6 +123,7 @@ class Iap2WirelessControlClient(
                     continue
                 }
 
+                Iap2RxLog.trace(incoming.messageId) { incoming.payload }
                 when (incoming.messageId) {
                     REQUEST_ACCESSORY_WIFI_CONFIGURATION -> {
                         onProgress("iap2 rx=0x5702 request-wifi-configuration")

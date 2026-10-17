@@ -2137,7 +2137,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             val diLink3 = DiLinkGeneration.current(this) == DiLinkGeneration.DILINK_3
             if (diLink3) {
                 if (AirPlayPersistence.loadDiLink4ClusterRouteEnabled(this)) clusterRouteConflict(card)
-            } else {
+            } else if (!BydOutputSettings.xpengClusterAvailable(this)) {
                 reconnectingToggle(card, getString(R.string.adb_cluster_activity_mode),
                     getString(R.string.adb_cluster_activity_description), AirPlayPersistence.loadAdbClusterEnabled(this)) {
                     AirPlayPersistence.saveAdbClusterEnabled(this, it)
@@ -2151,8 +2151,8 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                     render()
                 }
             }
-            val adbCluster = AdbClusterRouter.enabled(this)
-            if (adbCluster) {
+            val adbCluster = !BydOutputSettings.xpengClusterAvailable(this) && AdbClusterRouter.enabled(this)
+            if (adbCluster && !BydOutputSettings.xpengClusterAvailable(this)) {
                 card.addView(button(getString(R.string.adb_cluster_authorize), false) { authorizeClusterRouting() }, matchButton(10, 56))
                 card.addView(button(getString(R.string.adb_cluster_open), false) { ClusterActivityOutput.retry(force = true) }, matchButton(10, 56))
             }
@@ -2171,12 +2171,18 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             val diLink4 = adbCluster || (clusterDisplay != null && clusterSize != null &&
                 DiLink4ClusterDisplay.matches(clusterDisplay.name, clusterSize.x, clusterSize.y))
             val clusterMapEnabled = AirPlayPersistence.loadClusterMapEnabled(this)
-            reconnectingToggle(card, getString(R.string.carplay_map_on_instrument_cluster_experimental),
+            // On XPeng the cluster stream is always negotiated, so this starts and stops the map at once.
+            val clusterMapToggle: (LinearLayout, String, String, Boolean, (Boolean) -> Unit) -> Unit =
+                if (XpengMapWindow.available(this)) { p, t, d, v, s -> toggle(p, t, d, v) { s(it) } } else ::reconnectingToggle
+            clusterMapToggle(card, getString(R.string.carplay_map_on_instrument_cluster_experimental),
                 if (clusterDisplay != null || adbCluster) getString(R.string.shows_the_iphone_s_cluster_map_on_the_instrument_cluster_c)
                 else getString(R.string.shows_the_iphone_s_cluster_map_virtual_stream_description),
                 clusterMapEnabled) {
                 AirPlayPersistence.saveClusterMapEnabled(this, it)
                 render()
+            }
+            if (clusterMapEnabled && XpengMapWindow.available(this)) {
+                xpengMapWindowControl(card)
             }
             if (clusterMapEnabled) {
                 clusterSpeedometerControls(card)
@@ -2436,7 +2442,7 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
         }
         // FCE head units show this card for their cluster's navigation view, which has its own opt-in.
         val bydNavigation = BydOutputSettings.available(this)
-        if (bydNavigation || BydOutputSettings.fceClusterAvailable()) filteredSection(content, SettingsSection.BYD_NAVIGATION,
+        if (bydNavigation || BydOutputSettings.fceClusterAvailable() || BydOutputSettings.xpengClusterAvailable(this)) filteredSection(content, SettingsSection.BYD_NAVIGATION,
             getString(R.string.byd_navigation), R.drawable.ic_dp_navigation) { card ->
             toggle(card, getString(R.string.navigation_on_hud_and_instrument_cluster),
                 getString(R.string.show_phone_navigation_arrows_distance_and_street_names_on),
@@ -2445,6 +2451,15 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 toggle(card, getString(R.string.settings_fce_cluster_guidance),
                     getString(R.string.settings_fce_cluster_guidance_description),
                     BydOutputSettings.fceCluster(this)) { BydOutputSettings.setFceCluster(this, it) }
+            }
+            if (BydOutputSettings.xpengClusterAvailable(this)) {
+                toggle(card, getString(R.string.settings_xpeng_cluster_guidance),
+                    getString(R.string.settings_xpeng_cluster_guidance_description),
+                    BydOutputSettings.xpengCluster(this), enabled = !adbSwitchChangePending) {
+                    BydOutputSettings.setXpengCluster(this, it)
+                    // The helper runs over DiPlay's own ADB key; the car asks for approval only here, never while driving.
+                    if (it) checkAdbState(mayAsk = true)
+                }
             }
             if (BydOutputSettings.standaloneHudAvailable(this)) {
                 toggle(card, getString(R.string.song_on_hud), getString(R.string.song_on_hud_description),
@@ -5827,6 +5842,11 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             DiagnosticRedactor.redact(line)?.let { appendLine(it) }
         }
         appendLine()
+        appendLine("--- XPeng cluster output ---")
+        com.shilapi.xcertplay.hud.BydNavigationOutputs.xpengClusterReport(appContext).lineSequence().forEach { line ->
+            DiagnosticRedactor.redact(line)?.let { appendLine(it) }
+        }
+        appendLine()
         appendLine("--- Standalone HUD compatibility ---")
         appendLine(BydOutputSettings.standaloneHudDiagnosticReport(appContext))
         appendLine()
@@ -6052,6 +6072,14 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
     }
     // Routing changes affect the live cluster surface as soon as the host resumes.
     // Ask before saving them instead of promising to defer only part of the change.
+    // Starts and stops at once: the host adds or removes the window, and the cluster stream is already negotiated.
+    private fun xpengMapWindowControl(card: LinearLayout) {
+        toggle(card, getString(R.string.settings_xpeng_map_window),
+            getString(R.string.settings_xpeng_map_window_description), XpengMapWindow.enabled(this)) {
+            XpengMapWindow.saveEnabled(this, it)
+        }
+    }
+
     private fun reconnectingToggle(parent: LinearLayout, title: String, description: String,
         value: Boolean, save: (Boolean) -> Unit) {
         toggle(parent, title, description, value) { selected ->

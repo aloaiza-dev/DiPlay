@@ -25,7 +25,7 @@ import java.io.File
 object AirPlayPersistence {
     /** 0 uses usage-based routing; 1–20 select stream types supported by the head unit. */
     val AUDIO_CHANNELS = 0..20
-    private const val PREFS = "xcertplay_airplay"
+    const val PREFS = "xcertplay_airplay"
     private const val KEY_IDENT_PRIVATE = "identity_private"
     private const val KEY_IDENT_PUBLIC = "identity_public"
     private const val KEY_PAIRING_ID = "pairing_id"
@@ -84,7 +84,7 @@ object AirPlayPersistence {
     private const val KEY_DIRECT_VIDEO_OUTPUT = "direct_video_output"
     private const val KEY_LOW_LATENCY_DECODER = "low_latency_decoder"
     private const val KEY_FPS_COUNTER = "fps_counter"
-    private const val KEY_CLUSTER_MAP = "cluster_map_enabled"
+    const val KEY_CLUSTER_MAP = "cluster_map_enabled"
     private const val KEY_ADB_CLUSTER_ACTIVITY = "adb_cluster_activity_enabled"
     private const val KEY_CENTER_MAP_OVERLAY = "center_map_overlay"
     private const val KEY_CENTER_MAP_AUTO_HIDE = "center_map_auto_hide"

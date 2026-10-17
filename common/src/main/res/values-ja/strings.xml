@@ -953,6 +953,8 @@
     <string name="bluetooth_will_not_stay_on_hint">そこでBluetoothをオンのままにできない場合、この車載端末のBluetoothは端末自身の通話と音楽専用で、アプリからは利用できません。その場合ワイヤレスCarPlayは使用できないため、USBケーブルで接続してください。</string>
     <string name="settings_fce_cluster_guidance">FCEメーターへの案内表示（実験的機能）</string>
     <string name="settings_fce_cluster_guidance_description">FCE車載端末の車両サービスに情報を書き込み、CarPlayの案内矢印と次の曲がり角までの距離をメーターのナビ画面に表示します。実車検証は1台のみです。メーターに異常が起きたらオフにしてください。</string>
+    <string name="settings_xpeng_cluster_guidance">XPengメーターへの案内表示（実験的機能）</string>
+    <string name="settings_xpeng_cluster_guidance_description">車のADB接続を使うヘルパー経由で、CarPlayの案内矢印、道路名、ルートの残り距離・時間・到着時刻をXPengメーターの案内カードに表示します。DiPlayにADBアクセスの許可が必要です。実車検証は1台のみです。メーターに異常が起きたらオフにしてください。</string>
     <string name="settings_cluster_music">メーターに音楽を表示（実験的機能）</string>
     <string name="settings_cluster_music_description">メーターの地図上に正方形のアルバムアートを表示します。一時表示（8秒）または常時表示を選択できます。曲が変わると、タイトルとアーティストはどちらのモードでもアルバムアート上に8秒間表示されます。位置とサイズの変更はすぐに反映されます。メーターへの投影とiPhoneからの曲情報が必要です。</string>
     <string name="settings_cluster_music_mode">アルバムアートの表示</string>
@@ -1005,4 +1007,6 @@
     <string name="settings_launcher_bubble_unlocked">位置のロックを解除</string>
     <string name="settings_launcher_bubble_hold_to_lock">長押しでロック</string>
     <string name="settings_launcher_bubble_hold_to_unlock">長押しで解除</string>
+    <string name="settings_xpeng_map_window">XPengメーターの地図ウィンドウ（実験的機能）</string>
+    <string name="settings_xpeng_map_window_description">iPhoneの独立した地図をメーター中央に表示し、端を滑らかに透明化します。左右のカードと状態表示は維持されます。メーター地図の有効化と対応XPeng機器が必要です。映像を提供しないアプリもあります。すぐに開始・停止します。停車中に位置を確認してください。</string>
 </resources>
