@@ -132,6 +132,9 @@ internal class FceNavigationState {
     private var state: Int? = null
     private var source: String? = null
 
+    /** The navigation app's name from the latest update that carried one; "" means it reported none. */
+    val sourceName: String? get() = source
+
     val active: Boolean
         get() = when {
             source == "" -> false

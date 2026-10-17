@@ -913,6 +913,8 @@
     <string name="bluetooth_will_not_stay_on_hint">如果藍牙在那裡開不起來，或開了又自己關掉，代表這台車機的藍牙只供它自己的通話和音樂使用，App 無法使用。這種情況下無法使用無線 CarPlay，請改用 USB 線。</string>
     <string name="settings_fce_cluster_guidance">FCE 儀表導航（實驗性）</string>
     <string name="settings_fce_cluster_guidance_description">在 FCE 平台車機上，透過車機的車輛服務把 CarPlay 轉向箭頭和到下一路口的距離顯示在儀表的導航畫面。僅在一輛車上測試過；如果儀表顯示異常，請關閉。</string>
+    <string name="settings_xpeng_cluster_guidance">XPeng 儀表導航（實驗性）</string>
+    <string name="settings_xpeng_cluster_guidance_description">透過使用車機 ADB 連線的輔助程式，把 CarPlay 轉向箭頭、道路名稱以及路線剩餘距離、時間和抵達時間顯示在小鵬儀表的導航卡片上。需要已為 DiPlay 核准 ADB 存取。僅在一輛車上測試過；如果儀表顯示異常，請關閉。</string>
     <string name="settings_cluster_music">儀表音樂（實驗性）</string>
     <string name="settings_cluster_music_description">在儀表地圖上顯示方形專輯封面。可選擇暫時（8秒）或常駐封面；切歌時，歌曲名稱和藝人始終在封面上顯示8秒。位置和大小變更立即生效。需要儀表投影及iPhone歌曲資訊。</string>
     <string name="settings_cluster_music_mode">封面顯示模式</string>
@@ -970,4 +972,6 @@
 
     <string name="settings_hotspot_interface">熱點網路介面（選填）</string>
     <string name="settings_hotspot_interface_description">僅用於把熱點放在 Android 不認為是 Wi-Fi 熱點的網路介面上的車機，例如部分吉利、領克及其它高通車機上的 eth0.3。留空則自動尋找。</string>
+    <string name="settings_xpeng_map_window">XPeng 儀表地圖視窗（實驗性）</string>
+    <string name="settings_xpeng_map_window_description">在儀表中央顯示 iPhone 獨立地圖，邊緣平滑漸變為透明。側邊卡片與狀態指示保持可見。需要啟用儀表地圖並使用相容的 XPeng 主機。部分應用程式可能不提供此影片。立即開始與停止。請停車後檢查位置。</string>
 </resources>

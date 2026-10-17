@@ -453,6 +453,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private val currentSurface: Surface? get() = videoSurfaceOwner.current
     private var currentSurfaceTexture: SurfaceTexture? = null
     private var clusterPresentation: ClusterMapPresentation? = null
+    private var xpengMapWindow: XpengMapWindow? = null
     private var clusterSurface: Surface? = null
     private var clusterMonitor: DiLink51ClusterMonitor? = null
     private var detectedCluster = ClusterActivityState.Snapshot(null, false)
@@ -800,8 +801,19 @@ class CarPlayHostActivity : ComponentActivity() {
         }
     }
 
+    // The XPeng cluster map starts and stops from Settings without a new CarPlay session (see clusterDisplayConfig).
+    private val clusterSwitchListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == AirPlayPersistence.KEY_CLUSTER_MAP || key == XpengMapWindow.KEY) {
+            runOnUiThread { if (!isDestroyed && XpengMapWindow.available(this)) ensureClusterPresentation() }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (XpengMapWindow.available(this)) {
+            getSharedPreferences(AirPlayPersistence.PREFS, MODE_PRIVATE).registerOnSharedPreferenceChangeListener(clusterSwitchListener)
+            getSharedPreferences(XpengMapWindow.PREFS, MODE_PRIVATE).registerOnSharedPreferenceChangeListener(clusterSwitchListener)
+        }
         NavigationWidgetUpdater.attach(applicationContext)
         CarPlayCallKeys.install(applicationContext)
         CenterMapOverlay.requestShow = ::showCenterMap
@@ -1289,6 +1301,24 @@ class CarPlayHostActivity : ComponentActivity() {
         }
         // Handed back after CarPlay left; the next cluster stream takes the cluster again.
         if (clusterReleasedWhileIdle) return
+        if (XpengMapWindow.active(this)) {
+            if (xpengMapWindow == null) {
+                dismissClusterPresentation()
+                try {
+                    xpengMapWindow = XpengMapWindow(this, ::onClusterSurface) { message ->
+                        appendLog(message)
+                        updateClusterMapShown()
+                    }.also { it.show() }
+                } catch (error: RuntimeException) {
+                    appendLog("XPeng map: window unavailable ${error.javaClass.simpleName}")
+                }
+            }
+            xpengMapWindow?.setStreamActive(SCREEN_TYPE_ALT in activeScreenStreamTypes)
+            updateClusterMapShown()
+            return
+        }
+        xpengMapWindow?.close()
+        xpengMapWindow = null
         if (AdbClusterRouter.enabled(this)) {
             ClusterActivityOutput.bind(this, taskId) { onClusterSurface(it) }
             ClusterActivityOutput.setStreamActive(SCREEN_TYPE_ALT in activeScreenStreamTypes)
@@ -1441,6 +1471,8 @@ class CarPlayHostActivity : ComponentActivity() {
         }
     }
     private fun dismissClusterPresentation() {
+        xpengMapWindow?.close()
+        xpengMapWindow = null
         ClusterActivityOutput.stop(this)
         val presentations = (clusterLayers.values + listOfNotNull(clusterPresentation)).distinct()
         clusterLayers.clear()
@@ -1479,6 +1511,10 @@ class CarPlayHostActivity : ComponentActivity() {
     // finish after the session has already asked for the virtual fallback stream.
     private val clusterDisplayListener = object : android.hardware.display.DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId: Int) {
+            if (displayId == 2 && XpengMapWindow.active(this@CarPlayHostActivity)) {
+                if (!isDestroyed) ensureClusterPresentation()
+                return
+            }
             if (isDestroyed || !AirPlayPersistence.loadClusterMapEnabled(this@CarPlayHostActivity)) return
             val display = ClusterMapPresentation.findDisplay(this@CarPlayHostActivity, effectiveClusterTheme())
             if (display?.displayId != displayId) return
@@ -1488,7 +1524,13 @@ class CarPlayHostActivity : ComponentActivity() {
                 reconnectAfterLoss("Cluster display appeared; requesting its stream")
             }
         }
-        override fun onDisplayRemoved(displayId: Int) = Unit
+        override fun onDisplayRemoved(displayId: Int) {
+            if (displayId == 2) {
+                xpengMapWindow?.close()
+                xpengMapWindow = null
+                updateClusterMapShown()
+            }
+        }
         override fun onDisplayChanged(displayId: Int) = Unit
     }
 
@@ -1496,6 +1538,15 @@ class CarPlayHostActivity : ComponentActivity() {
         adbClusterConfigured = false
         clusterStreamOnDisplay = false
         requestedSmallWindowForStream = null
+        // Always asked for on XPeng: the iPhone creates a second display only when the session starts, so
+        // showing or hiding the map must not need a new session. The window and showUI/stopUI do that.
+        if (XpengMapWindow.available(this)) {
+            clusterStreamOnDisplay = true
+            return XpengMapWindow.streamConfig().also {
+                MapMirrors.streamAspect = it.widthPixels.toDouble() / it.heightPixels
+                appendLog("XPeng map: requesting alternate map stream ${it.widthPixels}x${it.heightPixels}")
+            }
+        }
         if (!AirPlayPersistence.loadClusterMapEnabled(this)) return null
         if (AdbClusterRouter.enabled(this) && ClusterActivityOutput.hasConfirmedRoute()) {
             adbClusterConfigured = true
@@ -1763,7 +1814,8 @@ class CarPlayHostActivity : ComponentActivity() {
         hostAppearanceResumed = false
         updateCallPopupGuard()
         AppAppearanceRuntime.clearHost(this)
-        nightModeController.pause()
+        // A visible XPeng cluster map outlives the main UI and still needs appearance updates.
+        if (xpengMapWindow == null) nightModeController.pause()
         super.onPause()
     }
 
@@ -1773,7 +1825,7 @@ class CarPlayHostActivity : ComponentActivity() {
         // The controller, USB/iAP2 link, and VPN attachment intentionally outlive the UI.
         isActivityStarted = false
         logThemeState(ThemeModeDiagnostics.Source.STOP, resources.configuration)
-        mainHandler.removeCallbacks(pollConfiguration)
+        if (xpengMapWindow == null) mainHandler.removeCallbacks(pollConfiguration)
         super.onStop()
         // Off screen there are no system bars to hide, so a launch waiting for focus can go now.
         onClusterLaunchTick()
@@ -1839,7 +1891,7 @@ class CarPlayHostActivity : ComponentActivity() {
         val presented = surface != null && presentation?.isShowing == true && presentation.mapVisible &&
             presentation.outputSurface === surface
         val direct = surface != null && adbClusterConfigured && ClusterActivityOutput.hasConfirmedRoute()
-        controller?.setDashboardMapOutputVisible(presented || direct)
+        controller?.setDashboardMapOutputVisible(presented || direct || xpengMapWindow?.showing == true)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -1866,6 +1918,8 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        getSharedPreferences(AirPlayPersistence.PREFS, MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(clusterSwitchListener)
+        getSharedPreferences(XpengMapWindow.PREFS, MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(clusterSwitchListener)
         mainHandler.removeCallbacks(hideTemporarySystemBars)
         discardLastPicture()
         if (pictureCopyThreadStarted) pictureCopyThread.quitSafely()
@@ -5306,6 +5360,7 @@ class CarPlayHostActivity : ComponentActivity() {
                         return@runOnUiThread
                     }
                     activeScreenStreamTypes.clear()
+                    xpengMapWindow?.setStreamActive(false)
                     ClusterActivityOutput.setStreamActive(false)
                     setConnectionStage(R.string.carplay_session_ended_reconnecting)
                     appendLog("AirPlay session ended; reconnecting from scratch")
@@ -5324,6 +5379,7 @@ class CarPlayHostActivity : ComponentActivity() {
                         return@runOnUiThread
                     }
                     activeScreenStreamTypes.clear()
+                    xpengMapWindow?.setStreamActive(false)
                     ClusterActivityOutput.setStreamActive(false)
                     setConnectionStage(R.string.transport_error_reconnecting)
                     appendLog("CarPlay transport error: $message; reconnecting from scratch")
@@ -5982,6 +6038,7 @@ class CarPlayHostActivity : ComponentActivity() {
         startupRetryButton?.visibility = View.GONE
         appendLog(reason)
         activeScreenStreamTypes.clear()
+        xpengMapWindow?.setStreamActive(false)
         ClusterActivityOutput.setStreamActive(false)
         setConnectionStage(reason)
         Log.i(TAG, "$reason; rebuilding stack at ${size.width}x${size.height}")
@@ -6482,6 +6539,11 @@ class CarPlayHostActivity : ComponentActivity() {
                 Log.i(ClusterMapPresentation.TAG, "cluster stream active=$active")
                 appendLog("Cluster map: stream active=$active")
                 clusterPresentation?.setStreamActive(active)
+                xpengMapWindow?.setStreamActive(active)
+                // Replay appearance when the alternate screen is established after the main screen.
+                if (active && xpengMapWindow != null) syncAirPlayDarkMode(ThemeModeDiagnostics.Source.SESSION_ACTIVE)
+                // The stream is always negotiated on XPeng; tell the iPhone to hold it back while no window shows it.
+                if (active && XpengMapWindow.available(this)) updateClusterMapShown()
                 ClusterActivityOutput.setStreamActive(active)
                 MapMirrors.setStreamActive(active)
                 if (active) {

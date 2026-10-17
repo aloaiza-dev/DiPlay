@@ -956,6 +956,8 @@
     <string name="bluetooth_will_not_stay_on_hint">If Bluetooth will not stay on there, this head unit keeps Bluetooth for its own calls and music, and apps cannot use it. Wireless CarPlay cannot work in that case: use a USB cable.</string>
     <string name="settings_fce_cluster_guidance">Guidance in the FCE cluster (experimental)</string>
     <string name="settings_fce_cluster_guidance_description">Shows CarPlay arrows and the next-turn distance in the instrument cluster’s navigation view on FCE head units, by writing to the head unit’s vehicle service. Tested on one car only; turn it off if the cluster behaves unexpectedly.</string>
+    <string name="settings_xpeng_cluster_guidance">Guidance in the XPeng cluster (experimental)</string>
+    <string name="settings_xpeng_cluster_guidance_description">Shows CarPlay turn arrows, road names, and the route’s remaining distance, time and arrival in the directions card of the XPeng instrument cluster, through a helper that uses the car’s ADB link. Needs ADB access approved for DiPlay. Tested on one car only; turn it off if the cluster behaves unexpectedly.</string>
     <string name="settings_cluster_music">Music on cluster (experimental)</string>
     <string name="settings_cluster_music_description">Show a square album cover over the cluster map. Choose temporary (8 seconds) or permanent artwork; the title and artist always appear over the cover for 8 seconds when the song changes. Position and size apply immediately. Requires cluster projection and iPhone metadata.</string>
     <string name="settings_cluster_music_mode">Album cover visibility</string>
@@ -1013,4 +1015,6 @@
 
     <string name="settings_hotspot_interface">Hotspot interface (optional)</string>
     <string name="settings_hotspot_interface_description">Only for head units that run their hotspot on a network interface Android does not report as a Wi-Fi hotspot, for example eth0.3 on some Geely, Lynk &amp; Co and other Qualcomm units. Leave empty to find it automatically.</string>
+    <string name="settings_xpeng_map_window">Map window in the XPeng cluster (experimental)</string>
+    <string name="settings_xpeng_map_window_description">Shows the iPhone’s separate map across the cluster center with soft transparent edges. Side cards and status rows remain visible. Requires the cluster map above and a supported XPeng head unit. Some navigation apps may not provide this video. Starts and stops at once. Test placement while parked.</string>
 </resources>

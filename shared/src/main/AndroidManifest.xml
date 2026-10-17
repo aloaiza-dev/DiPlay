@@ -36,6 +36,7 @@
         <package android:name="com.ts.car.someip.service" />
         <package android:name="com.byd.amapservice" />
         <package android:name="com.byd.automap" />
+        <provider android:authorities="com.xiaopeng.instrument.api.publisher" />
         <intent>
             <action android:name="com.android.settings.WIFI_TETHER_SETTINGS" />
         </intent>
