@@ -7,6 +7,13 @@ import java.util.Locale
 import java.util.concurrent.Executor
 import kotlin.math.roundToLong
 
+/** What a lookup came to. [Failed] is worth asking again; [None] is not. */
+sealed interface LyricsOutcome {
+    data class Found(val lyrics: SyncedLyrics) : LyricsOutcome
+    object None : LyricsOutcome
+    object Failed : LyricsOutcome
+}
+
 /** Looks lyrics up on [worker] and keeps answers on disk, so a repeated song costs no request. */
 class LyricsRepository(
     private val source: LyricsSource,
@@ -14,12 +21,12 @@ class LyricsRepository(
     private val worker: Executor,
     private val nowMillis: () -> Long,
 ) {
-    /** [onResult] runs on [worker]; a null result means "show nothing". */
-    fun lookup(query: TrackQuery, onResult: (TrackQuery, SyncedLyrics?) -> Unit) {
+    /** [onResult] runs on [worker]. */
+    fun lookup(query: TrackQuery, onResult: (TrackQuery, LyricsOutcome) -> Unit) {
         worker.execute { onResult(query, resolve(query)) }
     }
 
-    private fun resolve(query: TrackQuery): SyncedLyrics? {
+    private fun resolve(query: TrackQuery): LyricsOutcome {
         val key = key(query)
         val hit = File(cacheDir, "$key.lrc")
         val miss = File(cacheDir, "$key.none")
@@ -27,24 +34,24 @@ class LyricsRepository(
             val cached = runCatching { LrcParser.parse(hit.readText()) }.getOrNull()
             if (cached != null) {
                 hit.setLastModified(nowMillis())
-                return cached
+                return LyricsOutcome.Found(cached)
             }
             hit.delete()
         }
         if (miss.isFile) {
-            if (nowMillis() - miss.lastModified() < MISS_TTL_MILLIS) return null
+            if (nowMillis() - miss.lastModified() < MISS_TTL_MILLIS) return LyricsOutcome.None
             miss.delete()
         }
         val raw = try {
             source.fetch(query)
         } catch (_: IOException) {
-            return null
+            return LyricsOutcome.Failed
         }
         val lyrics = raw?.let(LrcParser::parse)?.takeIf { fitsDuration(it, query) }
         cacheDir.mkdirs()
         if (lyrics != null) write(hit, checkNotNull(raw)) else write(miss, "")
         prune()
-        return lyrics
+        return if (lyrics != null) LyricsOutcome.Found(lyrics) else LyricsOutcome.None
     }
 
     // A reply that runs well past the track is another recording: show nothing rather than wrong lyrics.

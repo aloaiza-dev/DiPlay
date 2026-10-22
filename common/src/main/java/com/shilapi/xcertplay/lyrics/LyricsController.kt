@@ -1,6 +1,7 @@
 package com.shilapi.xcertplay.lyrics
 
 import android.os.Handler
+import android.util.Log
 import com.shilapi.xcertplay.media.CarPlayNowPlaying
 import kotlin.math.abs
 
@@ -124,12 +125,32 @@ internal class LyricsController(
             suppressed = false
         }
         if (suppressed) return
+        request(query, attempt = 0)
+    }
+
+    // A failed lookup is not cached, so nothing would ask again until the song changed. The head unit's
+    // network can be slow to come up after CarPlay connects, so ask again with growing pauses.
+    private fun request(query: TrackQuery, attempt: Int) {
         val forTrack = generation
-        repository.lookup(query) { _, result ->
+        repository.lookup(query) { _, outcome ->
             handler.post {
                 if (forTrack != generation) return@post
-                lyrics = result
-                render()
+                when (outcome) {
+                    is LyricsOutcome.Found -> {
+                        Log.i(TAG, "\"${query.title}\" / ${query.artist}: ${outcome.lyrics.lines.size} lines")
+                        lyrics = outcome.lyrics
+                        render()
+                    }
+                    LyricsOutcome.None -> Log.i(TAG, "\"${query.title}\" / ${query.artist}: no synced lyrics")
+                    LyricsOutcome.Failed -> {
+                        val delay = RETRY_DELAYS_MILLIS.getOrNull(attempt)
+                        Log.i(TAG, "\"${query.title}\" / ${query.artist}: lookup failed" +
+                            if (delay != null) ", retry in ${delay / 1000} s" else ", giving up")
+                        if (delay != null) handler.postDelayed({
+                            if (started && forTrack == generation) request(query, attempt + 1)
+                        }, delay)
+                    }
+                }
             }
         }
     }
@@ -141,7 +162,8 @@ internal class LyricsController(
         val position = clock.positionMillis()
         val hiddenForDriving = hideWhileDriving() && gate.moving
         val railBlocked = mode == LyricsPlacement.SIDE_RAIL && sidePanelOpen()
-        if (mode == LyricsPlacement.OFF || lines == null || position == null || suppressed || hiddenForDriving || railBlocked) {
+        val stopped = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_HIDE_MILLIS } == true
+        if (mode == LyricsPlacement.OFF || lines == null || position == null || suppressed || hiddenForDriving || railBlocked || stopped) {
             pill.hide()
             rail.hide()
             return
@@ -179,7 +201,10 @@ internal class LyricsController(
     private companion object {
         const val NOTE = "♪"
         const val TICK_MILLIS = 250L
+        const val TAG = "DiPlay-Lyrics"
+        val RETRY_DELAYS_MILLIS = listOf(3_000L, 10_000L, 30_000L, 60_000L, 60_000L)
         const val PAUSE_DIM_MILLIS = 1_000L
+        const val PAUSE_HIDE_MILLIS = 4_000L
         const val PRE_ROLL_MILLIS = 3_000L
         const val SEEK_MILLIS = 2_000L
         const val TITLE_CHURN_WINDOW_MILLIS = 10_000L

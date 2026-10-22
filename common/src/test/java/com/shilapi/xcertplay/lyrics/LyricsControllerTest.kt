@@ -19,6 +19,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.io.IOException
 import java.time.Duration
 import java.util.concurrent.Executor
 
@@ -264,6 +265,88 @@ class LyricsControllerTest {
         assertEquals(0.6f, pill.alpha, 0.001f)
         publish(np("Song", elapsed = 2_000L, playing = true))
         assertEquals(1f, pill.alpha, 0.001f)
+    }
+
+    @Test
+    fun retriesAfterANetworkFailure() {
+        var attempts = 0
+        lrc = { if (++attempts < 3) throw IOException("busy") else "[00:01.00]one\n[00:05.00]two" }
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        assertEquals(View.GONE, pill.visibility)
+        advance(3_100L)
+        runJobs()
+        assertEquals("the first retry fails too", View.GONE, pill.visibility)
+        advance(10_100L)
+        runJobs()
+        assertEquals(View.VISIBLE, pill.visibility)
+        assertEquals(3, calls)
+    }
+
+    @Test
+    fun givesUpAfterFiveRetries() {
+        lrc = { throw IOException("down") }
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        for (wait in listOf(3_100L, 10_100L, 30_100L, 60_100L, 60_100L, 120_000L)) {
+            advance(wait)
+            runJobs()
+        }
+        assertEquals(6, calls)
+    }
+
+    @Test
+    fun doesNotRetryWhenThereAreNoLyrics() {
+        lrc = { null }
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(60_000L)
+        runJobs()
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun stopsRetryingOnceTheTrackHasChanged() {
+        lrc = { query -> if (query.title == "Song A") throw IOException("busy") else "[00:01.00]one" }
+        controller.start()
+        publish(np("Song A", elapsed = 2_000L, artist = "A"))
+        runJobs()
+        publish(np("Song B", elapsed = 2_000L, artist = "B"))
+        runJobs()
+        val before = calls
+        advance(3_100L)
+        runJobs()
+        assertEquals(before, calls)
+        assertEquals(View.VISIBLE, pill.visibility)
+    }
+
+    @Test
+    fun musicThatStopsClearsTheOverlayAndPlayingBringsItBack() {
+        placement = LyricsPlacement.TOP_PILL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        publish(np("Song", elapsed = 2_000L, playing = false))
+        advance(1_200L)
+        assertEquals("dimmed, still there", View.VISIBLE, pill.visibility)
+        advance(3_500L)
+        assertEquals("cleared after a few seconds", View.GONE, pill.visibility)
+        publish(np("Song", elapsed = 2_000L, playing = true))
+        assertEquals(View.VISIBLE, pill.visibility)
+    }
+
+    @Test
+    fun theRailIsClearedWhenMusicStopsToo() {
+        placement = LyricsPlacement.SIDE_RAIL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        publish(np("Song", elapsed = 2_000L, playing = false))
+        advance(5_000L)
+        assertEquals(View.GONE, rail.visibility)
     }
 
     @Test

@@ -22,13 +22,16 @@ class LyricsRepositoryTest {
     private fun repository(dir: File = folder.root) =
         LyricsRepository(source, dir, { it.run() }, { now })
 
-    private fun lookup(repository: LyricsRepository, track: TrackQuery = query): SyncedLyrics? {
-        var result: SyncedLyrics? = null
+    private fun outcome(repository: LyricsRepository, track: TrackQuery = query): LyricsOutcome {
+        var result: LyricsOutcome? = null
         var delivered: TrackQuery? = null
-        repository.lookup(track) { q, lyrics -> delivered = q; result = lyrics }
+        repository.lookup(track) { q, outcome -> delivered = q; result = outcome }
         assertEquals(track, delivered)
-        return result
+        return checkNotNull(result)
     }
+
+    private fun lookup(repository: LyricsRepository, track: TrackQuery = query): SyncedLyrics? =
+        (outcome(repository, track) as? LyricsOutcome.Found)?.lyrics
 
     @Test
     fun cachesHitOnDisk() {
@@ -47,6 +50,14 @@ class LyricsRepositoryTest {
         now += 2 * 3_600_000L
         assertNull(lookup(repository()))
         assertEquals(2, calls)
+    }
+
+    @Test
+    fun aMissIsReportedAsNoneAndAFailureAsFailed() {
+        reply = { null }
+        assertEquals(LyricsOutcome.None, outcome(repository()))
+        reply = { throw IOException("busy") }
+        assertEquals(LyricsOutcome.Failed, outcome(repository(), query.copy(title = "Other")))
     }
 
     @Test
