@@ -21,6 +21,8 @@ internal class LyricsController(
     private val placement: () -> LyricsPlacement,
     private val hideWhileDriving: () -> Boolean,
     private val night: () -> Boolean,
+    /** True: the rail stays while the car moves, minus its touch controls. False: the pill replaces it. */
+    private val keepRailWhileDriving: () -> Boolean,
     private val sidePanelOpen: () -> Boolean,
     private val nowMillis: () -> Long,
     /** How much earlier the lyrics show than their timestamps say; see [LyricsTiming]. Read on every render. */
@@ -211,14 +213,15 @@ internal class LyricsController(
         val animate = !jumped
         jumped = false
         // The view that is not wanted fades out while the wanted one comes in: a switch reads as one move.
-        // A moving car gets the pill whatever the saved layout: the rail is for a parked car.
-        if (mode == LyricsPlacement.TOP_PILL || moving) {
+        // Unless asked to keep the rail, a moving car gets the pill whatever the saved layout.
+        if (mode == LyricsPlacement.TOP_PILL || (moving && !keepRailWhileDriving())) {
             rail.fadeOut()
             pill.setInteractive(!moving)
             showPill(lines, index, position, animate)
             if (mode == LyricsPlacement.TOP_PILL && !moving) teachDoubleTap() else pill.setHint(false)
         } else {
             pill.fadeOut()
+            rail.setControlsAvailable(!moving)
             rail.show(lines.lines.map { it.text.ifBlank { NOTE } }, index)
         }
     }

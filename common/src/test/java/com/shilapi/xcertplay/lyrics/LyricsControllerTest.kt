@@ -45,6 +45,7 @@ class LyricsControllerTest {
     private val saved = mutableListOf<Int>()
     private val placements = mutableListOf<LyricsPlacement>()
     private var hintsSeen = 3
+    private var keepRail = false
     private val hintCounts = mutableListOf<Int>()
 
     private val speed = object : LyricsSpeedSource {
@@ -71,7 +72,7 @@ class LyricsControllerTest {
             sidePanelOpen = { sidePanelOpen }, nowMillis = ::now, offsetMillis = { offsetMillis },
             saveOffsetMillis = { saved += it; offsetMillis = it.toLong() },
             savePlacement = { placements += it; placement = it },
-            switchHintCount = { hintsSeen }, saveSwitchHintCount = { hintCounts += it; hintsSeen = it },
+            keepRailWhileDriving = { keepRail }, switchHintCount = { hintsSeen }, saveSwitchHintCount = { hintCounts += it; hintsSeen = it },
         )
     }
 
@@ -563,6 +564,23 @@ class LyricsControllerTest {
             pill.dispatchTouchEvent(up)
         }
         assertEquals(3, hintsSeen)
+    }
+
+    @Test
+    fun theRailStaysWhileTheCarMovesWhenAskedButItsControlsGo() {
+        placement = LyricsPlacement.SIDE_RAIL
+        keepRail = true
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        assertEquals(View.VISIBLE, rail.gearButton.visibility)
+        repeat(8) { onSpeed?.invoke(30); advance(500L) }
+        advance(400L)
+        assertEquals(View.VISIBLE, rail.visibility)
+        assertEquals(View.GONE, pill.visibility)
+        assertEquals(View.GONE, rail.gearButton.visibility)
+        repeat(10) { onSpeed?.invoke(0); advance(500L) }
+        assertEquals(View.VISIBLE, rail.gearButton.visibility)
     }
 
     @Test

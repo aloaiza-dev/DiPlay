@@ -89,6 +89,7 @@ object AirPlayPersistence {
     private const val KEY_LOW_LATENCY_DECODER = "low_latency_decoder"
     private const val KEY_FPS_COUNTER = "fps_counter"
     private const val KEY_LYRICS_PLACEMENT = "lyrics_placement"
+    private const val KEY_KEEP_LYRICS_RAIL_WHILE_DRIVING = "keep_lyrics_rail_while_driving"
     private const val KEY_LYRICS_RAIL_SIDE = "lyrics_rail_side"
     private const val KEY_LYRICS_SWITCH_HINTS = "lyrics_switch_hints"
     private const val KEY_HIDE_LYRICS_WHILE_DRIVING = "hide_lyrics_while_driving"
@@ -756,6 +757,13 @@ object AirPlayPersistence {
 
     fun saveLyricsSwitchHints(context: Context, count: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_LYRICS_SWITCH_HINTS, count).apply()
+    }
+
+    fun loadKeepLyricsRailWhileDriving(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_KEEP_LYRICS_RAIL_WHILE_DRIVING, false)
+
+    fun saveKeepLyricsRailWhileDriving(context: Context, keep: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_KEEP_LYRICS_RAIL_WHILE_DRIVING, keep).apply()
     }
 
     fun loadLyricsRailSide(context: Context): LyricsRailSide = LyricsRailSide.fromKey(

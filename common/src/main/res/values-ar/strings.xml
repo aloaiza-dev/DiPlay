@@ -996,5 +996,7 @@
     <string name="lyrics_control_later">أبطأ</string>
     <string name="lyrics_control_pill">التبديل إلى الشريط العلوي</string>
     <string name="lyrics_hint_double_tap">انقر مرتين للعرض الجانبي</string>
-    <string name="settings_lyrics_switch_hint">انقر مرتين على الشريط العلوي في شاشة السيارة لفتح اللوحة الجانبية. وعلى اللوحة، انقر أيقونة الشريط للعودة. يعمل الاثنان فقط والسيارة متوقفة. وأثناء حركة السيارة تظهر اللوحة الجانبية على هيئة الشريط العلوي.</string>
+    <string name="settings_lyrics_switch_hint">انقر مرتين على الشريط العلوي في شاشة السيارة لفتح اللوحة الجانبية. وعلى اللوحة، انقر أيقونة الشريط للعودة. يعمل الاثنان فقط والسيارة متوقفة. ما لم تُبقِ اللوحة أثناء القيادة، تظهر اللوحة على هيئة الشريط العلوي أثناء حركة السيارة.</string>
+    <string name="settings_lyrics_keep_rail_while_driving">إبقاء اللوحة الجانبية أثناء القيادة</string>
+    <string name="settings_lyrics_keep_rail_while_driving_description">يستطيع الركاب متابعة القراءة. تظهر اللوحة بلا أزرارها أثناء حركة السيارة. عند الإيقاف: تتحول اللوحة إلى الشريط العلوي.</string>
 </resources>

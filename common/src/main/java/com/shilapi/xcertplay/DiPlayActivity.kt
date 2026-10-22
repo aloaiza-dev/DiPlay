@@ -1973,6 +1973,9 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             card.addView(label(getString(R.string.settings_lyrics_timing_description), 14, MUTED).apply {
                 setPadding(0, 0, 0, dp(SETTINGS_BLOCK_GAP_DP))
             })
+            toggle(card, getString(R.string.settings_lyrics_keep_rail_while_driving),
+                getString(R.string.settings_lyrics_keep_rail_while_driving_description),
+                AirPlayPersistence.loadKeepLyricsRailWhileDriving(this)) { AirPlayPersistence.saveKeepLyricsRailWhileDriving(this, it) }
             toggle(card, getString(R.string.settings_lyrics_hide_while_driving),
                 getString(R.string.settings_lyrics_hide_while_driving_description),
                 AirPlayPersistence.loadHideLyricsWhileDriving(this)) { AirPlayPersistence.saveHideLyricsWhileDriving(this, it) }

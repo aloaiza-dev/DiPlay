@@ -73,6 +73,12 @@ class LyricsSettingsTest {
         assertEquals(LyricsRailSide.AUTO, AirPlayPersistence.loadLyricsRailSide(context))
     }
 
+    @Test fun theRailGivesWayToThePillWhileDrivingByDefault() {
+        assertFalse(AirPlayPersistence.loadKeepLyricsRailWhileDriving(context))
+        AirPlayPersistence.saveKeepLyricsRailWhileDriving(context, true)
+        assertEquals(true, AirPlayPersistence.loadKeepLyricsRailWhileDriving(context))
+    }
+
     @Test fun switchHintsStartAtZeroAndRoundTrip() {
         assertEquals(0, AirPlayPersistence.loadLyricsSwitchHints(context))
         AirPlayPersistence.saveLyricsSwitchHints(context, 2)

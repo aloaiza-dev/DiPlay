@@ -959,5 +959,7 @@
     <string name="lyrics_control_later">Пізніше</string>
     <string name="lyrics_control_pill">Перемкнути на плашку</string>
     <string name="lyrics_hint_double_tap">Двічі торкніться для бічної панелі</string>
-    <string name="settings_lyrics_switch_hint">Двічі торкніться плашки на екрані автомобіля, щоб відкрити бічну панель. На панелі торкніться значка плашки, щоб повернутися. Обидві дії працюють лише на нерухомому автомобілі. Під час руху панель відображається як плашка.</string>
+    <string name="settings_lyrics_switch_hint">Двічі торкніться плашки на екрані автомобіля, щоб відкрити бічну панель. На панелі торкніться значка плашки, щоб повернутися. Обидві дії працюють лише на нерухомому автомобілі. Якщо не залишати панель під час руху, вона відображається як плашка.</string>
+    <string name="settings_lyrics_keep_rail_while_driving">Залишати бічну панель під час руху</string>
+    <string name="settings_lyrics_keep_rail_while_driving_description">Пасажири можуть читати далі. Під час руху панель показується без кнопок. Вимкнено: панель перетворюється на верхню плашку.</string>
 </resources>

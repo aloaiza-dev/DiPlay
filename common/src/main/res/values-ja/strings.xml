@@ -1049,5 +1049,7 @@
     <string name="lyrics_control_later">遅く</string>
     <string name="lyrics_control_pill">上部バー表示に切り替え</string>
     <string name="lyrics_hint_double_tap">ダブルタップでサイド表示</string>
-    <string name="settings_lyrics_switch_hint">車の画面で上部バーをダブルタップするとサイドパネルが開きます。パネルではバーのアイコンをタップすると戻ります。どちらも停車中のみ使えます。走行中はサイドパネルが上部バーとして表示されます。</string>
+    <string name="settings_lyrics_switch_hint">車の画面で上部バーをダブルタップするとサイドパネルが開きます。パネルではバーのアイコンをタップすると戻ります。どちらも停車中のみ使えます。走行中もパネルを表示する設定がオフの場合、走行中は上部バーとして表示されます。</string>
+    <string name="settings_lyrics_keep_rail_while_driving">走行中もサイドパネルを表示</string>
+    <string name="settings_lyrics_keep_rail_while_driving_description">同乗者が読み続けられます。走行中はボタンなしで表示されます。オフの場合、パネルは上部バーになります。</string>
 </resources>
