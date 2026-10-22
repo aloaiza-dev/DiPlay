@@ -75,11 +75,13 @@ class LyricsDesignSheetTest {
         })
     }
 
-    private fun addRail(root: FrameLayout, night: Boolean, lines: List<String>, index: Int) {
+    private fun addRail(root: FrameLayout, night: Boolean, lines: List<String>, index: Int, timing: Int? = null, open: Boolean = false) {
         val rail = LyricsRailView(root.context)
         rail.setWindowSizeDp(widthPx / density(), heightPx / density())
         rail.setNight(night)
+        if (timing != null) rail.setTimingControl(timing) {}
         rail.show(lines, index, animate = false)
+        if (open) rail.gearButton.performClick()
         root.addView(rail, FrameLayout.LayoutParams(rail.preferredWidthPx(), rail.preferredHeightPx(), Gravity.RIGHT or Gravity.CENTER_VERTICAL).apply {
             rightMargin = rail.edgeMarginPx()
         })
@@ -179,6 +181,13 @@ class LyricsDesignSheetTest {
     fun railNightAndDay() {
         sheet("rail-night", true) { addRail(it, true, lines, 2) }
         sheet("rail-day", false) { addRail(it, false, lines, 2) }
+    }
+
+    @Test
+    fun railTimingControl() {
+        sheet("rail-control-closed-night", true) { addRail(it, true, lines, 2, timing = 1000) }
+        sheet("rail-control-open-night", true) { addRail(it, true, lines, 2, timing = 1000, open = true) }
+        sheet("rail-control-open-day", false) { addRail(it, false, lines, 2, timing = 500, open = true) }
     }
 
     @Test

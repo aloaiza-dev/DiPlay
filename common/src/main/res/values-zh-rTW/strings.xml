@@ -999,4 +999,6 @@
     <string name="settings_lyrics_timing_earlier">提前 %1$s 秒</string>
     <string name="settings_lyrics_timing_later">延後 %1$s 秒</string>
     <string name="settings_lyrics_timing_description">讓每行歌詞提前或延後顯示，以配合聲音。若歌詞比歌曲慢，請選擇提前。返回 CarPlay 後生效。</string>
+    <string name="lyrics_control_earlier">提前</string>
+    <string name="lyrics_control_later">延後</string>
 </resources>

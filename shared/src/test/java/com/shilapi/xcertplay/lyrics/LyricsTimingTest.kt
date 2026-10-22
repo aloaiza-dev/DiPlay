@@ -37,6 +37,28 @@ class LyricsTimingTest {
     }
 
     @Test
+    fun aStepMovesAQuarterSecondEitherWay() {
+        assertEquals(750, LyricsTiming.step(500, earlier = true))
+        assertEquals(250, LyricsTiming.step(500, earlier = false))
+        assertEquals(-250, LyricsTiming.step(0, earlier = false))
+    }
+
+    @Test
+    fun aStepStopsAtTheEndsOfTheRange() {
+        assertEquals(2000, LyricsTiming.step(2000, earlier = true))
+        assertEquals(-2000, LyricsTiming.step(-2000, earlier = false))
+        assertEquals(2000, LyricsTiming.step(1900, earlier = true))
+    }
+
+    @Test
+    fun canStepTellsWhenAButtonShouldBeDisabled() {
+        assertEquals(false, LyricsTiming.canStep(2000, earlier = true))
+        assertEquals(true, LyricsTiming.canStep(2000, earlier = false))
+        assertEquals(false, LyricsTiming.canStep(-2000, earlier = false))
+        assertEquals(true, LyricsTiming.canStep(0, earlier = true))
+    }
+
+    @Test
     fun presetIndexFindsTheNearestPreset() {
         assertEquals(LyricsTiming.PRESETS_MILLIS.indexOf(500), LyricsTiming.nearestPresetIndex(500))
         assertEquals(LyricsTiming.PRESETS_MILLIS.indexOf(500), LyricsTiming.nearestPresetIndex(530))

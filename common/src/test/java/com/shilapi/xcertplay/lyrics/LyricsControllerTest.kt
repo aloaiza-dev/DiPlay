@@ -41,6 +41,7 @@ class LyricsControllerTest {
     private var night = true
     private var sidePanelOpen = false
     private var offsetMillis = 0L
+    private val saved = mutableListOf<Int>()
 
     private val speed = object : LyricsSpeedSource {
         override val available get() = speedAvailable
@@ -64,6 +65,7 @@ class LyricsControllerTest {
             observeNowPlaying = { listener -> onNowPlaying = listener; { onNowPlaying = null } },
             placement = { placement }, hideWhileDriving = { hideWhileDriving }, night = { night },
             sidePanelOpen = { sidePanelOpen }, nowMillis = ::now, offsetMillis = { offsetMillis },
+            saveOffsetMillis = { saved += it; offsetMillis = it.toLong() },
         )
     }
 
@@ -454,6 +456,58 @@ class LyricsControllerTest {
         assertEquals("a", pillText().first())
         advance(950L)
         assertEquals("b", pillText().first())
+    }
+
+    @Test
+    fun theRailTimingControlSavesEachStepAndAppliesItAtOnce() {
+        lrc = { "[00:01.00]one\n[00:03.00]two" }
+        placement = LyricsPlacement.SIDE_RAIL
+        controller.start()
+        publish(np("Song", elapsed = 2_300L))
+        runJobs()
+        advance(400L) // the song plays on: 2.7 s now, still before the 3 s line
+        assertEquals("one", rail.row(0).text.toString())
+        rail.gearButton.performClick()
+        rail.earlierButton.performClick()
+        rail.earlierButton.performClick()
+        assertEquals(listOf(250, 500), saved)
+        shadowOf(looper).idle()
+        assertEquals("the line moved earlier at once", "two", rail.row(0).text.toString())
+    }
+
+    @Test
+    fun theRailControlStartsFromTheSavedTiming() {
+        placement = LyricsPlacement.SIDE_RAIL
+        offsetMillis = 750L
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        rail.gearButton.performClick()
+        assertEquals("0.75 s earlier", rail.timingValue.text.toString())
+    }
+
+    @Test
+    fun theGearGoesAwayWhileTheCarMovesEvenWithoutTheHideOption() {
+        placement = LyricsPlacement.SIDE_RAIL
+        hideWhileDriving = false
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        assertEquals(View.VISIBLE, rail.gearButton.visibility)
+        repeat(8) { onSpeed?.invoke(30); advance(500L) }
+        assertEquals(View.GONE, rail.gearButton.visibility)
+        assertEquals("the lyrics themselves stay", View.VISIBLE, rail.visibility)
+        repeat(10) { onSpeed?.invoke(0); advance(500L) }
+        assertEquals(View.VISIBLE, rail.gearButton.visibility)
+    }
+
+    @Test
+    fun thePillNeverWatchesTheSpeedUnlessTheHideOptionIsOn() {
+        placement = LyricsPlacement.TOP_PILL
+        hideWhileDriving = false
+        controller.start()
+        assertNull(onSpeed)
+        assertEquals(View.GONE, rail.gearButton.visibility)
     }
 
     @Test

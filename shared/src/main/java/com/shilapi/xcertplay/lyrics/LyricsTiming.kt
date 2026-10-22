@@ -13,7 +13,14 @@ object LyricsTiming {
 
     val PRESETS_MILLIS = listOf(-1000, -500, -250, 0, 250, 500, 750, 1000, 1250, 1500, 2000)
 
+    const val STEP_MILLIS = 250
+
     fun clamp(millis: Int): Int = millis.coerceIn(MIN_MILLIS, MAX_MILLIS)
+
+    /** One tap of the rail's Earlier or Later button. */
+    fun step(millis: Int, earlier: Boolean): Int = clamp(millis + if (earlier) STEP_MILLIS else -STEP_MILLIS)
+
+    fun canStep(millis: Int, earlier: Boolean): Boolean = clamp(millis) != step(millis, earlier)
 
     fun nearestPresetIndex(millis: Int): Int = PRESETS_MILLIS.indices.minBy { abs(PRESETS_MILLIS[it] - clamp(millis)) }
 }

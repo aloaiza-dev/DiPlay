@@ -5,17 +5,29 @@ import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.StateListDrawable
+import android.os.Handler
+import android.os.Looper
 import android.text.Layout
 import android.util.TypedValue
+import android.view.Gravity
+import android.view.View
 import android.view.ViewGroup
 import android.view.animation.PathInterpolator
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import com.shilapi.xcertplay.host.R
 
 /**
  * Lyrics as a wheel on a floating glass card. Every line has one weight; size and opacity say how far a line
  * is from the current one ([LyricsMotion.railScale], [LyricsMotion.railAlpha]), and the current line sits at
  * the card's vertical centre. When the song moves to its next line every row eases from the pose of the
- * line it shows to the pose of the slot it moves into. It never takes touches.
+ * line it shows to the pose of the slot it moves into.
+ *
+ * The card takes no touches except on its timing control: a small gear in the corner that opens a strip with
+ * Later and Earlier buttons. Everywhere else a tap goes through to CarPlay.
  */
 internal class LyricsRailView(context: Context) : ViewGroup(context) {
     private enum class Motion { NONE, ENTER, ROLL, DIP, EXIT }
@@ -36,14 +48,122 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
     private var rollFrom: Map<Int, Pose> = emptyMap()
     private var animator: ValueAnimator? = null
 
+    // The timing control. It is hidden until [setTimingControl] and while [setControlsAvailable] is false.
+    private val handler = Handler(Looper.getMainLooper())
+    private var timingMillis = LyricsTiming.DEFAULT_MILLIS
+    private var onTimingChange: ((Int) -> Unit)? = null
+    private var controlConfigured = false
+    private var controlsAvailable = true
+    private val collapse = Runnable { closeStrip() }
+
+    internal val gearButton = ImageView(context).apply {
+        setImageResource(R.drawable.ic_dp_controls)
+        scaleType = ImageView.ScaleType.FIT_CENTER
+        isClickable = true
+        isFocusable = false
+        contentDescription = context.getString(R.string.settings_lyrics_timing)
+        importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
+        visibility = GONE
+        setOnClickListener { if (timingStrip.visibility == VISIBLE) closeStrip() else openStrip() }
+    }
+    internal val laterButton = controlButton(R.string.lyrics_control_later, earlier = false)
+    internal val earlierButton = controlButton(R.string.lyrics_control_earlier, earlier = true)
+    internal val timingValue = lyricsLine(context).apply { maxLines = 1; gravity = Gravity.CENTER }
+    internal val timingStrip = LinearLayout(context).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        isClickable = true // a tap on the strip must not fall through to CarPlay
+        isFocusable = false
+        visibility = GONE
+    }
+
     init {
         isClickable = false
         isFocusable = false
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_NO
         visibility = GONE
         clipChildren = true
+        timingStrip.addView(laterButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+        timingStrip.addView(timingValue, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.5f))
+        timingStrip.addView(earlierButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
+        addView(gearButton)
+        addView(timingStrip)
         rebuildRows()
         applyTheme()
+    }
+
+    /** Enables the control. [millis] is the timing now; [onChange] gets each new value after a tap. */
+    fun setTimingControl(millis: Int, onChange: (Int) -> Unit) {
+        timingMillis = millis
+        onTimingChange = onChange
+        controlConfigured = true
+        refreshControls()
+    }
+
+    /** The timing changed somewhere else, for example in Settings. */
+    fun setTiming(millis: Int) {
+        timingMillis = millis
+        refreshStrip()
+    }
+
+    /** False while the car moves: the gear and the strip go away. */
+    fun setControlsAvailable(available: Boolean) {
+        controlsAvailable = available
+        refreshControls()
+    }
+
+    private fun refreshControls() {
+        gearButton.visibility = if (controlConfigured && controlsAvailable) VISIBLE else GONE
+        if (gearButton.visibility == GONE) closeStrip()
+        refreshStrip()
+    }
+
+    private fun refreshStrip() {
+        timingValue.text = lyricsTimingLabel(context, timingMillis)
+        for (earlier in listOf(true, false)) {
+            val button = if (earlier) earlierButton else laterButton
+            val enabled = LyricsTiming.canStep(timingMillis, earlier)
+            button.isEnabled = enabled
+            button.alpha = if (enabled) 1f else DISABLED_ALPHA
+        }
+    }
+
+    private fun openStrip() {
+        timingStrip.visibility = VISIBLE
+        refreshStrip()
+        gearButton.setColorFilter(colors.current)
+        scheduleCollapse()
+        applyPose()
+    }
+
+    private fun closeStrip() {
+        handler.removeCallbacks(collapse)
+        timingStrip.visibility = GONE
+        gearButton.setColorFilter(colors.next)
+        applyPose()
+    }
+
+    private fun scheduleCollapse() {
+        handler.removeCallbacks(collapse)
+        handler.postDelayed(collapse, COLLAPSE_MILLIS)
+    }
+
+    private fun step(earlier: Boolean) {
+        if (!LyricsTiming.canStep(timingMillis, earlier)) return
+        timingMillis = LyricsTiming.step(timingMillis, earlier)
+        refreshStrip()
+        onTimingChange?.invoke(timingMillis)
+        scheduleCollapse()
+    }
+
+    private fun controlButton(label: Int, earlier: Boolean) = TextView(context).apply {
+        text = context.getString(label)
+        typeface = Typeface.DEFAULT_BOLD
+        gravity = Gravity.CENTER
+        maxLines = 1
+        isClickable = true
+        isFocusable = false
+        setOnClickListener { step(earlier) }
     }
 
     fun preferredWidthPx(): Int = (LyricsLayout.railWidthDp(windowWidthDp) * density).toInt()
@@ -108,6 +228,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
 
     fun hide() {
         settle()
+        closeStrip()
         visibility = GONE
     }
 
@@ -136,6 +257,8 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
         for (row in rows) {
             if (row.visibility != GONE) row.measure(MeasureSpec.makeMeasureSpec(inner, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
         }
+        gearButton.measure(MeasureSpec.makeMeasureSpec(gearSize(), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(gearSize(), MeasureSpec.EXACTLY))
+        timingStrip.measure(MeasureSpec.makeMeasureSpec(inner, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(stripHeight(), MeasureSpec.EXACTLY))
         setMeasuredDimension(width, height)
     }
 
@@ -150,6 +273,12 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
             val top = (centre - row.measuredHeight / 2f).toInt()
             row.layout(left, top, left + row.measuredWidth, top + row.measuredHeight)
         }
+        // The gear in the upper right corner; the strip along the bottom, above the faintest lines.
+        val edge = (CONTROL_EDGE_EM * textPx()).toInt()
+        val gear = gearSize()
+        gearButton.layout(width - edge - gear, edge, width - edge, edge + gear)
+        val stripBottom = (b - t) - (STRIP_BOTTOM_EM * textPx()).toInt()
+        timingStrip.layout(padH().toInt(), stripBottom - stripHeight(), width - padH().toInt(), stripBottom)
         applyPose()
     }
 
@@ -213,7 +342,10 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
             it.cancel()
         }
         animator = null
-        if (motion == Motion.EXIT) visibility = GONE
+        if (motion == Motion.EXIT) {
+            closeStrip()
+            visibility = GONE
+        }
         motion = Motion.NONE
         progress = 1f
         rollFrom = emptyMap()
@@ -240,6 +372,9 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
                 Motion.DIP -> alpha = target.alpha * lerp(LyricsMotion.DIP_ALPHA, 1f, progress)
                 else -> Unit
             }
+            // While the strip is open, a line that would reach under it is not drawn: only a sliver would show.
+            if (timingStrip.visibility == VISIBLE && row.visibility == VISIBLE &&
+                (row.top + row.bottom) / 2f + row.height * scale / 2f + shift > timingStrip.top) alpha = 0f
             row.translationY = shift
             row.scaleX = scale
             row.scaleY = scale
@@ -269,12 +404,13 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
     }
 
     private fun rebuildRows() {
-        removeAllViews()
+        rows.forEach { removeView(it) }
         reach = slotReachFor(windowHeightDp)
         rows = List(2 * reach + 1) {
             lyricsLine(context).apply { typeface = Typeface.DEFAULT_BOLD; maxLines = 2; breakStrategy = Layout.BREAK_STRATEGY_BALANCED }
         }
-        rows.forEach { addView(it) }
+        // Rows go under the gear and the strip.
+        rows.forEachIndexed { position, row -> addView(row, position) }
         applySizes()
         applyTheme()
         if (lines.isNotEmpty()) assign(lines, index)
@@ -282,13 +418,54 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
 
     private fun applyTheme() {
         rows.forEach { it.setTextColor(colors.current) }
+        applyControlTheme()
         applyShape()
     }
 
     private fun applySizes() {
         rows.forEach { it.setTextSize(TypedValue.COMPLEX_UNIT_PX, textPx()) }
+        applyControlSizes()
         applyShape()
     }
+
+    private fun applyControlTheme() {
+        val ink = colors.current and 0x00FFFFFF
+        // The glass's own colour made opaque and lifted a little: the faint lines behind it must not show through.
+        val stripFill = LyricsTheme.over(ink or STRIP_LIFT, colors.glassBottom or OPAQUE)
+        timingStrip.background = GradientDrawable().apply {
+            setColor(stripFill)
+            cornerRadius = stripHeight() / 2f
+        }
+        for (button in listOf(laterButton, earlierButton)) {
+            button.setTextColor(colors.current)
+            button.background = StateListDrawable().apply {
+                addState(intArrayOf(android.R.attr.state_pressed), GradientDrawable().apply {
+                    setColor(ink or PRESSED_FILL)
+                    cornerRadius = stripHeight() / 2f
+                })
+            }
+        }
+        timingValue.setTextColor(colors.next)
+        gearButton.background = StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_pressed), GradientDrawable().apply {
+                setColor(ink or PRESSED_FILL)
+                shape = GradientDrawable.OVAL
+            })
+        }
+        gearButton.setColorFilter(if (timingStrip.visibility == VISIBLE) colors.current else colors.next)
+    }
+
+    private fun applyControlSizes() {
+        val label = CONTROL_TEXT_EM * textPx()
+        for (view in listOf<TextView>(laterButton, earlierButton, timingValue)) view.setTextSize(TypedValue.COMPLEX_UNIT_PX, label)
+        val pad = (GEAR_PADDING_FRACTION * gearSize()).toInt()
+        gearButton.setPadding(pad, pad, pad, pad)
+        applyControlTheme()
+    }
+
+    private fun gearSize(): Int = maxOf(MIN_TARGET_DP * density, GEAR_EM * textPx()).toInt()
+
+    private fun stripHeight(): Int = maxOf(MIN_TARGET_DP * density, STRIP_EM * textPx()).toInt()
 
     private fun applyShape() {
         background = lyricsGlass(colors, LyricsLayout.RAIL_RADIUS_EM * textPx(), LyricsLayout.RIM_DP * density)
@@ -313,5 +490,19 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
         const val DIMMED_ALPHA = 0.6f
         const val ENTER_RISE_EM = 0.3f
         const val EXIT_RISE_EM = 0.15f
+
+        // The control: touch targets are at least 48 dp, and otherwise follow the text size.
+        const val MIN_TARGET_DP = 48f
+        const val GEAR_EM = 1.15f
+        const val STRIP_EM = 1.3f
+        const val GEAR_PADDING_FRACTION = 0.2f
+        const val CONTROL_EDGE_EM = 0.3f
+        const val STRIP_BOTTOM_EM = 0.45f
+        const val CONTROL_TEXT_EM = 0.62f
+        const val STRIP_LIFT = 0x1F000000
+        const val OPAQUE = 0xFF000000.toInt()
+        const val PRESSED_FILL = 0x38000000
+        const val DISABLED_ALPHA = 0.35f
+        const val COLLAPSE_MILLIS = 4_000L
     }
 }

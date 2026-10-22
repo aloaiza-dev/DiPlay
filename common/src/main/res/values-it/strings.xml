@@ -1029,4 +1029,6 @@
     <string name="settings_lyrics_timing_earlier">%1$s s prima</string>
     <string name="settings_lyrics_timing_later">%1$s s dopo</string>
     <string name="settings_lyrics_timing_description">Mostra ogni riga prima o dopo per seguire il suono. Se i testi arrivano dopo il brano, scegli prima. Si applica quando torni a CarPlay.</string>
+    <string name="lyrics_control_earlier">Prima</string>
+    <string name="lyrics_control_later">Dopo</string>
 </resources>

@@ -24,6 +24,8 @@ internal class LyricsController(
     private val nowMillis: () -> Long,
     /** How much earlier the lyrics show than their timestamps say; see [LyricsTiming]. Read on every render. */
     private val offsetMillis: () -> Long,
+    /** Persists the timing the rail's control sets, so Settings and the rail always agree. */
+    private val saveOffsetMillis: (Int) -> Unit,
 ) {
     private var clock = LyricsClock(nowMillis)
     private var gate = DrivingGate(nowMillis)
@@ -51,7 +53,14 @@ internal class LyricsController(
         started = true
         onNightChanged(night())
         stopNowPlaying = observeNowPlaying(::onNowPlaying)
-        if (hideWhileDriving()) stopSpeed = speed.observe { kmh ->
+        val railMode = placement() == LyricsPlacement.SIDE_RAIL
+        // The rail's timing control: each tap is saved and takes effect on the next render.
+        if (railMode) rail.setTimingControl(offsetMillis().toInt()) { millis ->
+            saveOffsetMillis(millis)
+            render()
+        }
+        // The speed is wanted to hide the lyrics while driving, and to take the rail's control away.
+        if (hideWhileDriving() || railMode) stopSpeed = speed.observe { kmh ->
             gate.onSpeed(kmh)
             render()
         }
@@ -162,7 +171,8 @@ internal class LyricsController(
         val lines = lyrics
         // The timing offset moves the position the lines are looked up at: earlier lyrics for a positive one.
         val position = clock.positionMillis()?.let { (it + offsetMillis()).coerceAtLeast(0L) }
-        val hiddenForDriving = hideWhileDriving() && gate.moving
+        val moving = gate.moving
+        val hiddenForDriving = hideWhileDriving() && moving
         val railBlocked = mode == LyricsPlacement.SIDE_RAIL && sidePanelOpen()
         val stopped = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_HIDE_MILLIS } == true
         if (mode == LyricsPlacement.OFF || lines == null || position == null || suppressed || hiddenForDriving || railBlocked || stopped) {
@@ -184,6 +194,7 @@ internal class LyricsController(
             showPill(lines, index, position, animate)
         } else {
             pill.hide()
+            rail.setControlsAvailable(!moving)
             rail.show(lines.lines.map { it.text.ifBlank { NOTE } }, index)
         }
     }

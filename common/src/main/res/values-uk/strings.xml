@@ -951,4 +951,6 @@
     <string name="settings_lyrics_timing_earlier">На %1$s с раніше</string>
     <string name="settings_lyrics_timing_later">На %1$s с пізніше</string>
     <string name="settings_lyrics_timing_description">Показує кожен рядок раніше або пізніше, щоб збігатися зі звуком. Якщо текст відстає від пісні, оберіть «раніше». Застосовується після повернення в CarPlay.</string>
+    <string name="lyrics_control_earlier">Раніше</string>
+    <string name="lyrics_control_later">Пізніше</string>
 </resources>

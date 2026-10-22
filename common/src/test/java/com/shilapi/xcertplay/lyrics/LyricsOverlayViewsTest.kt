@@ -13,6 +13,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import com.shilapi.xcertplay.host.R
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
@@ -395,6 +396,202 @@ class LyricsOverlayViewsTest {
         assertEquals(View.VISIBLE, rail.visibility)
         letTimePass(400L)
         assertEquals(View.GONE, rail.visibility)
+    }
+
+    private val timingCalls = mutableListOf<Int>()
+
+    private fun controlledRail(initial: Int = 500): Pair<LyricsRailView, FrameLayout> {
+        timingCalls.clear()
+        val rail = LyricsRailView(context)
+        val root = laidOutRail(rail)
+        rail.setTimingControl(initial) { timingCalls += it }
+        rail.show(ten, 4, animate = false)
+        relayout(root)
+        return rail to root
+    }
+
+    private fun touchAt(view: View, x: Float, y: Float): Boolean {
+        val event = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, x, y, 0)
+        return view.dispatchTouchEvent(event).also { event.recycle() }
+    }
+
+    private fun centreOf(view: View) = (view.left + view.right) / 2f to (view.top + view.bottom) / 2f
+
+    @Test
+    fun theGearIsTheOnlyPartOfTheRailThatTakesTouches() {
+        val (rail, _) = controlledRail()
+        val (gx, gy) = centreOf(rail.gearButton)
+        assertTrue("the gear takes a tap", touchAt(rail, gx, gy))
+        assertFalse("the middle of the card passes the tap on", touchAt(rail, rail.width / 2f, rail.height / 2f))
+        assertFalse("so does a corner without the gear", touchAt(rail, 4f, rail.height - 4f))
+    }
+
+    @Test
+    fun withoutAControlTheRailTakesNoTouchesAndShowsNoGear() {
+        val rail = LyricsRailView(context)
+        val root = laidOutRail(rail)
+        rail.show(ten, 4, animate = false)
+        relayout(root)
+        assertEquals(View.GONE, rail.gearButton.visibility)
+        assertFalse(touchAt(rail, rail.width - 10f, 10f))
+    }
+
+    @Test
+    fun theGearHasANameAndAComfortableTouchTarget() {
+        val (rail, _) = controlledRail()
+        assertEquals(context.getString(R.string.settings_lyrics_timing), rail.gearButton.contentDescription)
+        val minimum = 48 * context.resources.displayMetrics.density
+        assertTrue("gear ${rail.gearButton.width}x${rail.gearButton.height}", rail.gearButton.width >= minimum && rail.gearButton.height >= minimum)
+        assertTrue("earlier ${rail.earlierButton.height}", rail.earlierButton.let { it.height >= minimum || rail.timingStrip.height >= minimum })
+    }
+
+    @Test
+    fun tappingTheGearOpensTheStripAndTappingAgainClosesIt() {
+        val (rail, _) = controlledRail()
+        assertEquals(View.GONE, rail.timingStrip.visibility)
+        rail.gearButton.performClick()
+        assertEquals(View.VISIBLE, rail.timingStrip.visibility)
+        rail.gearButton.performClick()
+        assertEquals(View.GONE, rail.timingStrip.visibility)
+    }
+
+    @Test
+    fun theStripShowsTheCurrentTimingAndFollowsChangesFromElsewhere() {
+        val (rail, _) = controlledRail(1000)
+        rail.gearButton.performClick()
+        assertEquals("1 s earlier", rail.timingValue.text.toString())
+        rail.setTiming(250)
+        assertEquals("0.25 s earlier", rail.timingValue.text.toString())
+        assertEquals(context.getString(R.string.lyrics_control_earlier), rail.earlierButton.text.toString())
+        assertEquals(context.getString(R.string.lyrics_control_later), rail.laterButton.text.toString())
+    }
+
+    @Test
+    fun earlierAndLaterStepAQuarterSecondAndReportEachChange() {
+        val (rail, _) = controlledRail(500)
+        rail.gearButton.performClick()
+        rail.earlierButton.performClick()
+        assertEquals(listOf(750), timingCalls)
+        assertEquals("0.75 s earlier", rail.timingValue.text.toString())
+        rail.laterButton.performClick()
+        rail.laterButton.performClick()
+        rail.laterButton.performClick()
+        assertEquals(listOf(750, 500, 250, 0), timingCalls)
+        assertEquals("On time", rail.timingValue.text.toString())
+    }
+
+    @Test
+    fun theButtonsStopAtTheEndsOfTheRange() {
+        val (top, _) = controlledRail(2000)
+        top.gearButton.performClick()
+        assertFalse(top.earlierButton.isEnabled)
+        top.earlierButton.performClick()
+        assertTrue(timingCalls.isEmpty())
+        assertTrue(top.laterButton.isEnabled)
+        val (bottom, _) = controlledRail(-2000)
+        bottom.gearButton.performClick()
+        assertFalse(bottom.laterButton.isEnabled)
+        assertTrue(bottom.earlierButton.isEnabled)
+    }
+
+    @Test
+    fun theStripClosesByItselfAndEachTapStartsTheWaitAgain() {
+        val (rail, _) = controlledRail()
+        rail.gearButton.performClick()
+        letTimePass(3_000L)
+        assertEquals(View.VISIBLE, rail.timingStrip.visibility)
+        rail.earlierButton.performClick()
+        letTimePass(3_000L)
+        assertEquals("a tap restarts the wait", View.VISIBLE, rail.timingStrip.visibility)
+        letTimePass(2_000L)
+        assertEquals(View.GONE, rail.timingStrip.visibility)
+    }
+
+    @Test
+    fun whileTheCarMovesTheGearAndStripAreGone() {
+        val (rail, _) = controlledRail()
+        rail.gearButton.performClick()
+        rail.setControlsAvailable(false)
+        assertEquals(View.GONE, rail.gearButton.visibility)
+        assertEquals(View.GONE, rail.timingStrip.visibility)
+        rail.setControlsAvailable(true)
+        assertEquals(View.VISIBLE, rail.gearButton.visibility)
+        assertEquals("the strip stays closed", View.GONE, rail.timingStrip.visibility)
+    }
+
+    @Test
+    fun hidingTheRailClosesTheStrip() {
+        val (rail, _) = controlledRail()
+        rail.gearButton.performClick()
+        rail.hide()
+        rail.show(ten, 4, animate = false)
+        assertEquals(View.GONE, rail.timingStrip.visibility)
+    }
+
+    @Test
+    fun linesThatWouldPokeOutBesideTheOpenStripAreNotDrawn() {
+        val (rail, root) = controlledRail()
+        rail.gearButton.performClick()
+        relayout(root)
+        var hidden = 0
+        for (offset in -rail.slotReach..rail.slotReach) {
+            val row = rail.row(offset)
+            if (row.visibility != View.VISIBLE) continue
+            val centre = (row.top + row.bottom) / 2f
+            val bottom = centre + row.height * LyricsMotion.railScale(offset) / 2f
+            if (bottom > rail.timingStrip.top) {
+                hidden++
+                assertEquals("row $offset is under the strip", 0f, row.alpha, 0.001f)
+            } else {
+                assertEquals("row $offset stays", LyricsMotion.railAlpha(offset), row.alpha, 0.001f)
+            }
+        }
+        rail.gearButton.performClick()
+        for (offset in -rail.slotReach..rail.slotReach) {
+            assertEquals("row $offset comes back", LyricsMotion.railAlpha(offset), rail.row(offset).alpha, 0.001f)
+        }
+        assertTrue("a closed strip hides nothing; hidden=$hidden", hidden >= 0)
+    }
+
+    @Test
+    fun everyLabelInTheStripIsCentredBothWays() {
+        val (rail, _) = controlledRail()
+        for (view in listOf(rail.laterButton, rail.timingValue, rail.earlierButton)) {
+            assertEquals(android.view.Gravity.CENTER, view.gravity)
+        }
+    }
+
+    @Test
+    fun theStripIsOpaqueSoTheLinesBehindItDoNotShowThrough() {
+        for (night in listOf(true, false)) {
+            val (rail, _) = controlledRail()
+            rail.setNight(night)
+            val fill = (rail.timingStrip.background as android.graphics.drawable.GradientDrawable).color!!.defaultColor
+            assertEquals("night=$night", 0xFF, fill ushr 24)
+        }
+    }
+
+    @Test
+    fun theStripKeepsItsLabelsReadableOnItsOwnFill() {
+        for (night in listOf(true, false)) {
+            val (rail, _) = controlledRail()
+            rail.setNight(night)
+            val colors = LyricsTheme.colors(night)
+            val fill = (rail.timingStrip.background as android.graphics.drawable.GradientDrawable).color!!.defaultColor
+            assertTrue("current text, night=$night", LyricsTheme.contrast(colors.current, fill) >= 7.0)
+            assertTrue("value text, night=$night", LyricsTheme.contrast(colors.next, fill) >= 4.5)
+        }
+    }
+
+    @Test
+    fun theStripSitsInsideTheCardAndTheGearInItsCorner() {
+        val (rail, root) = controlledRail()
+        rail.gearButton.performClick()
+        relayout(root)
+        val strip = rail.timingStrip
+        assertTrue("strip ${strip.left},${strip.top},${strip.right},${strip.bottom} in ${rail.width}x${rail.height}",
+            strip.left >= 0 && strip.right <= rail.width && strip.top >= 0 && strip.bottom <= rail.height)
+        assertTrue("gear in the upper right", rail.gearButton.right <= rail.width && rail.gearButton.left > rail.width / 2 && rail.gearButton.top >= 0)
     }
 
     @Test

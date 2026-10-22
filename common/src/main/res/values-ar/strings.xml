@@ -988,4 +988,6 @@
     <string name="settings_lyrics_timing_earlier">أبكر بمقدار %1$s ث</string>
     <string name="settings_lyrics_timing_later">أبطأ بمقدار %1$s ث</string>
     <string name="settings_lyrics_timing_description">يعرض كل سطر أبكر أو أبطأ ليتوافق مع الصوت. إذا تأخرت الكلمات عن الأغنية فاختر أبكر. يُطبَّق عند العودة إلى CarPlay.</string>
+    <string name="lyrics_control_earlier">أبكر</string>
+    <string name="lyrics_control_later">أبطأ</string>
 </resources>

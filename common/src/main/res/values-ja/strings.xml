@@ -1041,4 +1041,6 @@
     <string name="settings_lyrics_timing_earlier">%1$s秒早く</string>
     <string name="settings_lyrics_timing_later">%1$s秒遅く</string>
     <string name="settings_lyrics_timing_description">音に合わせて各行を早く、または遅く表示します。歌詞が曲より遅れる場合は「早く」を選びます。CarPlayに戻ると反映されます。</string>
+    <string name="lyrics_control_earlier">早く</string>
+    <string name="lyrics_control_later">遅く</string>
 </resources>
