@@ -149,6 +149,37 @@ class LyricsOverlayScreenshotsTest {
     }
 
     @Test
+    fun aLongCurrentLineWrapsToASecondRowInsteadOfBeingCut() {
+        val long = "Yeah, today I drove through the suburbs and pictured I was driving home to you"
+        val (root, pillView, _) = capture("pill-wrap", wide, true, Color.DKGRAY, pill(true, long, song[3]), fontScale = 1.0f)
+        val pill = pillView as LyricsPillView
+        assertInside(root, pillView)
+        assertEquals("two rows", 2, pill.currentRow.lineCount)
+        assertTrue("nothing cut: ${pill.currentRow.text}", !truncated(pill.currentRow))
+        assertTrue("still within the width cap", pillView.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
+        assertEquals("the preview stays one row", 1, pill.nextRow.lineCount)
+    }
+
+    @Test
+    fun aLineSlightlyTooLongShrinksToOneRowInsteadOfWrapping() {
+        // About 10% over the width: shrinking to 90% fits it on one row, which reads better than two short rows.
+        val line = "Yeah, today I drove through the suburbs, past the park"
+        val (_, pillView, _) = capture("pill-shrink", wide, true, Color.DKGRAY, pill(true, line, song[3]), fontScale = 1.0f)
+        val pill = pillView as LyricsPillView
+        val base = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, LyricsLayout.PILL_CURRENT_SP, pill.resources.displayMetrics)
+        if (pill.currentRow.lineCount == 1) assertTrue("shrunk", pill.currentRow.textSize <= base)
+        assertTrue(!truncated(pill.currentRow))
+    }
+
+    @Test
+    fun aLineBeyondTwoRowsEndsInAnEllipsisOnTheSecond() {
+        val (_, pillView, _) = capture("pill-ellipsis", wide, true, Color.DKGRAY, pill(true, "word ".repeat(60), song[3]), fontScale = 1.0f)
+        val pill = pillView as LyricsPillView
+        assertEquals(2, pill.currentRow.lineCount)
+        assertTrue("cut on the second row", truncated(pill.currentRow))
+    }
+
+    @Test
     fun narrowRailUsesFewerSlotsThanWide() {
         val (_, narrowRail, _) = capture("rail-lines-narrow", narrow, true, Color.BLACK, rail(true, song, 3))
         val (_, wideRail, _) = capture("rail-lines-wide", wide, true, Color.BLACK, rail(true, song, 3))
@@ -168,9 +199,8 @@ class LyricsOverlayScreenshotsTest {
             assertInside(root, view)
             assertTrue("$name pill too wide: ${view.width}", view.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
             val pill = view as LyricsPillView
-            for (row in listOf(pill.currentRow, pill.nextRow)) {
-                assertTrue("$name row ${row.text} wraps to ${row.lineCount} lines", row.lineCount <= 1)
-            }
+            assertTrue("$name current line wraps to ${pill.currentRow.lineCount} lines", pill.currentRow.lineCount <= 2)
+            assertTrue("$name next line wraps to ${pill.nextRow.lineCount} lines", pill.nextRow.lineCount <= 1)
         }
     }
 

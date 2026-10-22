@@ -6,6 +6,7 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.Typeface
+import android.text.Layout
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -26,9 +27,10 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     private enum class Motion { NONE, ENTER, ROLL, DIP, EXIT }
 
     private val density = context.resources.displayMetrics.density
-    private val outgoing = lyricsLine(context).apply { typeface = Typeface.DEFAULT_BOLD; maxLines = 1; visibility = GONE }
+    // The current line may take two balanced rows; the preview line stays on one.
+    private val outgoing = lyricsLine(context).apply { typeface = Typeface.DEFAULT_BOLD; maxLines = 2; breakStrategy = Layout.BREAK_STRATEGY_BALANCED; visibility = GONE }
     private val morph = lyricsLine(context).apply { maxLines = 1; visibility = GONE }
-    private val current = lyricsLine(context).apply { typeface = Typeface.DEFAULT_BOLD; maxLines = 1 }
+    private val current = lyricsLine(context).apply { typeface = Typeface.DEFAULT_BOLD; maxLines = 2; breakStrategy = Layout.BREAK_STRATEGY_BALANCED }
     private val next = lyricsLine(context).apply { maxLines = 1 }
     private var colors = LyricsTheme.colors(true)
     private var windowWidthDp = 0f
@@ -202,13 +204,14 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         requestLayout()
     }
 
-    // A long line shrinks to 80% of its size, then ellipsizes at the end.
+    // A line a little too long shrinks (down to 80%) to stay on one row. A longer one keeps its full size and
+    // wraps to a second row; only text beyond two rows ends in an ellipsis.
     private fun fitCurrentLine() {
         val base = currentPx()
         val available = maxWidthPx() - 2 * padH()
         val needed = Paint(current.paint).also { it.textSize = base }.measureText(current.text.toString())
-        val size = if (available > 0 && needed > available) max(base * LyricsLayout.PILL_MIN_TEXT_SCALE, base * available / needed) else base
-        current.setTextSize(TypedValue.COMPLEX_UNIT_PX, size)
+        val shrinks = available > 0 && needed > available && needed <= available / LyricsLayout.PILL_MIN_TEXT_SCALE
+        current.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (shrinks) base * available / needed else base)
     }
 
     private fun run(mode: Motion, millis: Long) {
