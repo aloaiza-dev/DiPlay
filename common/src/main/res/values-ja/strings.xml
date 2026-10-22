@@ -1048,5 +1048,5 @@
     <string name="lyrics_control_earlier">早く</string>
     <string name="lyrics_control_later">遅く</string>
     <string name="lyrics_control_pill">上部バー表示に切り替え</string>
-    <string name="settings_lyrics_switch_hint">車の画面で上部バーをダブルタップするとサイドパネルが開きます。パネルではバーのアイコンをタップすると戻ります。どちらも停車中のみ使えます。</string>
+    <string name="settings_lyrics_switch_hint">車の画面で上部バーをダブルタップするとサイドパネルが開きます。パネルではバーのアイコンをタップすると戻ります。どちらも停車中のみ使えます。走行中はサイドパネルが上部バーとして表示されます。</string>
 </resources>

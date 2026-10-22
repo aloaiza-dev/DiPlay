@@ -202,13 +202,13 @@ internal class LyricsController(
         val animate = !jumped
         jumped = false
         // The view that is not wanted fades out while the wanted one comes in: a switch reads as one move.
-        if (mode == LyricsPlacement.TOP_PILL) {
+        // A moving car gets the pill whatever the saved layout: the rail is for a parked car.
+        if (mode == LyricsPlacement.TOP_PILL || moving) {
             rail.fadeOut()
             pill.setInteractive(!moving)
             showPill(lines, index, position, animate)
         } else {
             pill.fadeOut()
-            rail.setControlsAvailable(!moving)
             rail.show(lines.lines.map { it.text.ifBlank { NOTE } }, index)
         }
     }

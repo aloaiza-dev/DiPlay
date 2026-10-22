@@ -1049,5 +1049,5 @@
     <string name="lyrics_control_earlier">Earlier</string>
     <string name="lyrics_control_later">Later</string>
     <string name="lyrics_control_pill">Switch to pill view</string>
-    <string name="settings_lyrics_switch_hint">Double-tap the pill on the car’s screen to open the side rail. On the rail, tap the pill icon to go back. Both only work while the car is still.</string>
+    <string name="settings_lyrics_switch_hint">Double-tap the pill on the car’s screen to open the side rail. On the rail, tap the pill icon to go back. Both only work while the car is still. While the car moves, the rail shows as the pill.</string>
 </resources>

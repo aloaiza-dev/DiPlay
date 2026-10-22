@@ -995,5 +995,5 @@
     <string name="lyrics_control_earlier">أبكر</string>
     <string name="lyrics_control_later">أبطأ</string>
     <string name="lyrics_control_pill">التبديل إلى الشريط العلوي</string>
-    <string name="settings_lyrics_switch_hint">انقر مرتين على الشريط العلوي في شاشة السيارة لفتح اللوحة الجانبية. وعلى اللوحة، انقر أيقونة الشريط للعودة. يعمل الاثنان فقط والسيارة متوقفة.</string>
+    <string name="settings_lyrics_switch_hint">انقر مرتين على الشريط العلوي في شاشة السيارة لفتح اللوحة الجانبية. وعلى اللوحة، انقر أيقونة الشريط للعودة. يعمل الاثنان فقط والسيارة متوقفة. وأثناء حركة السيارة تظهر اللوحة الجانبية على هيئة الشريط العلوي.</string>
 </resources>

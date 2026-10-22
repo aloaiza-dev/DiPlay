@@ -490,18 +490,22 @@ class LyricsControllerTest {
     }
 
     @Test
-    fun theGearGoesAwayWhileTheCarMovesEvenWithoutTheHideOption() {
+    fun theRailBecomesThePillWhileTheCarMovesAndComesBackWhenStopped() {
         placement = LyricsPlacement.SIDE_RAIL
         hideWhileDriving = false
         controller.start()
         publish(np("Song", elapsed = 2_000L))
         runJobs()
-        assertEquals(View.VISIBLE, rail.gearButton.visibility)
+        assertEquals(View.VISIBLE, rail.visibility)
         repeat(8) { onSpeed?.invoke(30); advance(500L) }
-        assertEquals(View.GONE, rail.gearButton.visibility)
-        assertEquals("the lyrics themselves stay", View.VISIBLE, rail.visibility)
+        advance(400L)
+        assertEquals("the road layout is the pill", View.VISIBLE, pill.visibility)
+        assertEquals("the rail goes", View.GONE, rail.visibility)
+        assertEquals("nothing was saved", LyricsPlacement.SIDE_RAIL, placement)
         repeat(10) { onSpeed?.invoke(0); advance(500L) }
-        assertEquals(View.VISIBLE, rail.gearButton.visibility)
+        advance(400L)
+        assertEquals(View.VISIBLE, rail.visibility)
+        assertEquals(View.GONE, pill.visibility)
     }
 
     @Test

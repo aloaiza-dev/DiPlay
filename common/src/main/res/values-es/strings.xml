@@ -946,5 +946,5 @@
     <string name="lyrics_control_earlier">Antes</string>
     <string name="lyrics_control_later">Después</string>
     <string name="lyrics_control_pill">Cambiar a la cápsula</string>
-    <string name="settings_lyrics_switch_hint">Toca dos veces la cápsula en la pantalla del coche para abrir el panel lateral. En el panel, toca el icono de cápsula para volver. Ambos solo funcionan con el coche parado.</string>
+    <string name="settings_lyrics_switch_hint">Toca dos veces la cápsula en la pantalla del coche para abrir el panel lateral. En el panel, toca el icono de cápsula para volver. Ambos solo funcionan con el coche parado. Con el coche en movimiento, el panel se muestra como cápsula.</string>
 </resources>

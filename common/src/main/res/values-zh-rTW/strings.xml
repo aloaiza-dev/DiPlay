@@ -1006,5 +1006,5 @@
     <string name="lyrics_control_earlier">提前</string>
     <string name="lyrics_control_later">延後</string>
     <string name="lyrics_control_pill">切換到膠囊檢視</string>
-    <string name="settings_lyrics_switch_hint">在車機螢幕上雙擊膠囊可開啟側邊欄；在側邊欄上點按膠囊圖示可返回。兩者都僅在車輛靜止時可用。</string>
+    <string name="settings_lyrics_switch_hint">在車機螢幕上雙擊膠囊可開啟側邊欄；在側邊欄上點按膠囊圖示可返回。兩者都僅在車輛靜止時可用。行駛時，側邊欄會顯示為膠囊。</string>
 </resources>
