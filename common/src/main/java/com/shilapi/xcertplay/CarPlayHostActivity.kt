@@ -1177,17 +1177,28 @@ class CarPlayHostActivity : ComponentActivity() {
         homeScreenVisible = null
         // Read here so a change made in Settings applies when the projection comes back.
         if (AirPlayPersistence.loadFpsCounter(this)) fpsCounter?.start() else fpsCounter?.stop()
-        lyricsRail?.let { rail ->
-            (rail.layoutParams as? FrameLayout.LayoutParams)?.let { params ->
-                params.gravity = lyricsRailGravity()
-                rail.layoutParams = params
-            }
-        }
+        lyricsRail?.let(::fitLyricsRail)
         lyricsController?.start()
     }
 
     // The rail sits on the edge opposite CarPlay's dock. The dock follows the driving side; unverified on a car.
-    private fun lyricsRailGravity() = if (rightHandDrive) Gravity.LEFT else Gravity.RIGHT
+    private fun lyricsRailGravity() = Gravity.CENTER_VERTICAL or if (rightHandDrive) Gravity.LEFT else Gravity.RIGHT
+
+    // A floating card: its size and its off-the-edge margin follow the window, and its side the driving side.
+    private fun fitLyricsRail(rail: LyricsRailView) {
+        val params = rail.layoutParams as? FrameLayout.LayoutParams ?: return
+        val width = rail.preferredWidthPx()
+        val height = rail.preferredHeightPx()
+        val margin = rail.edgeMarginPx()
+        if (params.width == width && params.height == height && params.leftMargin == margin &&
+            params.rightMargin == margin && params.gravity == lyricsRailGravity()) return
+        params.width = width
+        params.height = height
+        params.leftMargin = margin
+        params.rightMargin = margin
+        params.gravity = lyricsRailGravity()
+        rail.layoutParams = params
+    }
 
     // Above the picture and the gesture layer, under the menus. Neither view takes touches.
     private fun addLyricsOverlay(root: FrameLayout) {
@@ -1196,15 +1207,12 @@ class CarPlayHostActivity : ComponentActivity() {
         root.addView(pill, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
             topMargin = dp(LyricsLayout.PILL_TOP_MARGIN_DP)
         })
-        root.addView(rail, FrameLayout.LayoutParams(rail.preferredWidthPx(), -1, lyricsRailGravity()))
+        root.addView(rail, FrameLayout.LayoutParams(rail.preferredWidthPx(), rail.preferredHeightPx(), lyricsRailGravity()))
         root.addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
             val density = resources.displayMetrics.density
             pill.setWindowSizeDp((right - left) / density, (bottom - top) / density)
             rail.setWindowSizeDp((right - left) / density, (bottom - top) / density)
-            (rail.layoutParams as? FrameLayout.LayoutParams)?.takeIf { it.width != rail.preferredWidthPx() }?.let { params ->
-                params.width = rail.preferredWidthPx()
-                rail.layoutParams = params
-            }
+            fitLyricsRail(rail)
         }
         lyricsRail = rail
         val executor = Executors.newSingleThreadExecutor { task -> Thread(task, "diplay-lyrics").apply { isDaemon = true } }

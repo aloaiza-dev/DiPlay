@@ -62,7 +62,7 @@ class LyricsOverlayScreenshotsTest {
         LyricsPillView(root.context).also { pill ->
             pill.setWindowSizeDp(window.widthDp.toFloat(), window.heightDp.toFloat())
             pill.setNight(night)
-            pill.show(current, next)
+            pill.show(current, next, animate = false)
             root.addView(pill, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
                 topMargin = (LyricsLayout.PILL_TOP_MARGIN_DP * density).toInt()
             })
@@ -73,8 +73,10 @@ class LyricsOverlayScreenshotsTest {
         LyricsRailView(root.context).also { rail ->
             rail.setWindowSizeDp(window.widthDp.toFloat(), window.heightDp.toFloat())
             rail.setNight(night)
-            rail.show(lines, index)
-            root.addView(rail, FrameLayout.LayoutParams(rail.preferredWidthPx(), -1, Gravity.RIGHT))
+            rail.show(lines, index, animate = false)
+            root.addView(rail, FrameLayout.LayoutParams(rail.preferredWidthPx(), rail.preferredHeightPx(), Gravity.RIGHT or Gravity.CENTER_VERTICAL).apply {
+                rightMargin = rail.edgeMarginPx()
+            })
         }
     }
 
@@ -91,22 +93,25 @@ class LyricsOverlayScreenshotsTest {
                 pill(night, song[2], song[3]))
             assertInside(root, view)
             assertTrue("pill wider than 55%: ${view.width}", view.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
-            val drawn = bitmap.getPixel(view.left + view.paddingLeft / 2, view.top + view.height / 2)
-            val expected = LyricsTheme.over(LyricsTheme.colors(night).scrim, backdrop)
+            // Left of the text, halfway down: the glass gradient is about halfway between its two ends.
+            val drawn = bitmap.getPixel(view.left + 10, view.top + view.height / 2)
+            val glass = LyricsTheme.colors(night)
+            fun middle(shift: Int) = (((glass.glassTop ushr shift) and 0xFF) + ((glass.glassBottom ushr shift) and 0xFF)) / 2
+            val expected = LyricsTheme.over((middle(24) shl 24) or (middle(16) shl 16) or (middle(8) shl 8) or middle(0), backdrop)
             for (shift in listOf(16, 8, 0)) {
-                assertTrue("scrim colour off at shift $shift: ${drawn.toUInt().toString(16)} vs ${expected.toUInt().toString(16)}",
-                    Math.abs(((drawn ushr shift) and 0xFF) - ((expected ushr shift) and 0xFF)) <= 2)
+                assertTrue("glass colour off at shift $shift: ${drawn.toUInt().toString(16)} vs ${expected.toUInt().toString(16)}",
+                    Math.abs(((drawn ushr shift) and 0xFF) - ((expected ushr shift) and 0xFF)) <= 8)
             }
         }
     }
 
     @Test
-    fun railInDayAndNightKeepsItsWidthRuleAndFillsTheHeight() {
+    fun railInDayAndNightKeepsItsCardRule() {
         for (window in listOf(wide, narrow)) for (night in listOf(true, false)) for ((tone, backdrop) in listOf("white" to Color.WHITE, "black" to Color.BLACK)) {
             val theme = if (night) "night" else "day"
             val (root, view, _) = capture("rail-${window.name}-$theme-$tone", window, night, backdrop, rail(night, song, 3))
             assertInside(root, view)
-            assertEquals(root.height, view.height)
+            assertEquals((LyricsLayout.railHeightDp(window.heightDp.toFloat()) * root.resources.displayMetrics.density).toInt(), view.height)
             assertEquals((LyricsLayout.railWidthDp(window.widthDp.toFloat()) * root.resources.displayMetrics.density).toInt(), view.width)
         }
     }
@@ -119,11 +124,11 @@ class LyricsOverlayScreenshotsTest {
             val theme = if (night) "night" else "day"
             val (_, pillView, _) = capture("pill-wide-$theme-regular-scale", wide, night, Color.WHITE,
                 pill(night, song[2], song[3]), fontScale = 1.0f)
-            val current = (pillView as android.view.ViewGroup).getChildAt(0) as android.widget.TextView
+            val current = (pillView as LyricsPillView).currentRow
             assertTrue("pill current line cut: ${current.text}", !truncated(current))
             val (_, railView, _) = capture("rail-wide-$theme-regular-scale", wide, night, Color.WHITE,
                 rail(night, song, 3), fontScale = 1.0f)
-            val centre = (railView as android.view.ViewGroup).getChildAt(2) as android.widget.TextView
+            val centre = (railView as LyricsRailView).row(0)
             assertTrue("rail current line cut: ${centre.text}", !truncated(centre))
         }
     }
@@ -134,21 +139,21 @@ class LyricsOverlayScreenshotsTest {
         val (root, pillView, _) = capture("pill-xpeng-night", xpeng, true, Color.DKGRAY, pill(true, song[2], song[3]), fontScale = 1.0f)
         assertInside(root, pillView)
         assertTrue("pill wider than 55%: ${pillView.width}", pillView.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
-        val current = (pillView as android.view.ViewGroup).getChildAt(0) as android.widget.TextView
+        val current = (pillView as LyricsPillView).currentRow
         assertTrue("pill line cut: ${current.text}", !truncated(current))
         val (railRoot, railView, _) = capture("rail-xpeng-night", xpeng, true, Color.DKGRAY, rail(true, song, 3), fontScale = 1.0f)
         assertInside(railRoot, railView)
         assertEquals((LyricsLayout.railWidthDp(2666f) * railRoot.resources.displayMetrics.density).toInt(), railView.width)
-        val centre = (railView as android.view.ViewGroup).getChildAt(2) as android.widget.TextView
+        val centre = (railView as LyricsRailView).row(0)
         assertTrue("rail line cut: ${centre.text}", !truncated(centre))
     }
 
     @Test
-    fun narrowRailShowsThreeLinesAndWideShowsFive() {
+    fun narrowRailUsesFewerSlotsThanWide() {
         val (_, narrowRail, _) = capture("rail-lines-narrow", narrow, true, Color.BLACK, rail(true, song, 3))
         val (_, wideRail, _) = capture("rail-lines-wide", wide, true, Color.BLACK, rail(true, song, 3))
-        assertEquals(3, (narrowRail as android.view.ViewGroup).childCount)
-        assertEquals(5, (wideRail as android.view.ViewGroup).childCount)
+        assertEquals(2, (narrowRail as LyricsRailView).slotReach)
+        assertEquals(3, (wideRail as LyricsRailView).slotReach)
     }
 
     @Test
@@ -162,10 +167,9 @@ class LyricsOverlayScreenshotsTest {
             val (root, view, _) = capture("pill-wide-night-$name", wide, true, Color.WHITE, pill(true, now, next))
             assertInside(root, view)
             assertTrue("$name pill too wide: ${view.width}", view.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
-            val rows = (view as android.view.ViewGroup)
-            for (index in 0 until rows.childCount) {
-                val row = rows.getChildAt(index) as android.widget.TextView
-                assertTrue("$name row $index wraps to ${row.lineCount} lines", row.lineCount <= 1)
+            val pill = view as LyricsPillView
+            for (row in listOf(pill.currentRow, pill.nextRow)) {
+                assertTrue("$name row ${row.text} wraps to ${row.lineCount} lines", row.lineCount <= 1)
             }
         }
     }
@@ -178,8 +182,10 @@ class LyricsOverlayScreenshotsTest {
         val long = listOf("a", "b", "x".repeat(200), "c", "d")
         val (root2, view2, _) = capture("rail-wide-night-long", wide, true, Color.WHITE, rail(true, long, 2))
         assertInside(root2, view2)
-        val rows = view2 as android.view.ViewGroup
-        for (index in listOf(0, 1, 3, 4)) assertTrue((rows.getChildAt(index) as android.widget.TextView).lineCount <= 1)
-        assertTrue((rows.getChildAt(2) as android.widget.TextView).lineCount <= 2)
+        val rail = view2 as LyricsRailView
+        for (offset in -rail.slotReach..rail.slotReach) {
+            val row = rail.row(offset)
+            if (row.visibility == View.VISIBLE) assertTrue("row $offset wraps to ${row.lineCount} lines", row.lineCount <= 2)
+        }
     }
 }

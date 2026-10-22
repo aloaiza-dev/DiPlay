@@ -87,7 +87,9 @@ class LyricsControllerTest {
 
     private fun rows(view: ViewGroup) = (0 until view.childCount).map { view.getChildAt(it) as TextView }
 
-    private fun pillText() = rows(pill).filter { it.visibility == View.VISIBLE }.map { it.text.toString() }
+    private fun pillRows() = listOf(pill.currentRow, pill.nextRow)
+
+    private fun pillText() = pillRows().filter { it.visibility == View.VISIBLE }.map { it.text.toString() }
 
     @Test
     fun showsTheCurrentAndNextLineOnceLyricsArrive() {
@@ -259,6 +261,7 @@ class LyricsControllerTest {
         controller.start()
         publish(np("Song", elapsed = 2_000L))
         runJobs()
+        advance(400L) // the pill finishes entering
         publish(np("Song", elapsed = 2_000L, playing = false))
         assertEquals(1f, pill.alpha, 0.001f)
         advance(1_200L)
@@ -356,7 +359,7 @@ class LyricsControllerTest {
         runJobs()
         val before = calls
         controller.onNightChanged(false)
-        assertEquals(LyricsTheme.colors(false).current, rows(pill)[0].currentTextColor)
+        assertEquals(LyricsTheme.colors(false).current, pillRows()[0].currentTextColor)
         assertEquals(listOf("one", "two"), pillText())
         assertEquals(before, calls)
     }
@@ -367,7 +370,7 @@ class LyricsControllerTest {
         controller.start()
         publish(np("Song", elapsed = 2_000L))
         runJobs()
-        assertEquals(LyricsTheme.colors(false).current, rows(pill)[0].currentTextColor)
+        assertEquals(LyricsTheme.colors(false).current, pillRows()[0].currentTextColor)
     }
 
     @Test

@@ -164,7 +164,8 @@ internal class LyricsController(
         val railBlocked = mode == LyricsPlacement.SIDE_RAIL && sidePanelOpen()
         val stopped = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_HIDE_MILLIS } == true
         if (mode == LyricsPlacement.OFF || lines == null || position == null || suppressed || hiddenForDriving || railBlocked || stopped) {
-            pill.hide()
+            // Music that stops and a car that moves fade the overlay out; every other reason clears it at once.
+            if (hiddenForDriving || stopped) pill.fadeOut() else pill.hide()
             rail.hide()
             return
         }

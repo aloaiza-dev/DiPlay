@@ -27,6 +27,12 @@ class LyricsLayoutTest {
     }
 
     @Test
+    fun railIsAFloatingCardAboutSixTenthsOfTheWindowHeight() {
+        assertEquals(0.62f * 700f, LyricsLayout.railHeightDp(700f), 0.01f)
+        assertEquals(0.03f * 700f, LyricsLayout.railEdgeMarginDp(700f), 0.01f)
+    }
+
+    @Test
     fun widthScaleIsOneUpToTheReferenceWidth() {
         assertEquals(1f, LyricsLayout.widthScale(0f), 0.001f)
         assertEquals(1f, LyricsLayout.widthScale(1000f), 0.001f)

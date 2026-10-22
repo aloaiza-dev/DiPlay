@@ -1,7 +1,6 @@
 package com.shilapi.xcertplay.lyrics
 
 import android.content.Context
-import android.graphics.drawable.GradientDrawable
 import android.provider.Settings
 import android.text.TextUtils
 import android.view.Gravity
@@ -12,11 +11,8 @@ import android.widget.TextView
 internal fun lyricsReducedMotion(context: Context): Boolean =
     Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
 
-internal fun lyricsBackground(colors: LyricsColors, radiusPx: Float, strokePx: Int) = GradientDrawable().apply {
-    setColor(colors.scrim)
-    cornerRadius = radiusPx
-    if ((colors.edge ushr 24) != 0) setStroke(strokePx, colors.edge)
-}
+internal fun lyricsGlass(colors: LyricsColors, radiusPx: Float, rimPx: Float) =
+    LyricsGlassDrawable().apply { update(colors, radiusPx, rimPx) }
 
 /** A touch-free, centred line that picks its direction from its own first strong character. */
 internal fun lyricsLine(context: Context) = TextView(context).apply {

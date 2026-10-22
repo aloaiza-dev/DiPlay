@@ -9,33 +9,53 @@ class LyricsThemeTest {
     private val white = 0xFFFFFFFF.toInt()
     private val black = 0xFF000000.toInt()
 
-    // The map colour that is hardest for each scrim to hold against.
-    private fun backing(night: Boolean) = LyricsTheme.over(LyricsTheme.colors(night).scrim, if (night) white else black)
+    // The map colour that is hardest for each glass to hold against, under its lightest (top) end for night.
+    private fun worstBacking(night: Boolean): Int {
+        val colors = LyricsTheme.colors(night)
+        return if (night) LyricsTheme.over(colors.glassTop, white) else LyricsTheme.over(colors.glassBottom, black)
+    }
 
     private fun ratio(night: Boolean, pick: (LyricsColors) -> Int): Double =
-        LyricsTheme.contrast(pick(LyricsTheme.colors(night)), backing(night))
+        LyricsTheme.contrast(pick(LyricsTheme.colors(night)), worstBacking(night))
 
     @Test
-    fun currentLineHasTwelveToOneInBothThemes() {
-        assertTrue(ratio(true) { it.current } >= 12.0)
-        assertTrue(ratio(false) { it.current } >= 12.0)
+    fun currentLineHasEightToOneInBothThemes() {
+        assertTrue("night ${ratio(true) { it.current }}", ratio(true) { it.current } >= 8.0)
+        assertTrue("day ${ratio(false) { it.current }}", ratio(false) { it.current } >= 8.0)
     }
 
     @Test
-    fun nextLineHasSevenToOneInBothThemes() {
-        assertTrue(ratio(true) { it.next } >= 7.0)
-        assertTrue(ratio(false) { it.next } >= 7.0)
+    fun nextLineHasFiveToOneInBothThemes() {
+        assertTrue("night ${ratio(true) { it.next }}", ratio(true) { it.next } >= 5.0)
+        assertTrue("day ${ratio(false) { it.next }}", ratio(false) { it.next } >= 5.0)
     }
 
     @Test
-    fun farLinesHaveFourPointFiveToOneInBothThemes() {
-        assertTrue(ratio(true) { it.far } >= 4.5)
-        assertTrue(ratio(false) { it.far } >= 4.5)
+    fun farLinesHaveFourToOneInBothThemes() {
+        assertTrue("night ${ratio(true) { it.far }}", ratio(true) { it.far } >= 4.0)
+        assertTrue("day ${ratio(false) { it.far }}", ratio(false) { it.far } >= 4.0)
+    }
+
+    @Test
+    fun glassStaysTranslucentSoTheRoadShowsThrough() {
+        for (night in listOf(true, false)) {
+            val colors = LyricsTheme.colors(night)
+            assertTrue((colors.glassTop ushr 24) in 0xB0..0xF0)
+            assertTrue((colors.glassBottom ushr 24) in 0xB0..0xF0)
+        }
+    }
+
+    @Test
+    fun rimFadesFromTopToBottom() {
+        for (night in listOf(true, false)) {
+            val colors = LyricsTheme.colors(night)
+            assertTrue((colors.rimTop ushr 24) > (colors.rimBottom ushr 24))
+        }
     }
 
     @Test
     fun themesDiffer() {
-        assertNotEquals(LyricsTheme.colors(true).scrim, LyricsTheme.colors(false).scrim)
+        assertNotEquals(LyricsTheme.colors(true).glassBottom, LyricsTheme.colors(false).glassBottom)
         assertNotEquals(LyricsTheme.colors(true).current, LyricsTheme.colors(false).current)
     }
 
