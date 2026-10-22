@@ -19,8 +19,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * The current and the next lyric line on frosted glass. It takes touches only for its double tap (see
- * [setSwitchAction]); otherwise a tap goes through to CarPlay.
+ * The current and the next lyric line on frosted glass. It takes no touches, so every tap reaches CarPlay.
+ * The host feeds it the touches through [onHostTouch], which spots the double tap (see [setSwitchAction]).
  *
  * Four text roles share one layout. The two real rows hold the lines now shown. During a roll, two ghost
  * rows carry the lines that were shown: the old current line leaves upward and the old next line rises into
@@ -49,10 +49,11 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     private var rowDistance = 0f
     private var animator: ValueAnimator? = null
 
-    // A double tap on the pill switches to the side rail. The pill takes touches only while it is interactive
-    // (the car is still) and has an action; otherwise every tap goes through to CarPlay, as before.
+    // A double tap on the pill switches to the side rail, only while the car is still. Consuming the first tap
+    // would hide single taps from CarPlay, so the host watches the touches instead and the pill consumes none.
     private var switchAction: (() -> Unit)? = null
     private var interactive = false
+    private var watching = false
     private val doubleTap = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent) = true
 
@@ -64,18 +65,19 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
 
     fun setSwitchAction(action: (() -> Unit)?) {
         switchAction = action
-        isClickable = interactive && action != null
     }
 
     fun setInteractive(interactive: Boolean) {
         this.interactive = interactive
-        isClickable = interactive && switchAction != null
     }
 
-    override fun onTouchEvent(event: MotionEvent): Boolean {
-        if (!isClickable) return false
-        doubleTap.onTouchEvent(event)
-        return true
+    /** [event] is in the coordinates of the pill's parent. A touch that starts on the glass is watched to its end. */
+    fun onHostTouch(event: MotionEvent) {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+            watching = interactive && switchAction != null && visibility == VISIBLE &&
+                event.x >= left && event.x <= right && event.y >= top && event.y <= bottom
+        }
+        if (watching) doubleTap.onTouchEvent(event)
     }
 
     internal val currentRow: TextView get() = current

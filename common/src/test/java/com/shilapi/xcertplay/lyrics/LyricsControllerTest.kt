@@ -62,7 +62,7 @@ class LyricsControllerTest {
 
     @Before
     fun setUp() {
-        pill = LyricsPillView(context)
+        pill = LyricsPillView(context).apply { layout(0, 0, 300, 100) }
         rail = LyricsRailView(context)
         val repository = LyricsRepository(LyricsSource { calls++; lrc(it) }, folder.root, Executor { jobs.add(it) }, ::now)
         controller = LyricsController(
@@ -560,8 +560,8 @@ class LyricsControllerTest {
         for (downAt in listOf(0L, 150L)) {
             val down = android.view.MotionEvent.obtain(downAt, downAt, android.view.MotionEvent.ACTION_DOWN, 5f, 5f, 0)
             val up = android.view.MotionEvent.obtain(downAt, downAt + 40, android.view.MotionEvent.ACTION_UP, 5f, 5f, 0)
-            pill.dispatchTouchEvent(down)
-            pill.dispatchTouchEvent(up)
+            pill.onHostTouch(down)
+            pill.onHostTouch(up)
         }
         assertEquals(3, hintsSeen)
     }
@@ -592,19 +592,23 @@ class LyricsControllerTest {
         publish(np("Song", elapsed = 2_000L))
         runJobs()
         advance(400L)
-        assertTrue("still: the pill takes the double tap", pill.isClickable)
         repeat(8) { onSpeed?.invoke(30); advance(500L) }
-        assertFalse("moving: taps go through to CarPlay", pill.isClickable)
+        tap(pill, 10_000L)
+        tap(pill, 10_150L)
+        assertTrue("moving: the double tap does nothing", placements.isEmpty())
         assertEquals("the lyrics stay", View.VISIBLE, pill.visibility)
         repeat(10) { onSpeed?.invoke(0); advance(500L) }
-        assertTrue(pill.isClickable)
+        tap(pill, 20_000L)
+        tap(pill, 20_150L)
+        assertEquals("still: the double tap switches", listOf(LyricsPlacement.SIDE_RAIL), placements)
     }
 
-    private fun tap(view: View, downAt: Long) {
+    // The host feeds the pill every touch; it consumes none.
+    private fun tap(view: LyricsPillView, downAt: Long) {
         val down = android.view.MotionEvent.obtain(downAt, downAt, android.view.MotionEvent.ACTION_DOWN, 5f, 5f, 0)
-        view.dispatchTouchEvent(down)
+        view.onHostTouch(down)
         val up = android.view.MotionEvent.obtain(downAt, downAt + 40, android.view.MotionEvent.ACTION_UP, 5f, 5f, 0)
-        view.dispatchTouchEvent(up)
+        view.onHostTouch(up)
         down.recycle()
         up.recycle()
     }

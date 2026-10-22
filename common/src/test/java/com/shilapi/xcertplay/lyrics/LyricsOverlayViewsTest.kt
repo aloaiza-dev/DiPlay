@@ -400,21 +400,22 @@ class LyricsOverlayViewsTest {
 
     private var switches = 0
 
-    private fun tap(view: View, downAt: Long, x: Float = 5f, y: Float = 5f): Boolean {
+    // The host's touch layer feeds the pill every touch; the pill itself takes none, so CarPlay gets them all.
+    private fun tap(pill: LyricsPillView, downAt: Long, x: Float = 5f, y: Float = 5f) {
         val down = MotionEvent.obtain(downAt, downAt, MotionEvent.ACTION_DOWN, x, y, 0)
-        val consumed = view.dispatchTouchEvent(down)
+        pill.onHostTouch(down)
         val up = MotionEvent.obtain(downAt, downAt + 40, MotionEvent.ACTION_UP, x, y, 0)
-        view.dispatchTouchEvent(up)
+        pill.onHostTouch(up)
         down.recycle()
         up.recycle()
-        return consumed
     }
 
     private fun interactivePill(): LyricsPillView {
         switches = 0
         val pill = LyricsPillView(context)
-        laidOut(pill)
+        val root = laidOut(pill)
         pill.show("one", "two", animate = false)
+        relayout(root)
         pill.setSwitchAction { switches++ }
         pill.setInteractive(true)
         return pill
@@ -474,28 +475,38 @@ class LyricsOverlayViewsTest {
     }
 
     @Test
-    fun aPillThatIsNotInteractiveTakesNoTouches() {
+    fun aPillThatIsNotInteractiveIgnoresDoubleTaps() {
         val pill = interactivePill()
         pill.setInteractive(false)
-        assertFalse(pill.isClickable)
-        assertFalse("the tap goes through to CarPlay", tap(pill, 0L))
+        tap(pill, 0L)
         tap(pill, 150L)
         assertEquals(0, switches)
     }
 
     @Test
-    fun anInteractivePillTakesTheTapsInsideItsGlass() {
+    fun theInteractivePillStillConsumesNothingSoEveryTapReachesCarPlay() {
         val pill = interactivePill()
-        assertTrue(tap(pill, 0L))
+        assertFalse(pill.isClickable)
+        assertFalse(touch(pill))
     }
 
     @Test
-    fun aPillWithoutAnActionTakesNoTouchesEvenWhenInteractive() {
+    fun aDoubleTapOutsideTheGlassDoesNotSwitch() {
+        val pill = interactivePill()
+        tap(pill, 0L, x = 900f, y = 400f)
+        tap(pill, 150L, x = 900f, y = 400f)
+        assertEquals(0, switches)
+    }
+
+    @Test
+    fun aPillWithoutAnActionIgnoresDoubleTapsEvenWhenInteractive() {
         val pill = LyricsPillView(context)
         laidOut(pill)
         pill.show("one", "two", animate = false)
         pill.setInteractive(true)
-        assertFalse(tap(pill, 0L))
+        tap(pill, 0L)
+        tap(pill, 150L)
+        assertFalse(touch(pill))
     }
 
     private val timingCalls = mutableListOf<Int>()

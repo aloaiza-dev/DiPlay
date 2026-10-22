@@ -411,6 +411,7 @@ class CarPlayHostActivity : ComponentActivity() {
     // Display setting: synced lyrics over the picture, as a top pill or a side rail.
     private var lyricsController: LyricsController? = null
     private var lyricsRail: LyricsRailView? = null
+    private var lyricsPill: LyricsPillView? = null
     private var lyricsExecutor: ExecutorService? = null
     // Sinks whose sessions are being torn down; their decoders may still render to the current surface
     // until they have released their codecs, so a destroyed surface is detached from them too. A restart
@@ -1216,6 +1217,7 @@ class CarPlayHostActivity : ComponentActivity() {
             fitLyricsRail(rail)
         }
         lyricsRail = rail
+        lyricsPill = pill
         val executor = Executors.newSingleThreadExecutor { task -> Thread(task, "diplay-lyrics").apply { isDaemon = true } }
         lyricsExecutor = executor
         lyricsController = LyricsController(
@@ -6516,6 +6518,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     private fun onHostTouch(view: View, event: MotionEvent): Boolean {
         if (menuOpen) return true
+        lyricsPill?.onHostTouch(event)
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
