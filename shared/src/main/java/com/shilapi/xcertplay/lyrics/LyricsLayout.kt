@@ -25,9 +25,18 @@ object LyricsLayout {
     const val RAIL_OTHER_SP = 22f
     const val RAIL_FAR_SP = 18f
 
-    fun railWidthDp(windowWidthDp: Float): Float =
-        (windowWidthDp * RAIL_WIDTH_FRACTION).coerceIn(RAIL_MIN_DP, RAIL_MAX_DP)
+    // Head units differ a lot in density. XPENG runs 2400 px at 144 dpi, which is 2666 dp wide: type sized
+    // for a 1280 dp window would be tiny there, so type and the rail limits grow with the window, up to 2x.
+    const val WIDTH_REFERENCE_DP = 1280f
+    const val MAX_WIDTH_SCALE = 2f
+
+    fun widthScale(windowWidthDp: Float): Float = (windowWidthDp / WIDTH_REFERENCE_DP).coerceIn(1f, MAX_WIDTH_SCALE)
+
+    fun railWidthDp(windowWidthDp: Float): Float {
+        val scale = widthScale(windowWidthDp)
+        return (windowWidthDp * RAIL_WIDTH_FRACTION).coerceIn(RAIL_MIN_DP * scale, RAIL_MAX_DP * scale)
             .coerceAtMost(windowWidthDp * RAIL_MAX_FRACTION)
+    }
 
     fun typeScale(windowHeightDp: Float): Float = if (windowHeightDp < NARROW_HEIGHT_DP) NARROW_TYPE_SCALE else 1f
 

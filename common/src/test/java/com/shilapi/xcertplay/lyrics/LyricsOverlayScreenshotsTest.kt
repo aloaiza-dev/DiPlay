@@ -129,6 +129,21 @@ class LyricsOverlayScreenshotsTest {
     }
 
     @Test
+    fun anXpengSizedWindowKeepsThePillAndRailInProportion() {
+        val xpeng = Window("xpeng", 2666, 1225)
+        val (root, pillView, _) = capture("pill-xpeng-night", xpeng, true, Color.DKGRAY, pill(true, song[2], song[3]), fontScale = 1.0f)
+        assertInside(root, pillView)
+        assertTrue("pill wider than 55%: ${pillView.width}", pillView.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
+        val current = (pillView as android.view.ViewGroup).getChildAt(0) as android.widget.TextView
+        assertTrue("pill line cut: ${current.text}", !truncated(current))
+        val (railRoot, railView, _) = capture("rail-xpeng-night", xpeng, true, Color.DKGRAY, rail(true, song, 3), fontScale = 1.0f)
+        assertInside(railRoot, railView)
+        assertEquals((LyricsLayout.railWidthDp(2666f) * railRoot.resources.displayMetrics.density).toInt(), railView.width)
+        val centre = (railView as android.view.ViewGroup).getChildAt(2) as android.widget.TextView
+        assertTrue("rail line cut: ${centre.text}", !truncated(centre))
+    }
+
+    @Test
     fun narrowRailShowsThreeLinesAndWideShowsFive() {
         val (_, narrowRail, _) = capture("rail-lines-narrow", narrow, true, Color.BLACK, rail(true, song, 3))
         val (_, wideRail, _) = capture("rail-lines-wide", wide, true, Color.BLACK, rail(true, song, 3))

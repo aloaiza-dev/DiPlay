@@ -77,7 +77,7 @@ internal class LyricsRailView(context: Context) : LinearLayout(context) {
     private fun scrollUpOneLine() {
         animate().cancel()
         translationY = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_SP, LyricsLayout.RAIL_OTHER_SP * LyricsLayout.typeScale(windowHeightDp), resources.displayMetrics,
+            TypedValue.COMPLEX_UNIT_SP, LyricsLayout.RAIL_OTHER_SP * typeScale(), resources.displayMetrics,
         ) * LyricsLayout.LINE_SPACING_MULTIPLIER
         animate().translationY(0f).setDuration(SCROLL_MILLIS).setInterpolator(DecelerateInterpolator())
     }
@@ -94,9 +94,11 @@ internal class LyricsRailView(context: Context) : LinearLayout(context) {
         applyStyles()
     }
 
+    private fun typeScale() = LyricsLayout.typeScale(windowHeightDp) * LyricsLayout.widthScale(windowWidthDp)
+
     private fun applyStyles() {
         val centre = lines.size / 2
-        val scale = LyricsLayout.typeScale(windowHeightDp)
+        val scale = typeScale()
         lines.forEachIndexed { slot, view ->
             val distance = abs(slot - centre)
             val sp = when (distance) {

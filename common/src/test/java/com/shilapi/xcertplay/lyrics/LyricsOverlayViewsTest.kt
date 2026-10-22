@@ -4,6 +4,7 @@ import android.provider.Settings
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import org.junit.Assert.assertEquals
@@ -104,6 +105,39 @@ class LyricsOverlayViewsTest {
         pill.show("c", "d", animate = false)
         assertEquals(listOf("c", "d"), pill.texts().map { it.text.toString() })
         assertEquals(1f, pill.alpha, 0.001f)
+    }
+
+    @Test
+    fun pillGrowsToFitALongerLineAfterTheTextChanges() {
+        val root = FrameLayout(context)
+        val pill = LyricsPillView(context).apply { setWindowSizeDp(1000f, 480f) }
+        root.addView(pill, FrameLayout.LayoutParams(-2, -2))
+        fun layoutRoot() {
+            root.measure(View.MeasureSpec.makeMeasureSpec(1000, View.MeasureSpec.EXACTLY), View.MeasureSpec.makeMeasureSpec(480, View.MeasureSpec.EXACTLY))
+            root.layout(0, 0, 1000, 480)
+        }
+        pill.show("hi", "yo", animate = false)
+        layoutRoot()
+        val short = pill.width
+        pill.show("This line is much longer than the first one", "and so is the next line after it", animate = false)
+        layoutRoot()
+        val grown = pill.width
+        assertTrue("pill stayed $short wide, then $grown", grown > short + 20)
+        pill.show("tiny", "tiny", animate = false)
+        layoutRoot()
+        assertTrue("pill did not shrink back: ${pill.width} after $grown", pill.width < grown)
+    }
+
+    @Test
+    fun typeDoublesOnAVeryWideLowDensityWindow() {
+        fun currentSize(widthDp: Float): Float {
+            val pill = LyricsPillView(context).apply { setWindowSizeDp(widthDp, 700f); show("a", "b") }
+            return pill.texts()[0].textSize
+        }
+        assertEquals(2f, currentSize(2666f) / currentSize(1000f), 0.05f)
+        val narrowRail = LyricsRailView(context).apply { setWindowSizeDp(1000f, 700f); show(listOf("a", "b", "c"), 1) }
+        val wideRail = LyricsRailView(context).apply { setWindowSizeDp(2666f, 700f); show(listOf("a", "b", "c"), 1) }
+        assertEquals(2f, wideRail.texts()[2 - 1].textSize / narrowRail.texts()[2 - 1].textSize, 0.05f)
     }
 
     @Test

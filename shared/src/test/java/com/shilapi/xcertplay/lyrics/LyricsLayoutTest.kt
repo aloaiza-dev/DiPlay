@@ -17,7 +17,27 @@ class LyricsLayoutTest {
 
     @Test
     fun railWidthClampsToMaximum() {
-        assertEquals(420f, LyricsLayout.railWidthDp(2000f), 0.01f)
+        assertEquals(840f, LyricsLayout.railWidthDp(5000f), 0.01f)
+    }
+
+    @Test
+    fun railOnAnXpengSizedWindowIsAboutOneThirdOfTheScreen() {
+        // 2666 dp wide at 0.9 density is 2400 px. The rail limits double with the type: 840 dp is 756 px.
+        assertEquals(840f, LyricsLayout.railWidthDp(2666f), 0.01f)
+    }
+
+    @Test
+    fun widthScaleIsOneUpToTheReferenceWidth() {
+        assertEquals(1f, LyricsLayout.widthScale(0f), 0.001f)
+        assertEquals(1f, LyricsLayout.widthScale(1000f), 0.001f)
+        assertEquals(1f, LyricsLayout.widthScale(1280f), 0.001f)
+    }
+
+    @Test
+    fun widthScaleGrowsWithTheWindowAndStopsAtTwo() {
+        assertEquals(1.5f, LyricsLayout.widthScale(1920f), 0.001f)
+        assertEquals(2f, LyricsLayout.widthScale(2666f), 0.001f)
+        assertEquals(2f, LyricsLayout.widthScale(9000f), 0.001f)
     }
 
     @Test

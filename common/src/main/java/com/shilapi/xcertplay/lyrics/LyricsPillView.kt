@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.util.TypedValue
+import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import kotlin.math.max
@@ -27,9 +28,10 @@ internal class LyricsPillView(context: Context) : LinearLayout(context) {
         visibility = GONE
         setPadding(dp(LyricsLayout.PILL_PADDING_H_DP), dp(LyricsLayout.PILL_PADDING_V_DP),
             dp(LyricsLayout.PILL_PADDING_H_DP), dp(LyricsLayout.PILL_PADDING_V_DP))
-        // Full-width rows, so each line is centred inside the pill whatever its script.
-        addView(current, LayoutParams(-1, -2))
-        addView(next, LayoutParams(-1, -2))
+        // Wrap-content rows centred by gravity. A match-parent row would not ask for a new layout when its
+        // text changes at the same height, so the pill would keep the width of the previous line.
+        addView(current, LayoutParams(-2, -2).apply { gravity = Gravity.CENTER_HORIZONTAL })
+        addView(next, LayoutParams(-2, -2).apply { gravity = Gravity.CENTER_HORIZONTAL })
         applyTheme()
         applySizes()
     }
@@ -115,14 +117,16 @@ internal class LyricsPillView(context: Context) : LinearLayout(context) {
         next.setTextColor(colors.next)
     }
 
+    private fun typeScale() = LyricsLayout.typeScale(windowHeightDp) * LyricsLayout.widthScale(windowWidthDp)
+
     private fun applySizes() {
-        val scale = LyricsLayout.typeScale(windowHeightDp)
+        val scale = typeScale()
         next.setTextSize(TypedValue.COMPLEX_UNIT_SP, LyricsLayout.PILL_NEXT_SP * scale)
         fitCurrentLine()
     }
 
     private fun currentBasePx(): Float =
-        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, LyricsLayout.PILL_CURRENT_SP * LyricsLayout.typeScale(windowHeightDp), resources.displayMetrics)
+        TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, LyricsLayout.PILL_CURRENT_SP * typeScale(), resources.displayMetrics)
 
     private fun maxWidthPx(): Int =
         if (windowWidthDp > 0f) (windowWidthDp * LyricsLayout.PILL_MAX_WIDTH_FRACTION * density).toInt() else Int.MAX_VALUE
