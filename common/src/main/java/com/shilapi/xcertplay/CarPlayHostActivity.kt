@@ -95,6 +95,15 @@ import com.shilapi.xcertplay.airplay.CarPlayMediaEngine
 import com.shilapi.xcertplay.airplay.SafeAreaRect
 import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.location.AndroidCarPlayLocationProvider
+import com.shilapi.xcertplay.lyrics.LocationLyricsSpeedSource
+import com.shilapi.xcertplay.lyrics.LrclibSource
+import com.shilapi.xcertplay.lyrics.LyricsController
+import com.shilapi.xcertplay.lyrics.LyricsLayout
+import com.shilapi.xcertplay.lyrics.LyricsNowPlayingFeed
+import com.shilapi.xcertplay.lyrics.LyricsPillView
+import com.shilapi.xcertplay.lyrics.LyricsRailView
+import com.shilapi.xcertplay.lyrics.LyricsRepository
+import com.shilapi.xcertplay.lyrics.lrclibHttpGet
 import com.shilapi.xcertplay.media.AndroidMediaSink
 import com.shilapi.xcertplay.media.CarPlayTouchMapper
 import com.shilapi.xcertplay.media.CarPlayVideoLayout
@@ -399,6 +408,10 @@ class CarPlayHostActivity : ComponentActivity() {
     private var directVideoOutput = false
     // Diagnostics setting: a game-style FPS counter over the picture.
     private var fpsCounter: FpsCounterOverlay? = null
+    // Display setting: synced lyrics over the picture, as a top pill or a side rail.
+    private var lyricsController: LyricsController? = null
+    private var lyricsRail: LyricsRailView? = null
+    private var lyricsExecutor: ExecutorService? = null
     // Sinks whose sessions are being torn down; their decoders may still render to the current surface
     // until they have released their codecs, so a destroyed surface is detached from them too. A restart
     // and a shutdown can overlap, so this is a set.
@@ -592,6 +605,7 @@ class CarPlayHostActivity : ComponentActivity() {
             initialNight = darkMode,
             onNightChanged = { night ->
                 darkMode = night
+                lyricsController?.onNightChanged(night)
                 if (hostAppearanceResumed) AppAppearanceRuntime.publishHost(this, night)
                 refreshAppAppearance()
                 paintWaitingScreen()
@@ -1163,6 +1177,51 @@ class CarPlayHostActivity : ComponentActivity() {
         homeScreenVisible = null
         // Read here so a change made in Settings applies when the projection comes back.
         if (AirPlayPersistence.loadFpsCounter(this)) fpsCounter?.start() else fpsCounter?.stop()
+        lyricsRail?.let { rail ->
+            (rail.layoutParams as? FrameLayout.LayoutParams)?.let { params ->
+                params.gravity = lyricsRailGravity()
+                rail.layoutParams = params
+            }
+        }
+        lyricsController?.start()
+    }
+
+    // The rail sits on the edge opposite CarPlay's dock. The dock follows the driving side; unverified on a car.
+    private fun lyricsRailGravity() = if (rightHandDrive) Gravity.LEFT else Gravity.RIGHT
+
+    // Above the picture and the gesture layer, under the menus. Neither view takes touches.
+    private fun addLyricsOverlay(root: FrameLayout) {
+        val pill = LyricsPillView(this)
+        val rail = LyricsRailView(this)
+        root.addView(pill, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
+            topMargin = dp(LyricsLayout.PILL_TOP_MARGIN_DP)
+        })
+        root.addView(rail, FrameLayout.LayoutParams(rail.preferredWidthPx(), -1, lyricsRailGravity()))
+        root.addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
+            val density = resources.displayMetrics.density
+            pill.setWindowSizeDp((right - left) / density, (bottom - top) / density)
+            rail.setWindowSizeDp((right - left) / density, (bottom - top) / density)
+            (rail.layoutParams as? FrameLayout.LayoutParams)?.takeIf { it.width != rail.preferredWidthPx() }?.let { params ->
+                params.width = rail.preferredWidthPx()
+                rail.layoutParams = params
+            }
+        }
+        lyricsRail = rail
+        val executor = Executors.newSingleThreadExecutor { task -> Thread(task, "diplay-lyrics").apply { isDaemon = true } }
+        lyricsExecutor = executor
+        lyricsController = LyricsController(
+            pill, rail,
+            // The cache stamps files with the wall clock; the controller's timers use a monotonic one.
+            LyricsRepository(LrclibSource(::lrclibHttpGet), File(cacheDir, "lyrics"), executor, System::currentTimeMillis),
+            LocationLyricsSpeedSource(this), mainHandler,
+            observeNowPlaying = LyricsNowPlayingFeed::observe,
+            placement = { AirPlayPersistence.loadLyricsPlacement(this) },
+            hideWhileDriving = { AirPlayPersistence.loadHideLyricsWhileDriving(this) },
+            // CarPlay's own day/night state: the controller drives darkMode, appNight also follows the app setting.
+            night = { darkMode },
+            sidePanelOpen = { sidePanel?.visibility == View.VISIBLE },
+            nowMillis = SystemClock::elapsedRealtime,
+        )
     }
 
     override fun onResume() {
@@ -1814,6 +1873,7 @@ class CarPlayHostActivity : ComponentActivity() {
 
     override fun onStop() {
         fpsCounter?.stop()
+        lyricsController?.stop()
         closePicturePanel()
         // The controller, USB/iAP2 link, and VPN attachment intentionally outlive the UI.
         isActivityStarted = false
@@ -1911,6 +1971,8 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     override fun onDestroy() {
+        lyricsController?.stop()
+        lyricsExecutor?.shutdown()
         runCatching { unregisterReceiver(bluetoothOnReceiver) }
         mainHandler.removeCallbacks(hideTemporarySystemBars)
         dropHeldTouch()
@@ -2139,6 +2201,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 setMargins(0, dp(12), dp(12), 0)
             })
         }
+        addLyricsOverlay(root)
         settingsMenu = buildSettingsMenu().apply { visibility = View.GONE }
         root.addView(settingsMenu, FrameLayout.LayoutParams(-1, -1))
         safeAreaEditor = buildSafeAreaEditor().apply { visibility = View.GONE }

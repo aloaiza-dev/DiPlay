@@ -44,6 +44,7 @@ internal class LyricsRailView(context: Context) : LinearLayout(context) {
     }
 
     fun setWindowSizeDp(widthDp: Float, heightDp: Float) {
+        if (widthDp == windowWidthDp && heightDp == windowHeightDp) return // the host calls this from a layout pass
         windowWidthDp = widthDp
         windowHeightDp = heightDp
         if (lines.size != LyricsLayout.railVisibleLines(heightDp)) rebuildLines() else applyStyles()

@@ -45,13 +45,15 @@ internal class LyricsPillView(context: Context) : LinearLayout(context) {
     }
 
     fun setWindowSizeDp(widthDp: Float, heightDp: Float) {
+        if (widthDp == windowWidthDp && heightDp == windowHeightDp) return // the host calls this from a layout pass
         windowWidthDp = widthDp
         windowHeightDp = heightDp
         applySizes()
         requestLayout()
     }
 
-    fun show(currentLine: String?, nextLine: String?) {
+    /** [animate] false changes the line at once, for a seek. */
+    fun show(currentLine: String?, nextLine: String?, animate: Boolean = true) {
         val now = currentLine?.trim().orEmpty()
         val later = nextLine?.trim().orEmpty()
         if (now.isEmpty() && later.isEmpty()) {
@@ -66,17 +68,17 @@ internal class LyricsPillView(context: Context) : LinearLayout(context) {
             return
         }
         if (current.text.toString() == now && next.text.toString() == later) return
-        if (lyricsReducedMotion(context)) {
+        if (!animate || lyricsReducedMotion(context)) {
             animate().cancel()
             apply(now, later)
             alpha = targetAlpha()
             return
         }
+        // The text changes at once; only the opacity dips and recovers, so a cancelled animation cannot hold an old line.
         animate().cancel()
-        animate().alpha(0f).setDuration(FADE_HALF_MILLIS).withEndAction {
-            apply(now, later)
-            animate().alpha(targetAlpha()).setDuration(FADE_HALF_MILLIS)
-        }
+        apply(now, later)
+        alpha = DIP_ALPHA
+        animate().alpha(targetAlpha()).setDuration(RECOVER_MILLIS)
     }
 
     fun hide() {
@@ -130,7 +132,8 @@ internal class LyricsPillView(context: Context) : LinearLayout(context) {
     private fun dp(value: Int) = (value * density).toInt()
 
     private companion object {
-        const val FADE_HALF_MILLIS = 75L
+        const val RECOVER_MILLIS = 150L
+        const val DIP_ALPHA = 0.35f
         const val DIMMED_ALPHA = 0.6f
     }
 }

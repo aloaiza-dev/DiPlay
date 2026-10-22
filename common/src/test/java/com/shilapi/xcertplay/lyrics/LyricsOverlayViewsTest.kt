@@ -99,6 +99,14 @@ class LyricsOverlayViewsTest {
     }
 
     @Test
+    fun aRequestWithoutAnimationChangesTheLineAtOnce() {
+        val pill = LyricsPillView(context).apply { show("a", "b") }
+        pill.show("c", "d", animate = false)
+        assertEquals(listOf("c", "d"), pill.texts().map { it.text.toString() })
+        assertEquals(1f, pill.alpha, 0.001f)
+    }
+
+    @Test
     fun pillWidthIsCappedAtFiftyFivePercentOfTheWindow() {
         val pill = LyricsPillView(context).apply {
             setWindowSizeDp(1000f, 480f)
@@ -148,6 +156,23 @@ class LyricsOverlayViewsTest {
     fun railWidthFollowsTheLayoutRule() {
         val rail = LyricsRailView(context).apply { setWindowSizeDp(1000f, 480f) }
         assertEquals((320 * context.resources.displayMetrics.density).toInt(), rail.preferredWidthPx())
+    }
+
+    @Test
+    fun repeatingTheSameWindowSizeDoesNotRequestAnotherLayout() {
+        val pill = LyricsPillView(context)
+        val rail = LyricsRailView(context)
+        for (view in listOf<View>(pill, rail)) {
+            view.layout(0, 0, 100, 100)
+        }
+        pill.setWindowSizeDp(1000f, 480f)
+        rail.setWindowSizeDp(1000f, 480f)
+        pill.layout(0, 0, 100, 100)
+        rail.layout(0, 0, 100, 100)
+        pill.setWindowSizeDp(1000f, 480f)
+        rail.setWindowSizeDp(1000f, 480f)
+        assertFalse(pill.isLayoutRequested)
+        assertFalse(rail.isLayoutRequested)
     }
 
     @Test
