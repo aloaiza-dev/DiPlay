@@ -14,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.PathInterpolator
 import android.widget.TextView
+import com.shilapi.xcertplay.host.R
 import kotlin.math.max
 import kotlin.math.min
 
@@ -27,7 +28,7 @@ import kotlin.math.min
  * size of the text, so its width and height ease from one line to the next.
  */
 internal class LyricsPillView(context: Context) : ViewGroup(context) {
-    private enum class Motion { NONE, ENTER, ROLL, DIP, EXIT }
+    private enum class Motion { NONE, ENTER, ROLL, DIP, EXIT, RESIZE }
 
     private val density = context.resources.displayMetrics.density
     // The current line may take two balanced rows; the preview line stays on one.
@@ -35,6 +36,8 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     private val morph = lyricsLine(context).apply { maxLines = 1; visibility = GONE }
     private val current = lyricsLine(context).apply { typeface = Typeface.DEFAULT_BOLD; maxLines = 2; breakStrategy = Layout.BREAK_STRATEGY_BALANCED }
     private val next = lyricsLine(context).apply { maxLines = 1 }
+    // A one-time teaching line under the lyrics, see [setHint].
+    private val hint = lyricsLine(context).apply { maxLines = 1; visibility = GONE; setText(R.string.lyrics_hint_double_tap) }
     private var colors = LyricsTheme.colors(true)
     private var windowWidthDp = 0f
     private var windowHeightDp = LyricsLayout.NARROW_HEIGHT_DP
@@ -79,6 +82,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     internal val nextRow: TextView get() = next
     internal val outgoingRow: TextView get() = outgoing
     internal val morphRow: TextView get() = morph
+    internal val hintRow: TextView get() = hint
 
     init {
         isClickable = false
@@ -91,6 +95,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         addView(morph)
         addView(current)
         addView(next)
+        addView(hint)
         applyTheme()
         applySizes()
     }
@@ -153,8 +158,21 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         }
     }
 
+    /** Shows or hides the hint row; the glass eases to its new height. */
+    fun setHint(show: Boolean) {
+        if ((hint.visibility == VISIBLE) == show) return
+        val easing = visibility == VISIBLE && measuredWidth > 0 && !lyricsReducedMotion(context)
+        if (easing) {
+            fromWidth = measuredWidth
+            fromHeight = measuredHeight
+        }
+        hint.visibility = if (show) VISIBLE else GONE
+        if (easing) run(Motion.RESIZE, LyricsMotion.ENTER_MILLIS) else requestLayout()
+    }
+
     fun hide() {
         settle()
+        hint.visibility = GONE
         visibility = GONE
     }
 
@@ -192,12 +210,13 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         for (row in listOf(outgoing, morph, current, next)) {
             if (row.visibility != GONE) row.measure(MeasureSpec.makeMeasureSpec(inner, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
         }
-        val rows = listOf(current, next).filter { it.visibility != GONE }
+        if (hint.visibility != GONE) hint.measure(MeasureSpec.makeMeasureSpec(inner, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
+        val rows = listOf(current, next, hint).filter { it.visibility != GONE }
         val contentWidth = rows.maxOfOrNull { it.measuredWidth } ?: 0
-        val contentHeight = rows.sumOf { it.measuredHeight } + (if (rows.size == 2) gap().toInt() else 0)
+        val contentHeight = rows.sumOf { it.measuredHeight } + (rows.size - 1).coerceAtLeast(0) * gap().toInt()
         val naturalWidth = contentWidth + (2 * padH()).toInt()
         val naturalHeight = contentHeight + (2 * padV()).toInt()
-        val easing = (motion == Motion.ROLL || motion == Motion.DIP) && fromWidth > 0
+        val easing = (motion == Motion.ROLL || motion == Motion.DIP || motion == Motion.RESIZE) && fromWidth > 0
         setMeasuredDimension(
             if (easing) lerp(fromWidth, naturalWidth, progress) else naturalWidth,
             if (easing) lerp(fromHeight, naturalHeight, progress) else naturalHeight,
@@ -213,7 +232,11 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
             placeCentred(current, width, top)
             top += current.measuredHeight + gap().toInt()
         }
-        if (nextShown) placeCentred(next, width, top)
+        if (nextShown) {
+            placeCentred(next, width, top)
+            top += next.measuredHeight + gap().toInt()
+        }
+        if (hint.visibility != GONE) placeCentred(hint, width, top)
         val currentCentre = if (currentShown) current.top + current.measuredHeight / 2f else padV() + currentPx() * 0.6f
         val nextCentre = if (nextShown) next.top + next.measuredHeight / 2f else currentCentre + currentPx() * 1.2f
         rowDistance = max(nextCentre - currentCentre, 1f)
@@ -315,7 +338,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
                 wholeAlpha *= 1f - progress
                 wholeShift = -progress * EXIT_RISE_EM * currentPx()
             }
-            Motion.NONE -> Unit
+            Motion.NONE, Motion.RESIZE -> Unit
         }
         alpha = wholeAlpha
         translationY = wholeShift
@@ -339,12 +362,14 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         current.setTextColor(colors.current)
         outgoing.setTextColor(colors.current)
         next.setTextColor(colors.next)
+        hint.setTextColor(colors.far)
         morph.setTextColor(colors.next)
         applyShape()
     }
 
     private fun applySizes() {
         next.setTextSize(TypedValue.COMPLEX_UNIT_PX, nextPx())
+        hint.setTextSize(TypedValue.COMPLEX_UNIT_PX, nextPx() * HINT_SCALE)
         morph.setTextSize(TypedValue.COMPLEX_UNIT_PX, nextPx())
         outgoing.setTextSize(TypedValue.COMPLEX_UNIT_PX, currentPx())
         fitCurrentLine()
@@ -377,6 +402,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
 
     private companion object {
         const val DIMMED_ALPHA = 0.6f
+        const val HINT_SCALE = 0.8f
         const val ENTER_RISE_EM = 0.3f
         const val EXIT_RISE_EM = 0.15f
     }

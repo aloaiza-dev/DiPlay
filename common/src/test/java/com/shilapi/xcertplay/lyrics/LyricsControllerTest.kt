@@ -44,6 +44,8 @@ class LyricsControllerTest {
     private var offsetMillis = 0L
     private val saved = mutableListOf<Int>()
     private val placements = mutableListOf<LyricsPlacement>()
+    private var hintsSeen = 3
+    private val hintCounts = mutableListOf<Int>()
 
     private val speed = object : LyricsSpeedSource {
         override val available get() = speedAvailable
@@ -69,6 +71,7 @@ class LyricsControllerTest {
             sidePanelOpen = { sidePanelOpen }, nowMillis = ::now, offsetMillis = { offsetMillis },
             saveOffsetMillis = { saved += it; offsetMillis = it.toLong() },
             savePlacement = { placements += it; placement = it },
+            switchHintCount = { hintsSeen }, saveSwitchHintCount = { hintCounts += it; hintsSeen = it },
         )
     }
 
@@ -506,6 +509,60 @@ class LyricsControllerTest {
         advance(400L)
         assertEquals(View.VISIBLE, rail.visibility)
         assertEquals(View.GONE, pill.visibility)
+    }
+
+    @Test
+    fun theFirstParkedAppearancesOfThePillTeachTheDoubleTapThenStop() {
+        hintsSeen = 0
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        assertEquals(View.VISIBLE, pill.hintRow.visibility)
+        assertEquals(listOf(1), hintCounts)
+        publish(np("Song", elapsed = 2_500L))
+        assertEquals("one hint per track", listOf(1), hintCounts)
+        advance(5_000L)
+        assertEquals(View.GONE, pill.hintRow.visibility)
+        publish(np("Other", elapsed = 2_000L, artist = "B"))
+        runJobs()
+        assertEquals(listOf(1, 2), hintCounts)
+        hintsSeen = 3
+        publish(np("Third", elapsed = 2_000L, artist = "C"))
+        runJobs()
+        assertEquals("a driver who saw it three times is not shown it again", listOf(1, 2), hintCounts)
+        assertEquals(View.GONE, pill.hintRow.visibility)
+    }
+
+    @Test
+    fun noHintWhileTheCarMovesOrOnTheRail() {
+        hintsSeen = 0
+        controller.start()
+        repeat(8) { onSpeed?.invoke(30); advance(500L) }
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        assertEquals(View.VISIBLE, pill.visibility)
+        assertEquals(View.GONE, pill.hintRow.visibility)
+        assertTrue(hintCounts.isEmpty())
+        placement = LyricsPlacement.SIDE_RAIL
+        repeat(10) { onSpeed?.invoke(0); advance(500L) }
+        assertEquals(View.GONE, pill.hintRow.visibility)
+        assertTrue(hintCounts.isEmpty())
+    }
+
+    @Test
+    fun aDoubleTapMeansTheDriverKnowsAndTheHintIsNeverShownAgain() {
+        hintsSeen = 0
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        pill.setInteractive(true)
+        for (downAt in listOf(0L, 150L)) {
+            val down = android.view.MotionEvent.obtain(downAt, downAt, android.view.MotionEvent.ACTION_DOWN, 5f, 5f, 0)
+            val up = android.view.MotionEvent.obtain(downAt, downAt + 40, android.view.MotionEvent.ACTION_UP, 5f, 5f, 0)
+            pill.dispatchTouchEvent(down)
+            pill.dispatchTouchEvent(up)
+        }
+        assertEquals(3, hintsSeen)
     }
 
     @Test

@@ -90,6 +90,7 @@ object AirPlayPersistence {
     private const val KEY_FPS_COUNTER = "fps_counter"
     private const val KEY_LYRICS_PLACEMENT = "lyrics_placement"
     private const val KEY_LYRICS_RAIL_SIDE = "lyrics_rail_side"
+    private const val KEY_LYRICS_SWITCH_HINTS = "lyrics_switch_hints"
     private const val KEY_HIDE_LYRICS_WHILE_DRIVING = "hide_lyrics_while_driving"
     private const val KEY_LYRICS_OFFSET_MS = "lyrics_offset_ms"
     private const val KEY_CLUSTER_MAP = "cluster_map_enabled"
@@ -747,6 +748,14 @@ object AirPlayPersistence {
 
     fun saveLyricsPlacement(context: Context, placement: LyricsPlacement) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_LYRICS_PLACEMENT, placement.key).apply()
+    }
+
+    /** How many tracks the pill has shown its double-tap hint on. */
+    fun loadLyricsSwitchHints(context: Context): Int =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_LYRICS_SWITCH_HINTS, 0)
+
+    fun saveLyricsSwitchHints(context: Context, count: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_LYRICS_SWITCH_HINTS, count).apply()
     }
 
     fun loadLyricsRailSide(context: Context): LyricsRailSide = LyricsRailSide.fromKey(

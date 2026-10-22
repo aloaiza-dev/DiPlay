@@ -1,6 +1,7 @@
 package com.shilapi.xcertplay.lyrics
 
 import android.os.Handler
+import android.view.View
 import android.util.Log
 import com.shilapi.xcertplay.media.CarPlayNowPlaying
 import kotlin.math.abs
@@ -28,6 +29,9 @@ internal class LyricsController(
     private val saveOffsetMillis: (Int) -> Unit,
     /** Persists the layout the rail's pill icon or a double tap on the pill switches to. */
     private val savePlacement: (LyricsPlacement) -> Unit,
+    /** How many tracks the pill has taught the double tap on; see [HINT_LIMIT]. */
+    private val switchHintCount: () -> Int,
+    private val saveSwitchHintCount: (Int) -> Unit,
 ) {
     private var clock = LyricsClock(nowMillis)
     private var gate = DrivingGate(nowMillis)
@@ -43,6 +47,8 @@ internal class LyricsController(
     private var suppressed = false
     private var jumped = false
     private val titleChanges = ArrayDeque<Long>()
+    private var hintedFor = -1
+    private val hideHint = Runnable { pill.setHint(false) }
 
     private val tick = Runnable {
         render()
@@ -72,6 +78,8 @@ internal class LyricsController(
     }
 
     private fun switchTo(target: LyricsPlacement) {
+        // A driver who double-taps knows the gesture.
+        if (target == LyricsPlacement.SIDE_RAIL) saveSwitchHintCount(HINT_LIMIT)
         savePlacement(target)
         render()
     }
@@ -80,6 +88,7 @@ internal class LyricsController(
         started = false
         nextChangeMillis = null
         handler.removeCallbacks(tick)
+        handler.removeCallbacks(hideHint)
         stopNowPlaying?.invoke()
         stopNowPlaying = null
         stopSpeed?.invoke()
@@ -207,10 +216,23 @@ internal class LyricsController(
             rail.fadeOut()
             pill.setInteractive(!moving)
             showPill(lines, index, position, animate)
+            if (mode == LyricsPlacement.TOP_PILL && !moving) teachDoubleTap() else pill.setHint(false)
         } else {
             pill.fadeOut()
             rail.show(lines.lines.map { it.text.ifBlank { NOTE } }, index)
         }
+    }
+
+    // The first few tracks a parked driver sees on the pill carry a short hint for the double tap.
+    private fun teachDoubleTap() {
+        if (hintedFor == generation || pill.visibility != View.VISIBLE) return
+        val seen = switchHintCount()
+        if (seen >= HINT_LIMIT) return
+        hintedFor = generation
+        saveSwitchHintCount(seen + 1)
+        pill.setHint(true)
+        handler.removeCallbacks(hideHint)
+        handler.postDelayed(hideHint, HINT_MILLIS)
     }
 
     private fun showPill(lyrics: SyncedLyrics, index: Int, position: Long, animate: Boolean) {
@@ -239,6 +261,8 @@ internal class LyricsController(
     private companion object {
         const val NOTE = "♪"
         const val TICK_MILLIS = 250L
+        const val HINT_LIMIT = 3
+        const val HINT_MILLIS = 4_000L
         const val MIN_WAIT_MILLIS = 16L
         const val TAG = "DiPlay-Lyrics"
         val RETRY_DELAYS_MILLIS = listOf(3_000L, 10_000L, 30_000L, 60_000L, 60_000L)

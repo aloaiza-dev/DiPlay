@@ -73,6 +73,12 @@ class LyricsSettingsTest {
         assertEquals(LyricsRailSide.AUTO, AirPlayPersistence.loadLyricsRailSide(context))
     }
 
+    @Test fun switchHintsStartAtZeroAndRoundTrip() {
+        assertEquals(0, AirPlayPersistence.loadLyricsSwitchHints(context))
+        AirPlayPersistence.saveLyricsSwitchHints(context, 2)
+        assertEquals(2, AirPlayPersistence.loadLyricsSwitchHints(context))
+    }
+
     @Test fun lyricsSectionIsInDisplayOnly() {
         val owners = SettingsInformationArchitecture.sectionsByCategory
             .filterValues { SettingsSection.LYRICS in it }.keys

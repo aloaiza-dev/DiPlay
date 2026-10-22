@@ -946,5 +946,6 @@
     <string name="lyrics_control_earlier">Раньше</string>
     <string name="lyrics_control_later">Позже</string>
     <string name="lyrics_control_pill">Переключить на плашку</string>
+    <string name="lyrics_hint_double_tap">Дважды коснитесь для боковой панели</string>
     <string name="settings_lyrics_switch_hint">Дважды коснитесь плашки на экране автомобиля, чтобы открыть боковую панель. На панели коснитесь значка плашки, чтобы вернуться. Оба жеста работают только на стоящем автомобиле. Во время движения панель отображается как плашка.</string>
 </resources>

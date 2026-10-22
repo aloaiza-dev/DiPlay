@@ -429,6 +429,36 @@ class LyricsOverlayViewsTest {
     }
 
     @Test
+    fun theHintRowAddsToThePillAndTheGlassEasesBackWhenItGoes() {
+        val pill = LyricsPillView(context)
+        val root = laidOut(pill)
+        pill.show("one", "two", animate = false)
+        relayout(root)
+        val plain = pill.measuredHeight
+        assertEquals(View.GONE, pill.hintRow.visibility)
+        pill.setHint(true)
+        letTimePass(LyricsMotion.ENTER_MILLIS + 50L)
+        relayout(root)
+        assertEquals(View.VISIBLE, pill.hintRow.visibility)
+        assertTrue("the glass grew to hold the hint", pill.measuredHeight > plain)
+        pill.setHint(false)
+        letTimePass(LyricsMotion.ENTER_MILLIS + 50L)
+        relayout(root)
+        assertEquals(View.GONE, pill.hintRow.visibility)
+        assertEquals(plain, pill.measuredHeight)
+    }
+
+    @Test
+    fun theHintGoesWhenThePillHides() {
+        val pill = LyricsPillView(context)
+        laidOut(pill)
+        pill.show("one", "two", animate = false)
+        pill.setHint(true)
+        pill.hide()
+        assertEquals(View.GONE, pill.hintRow.visibility)
+    }
+
+    @Test
     fun aSingleTapOnThePillDoesNothing() {
         val pill = interactivePill()
         tap(pill, 0L)

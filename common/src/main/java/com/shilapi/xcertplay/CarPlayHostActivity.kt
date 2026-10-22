@@ -1233,6 +1233,8 @@ class CarPlayHostActivity : ComponentActivity() {
             offsetMillis = { AirPlayPersistence.loadLyricsOffsetMillis(this).toLong() },
             saveOffsetMillis = { AirPlayPersistence.saveLyricsOffsetMillis(this, it) },
             savePlacement = { AirPlayPersistence.saveLyricsPlacement(this, it) },
+            switchHintCount = { AirPlayPersistence.loadLyricsSwitchHints(this) },
+            saveSwitchHintCount = { AirPlayPersistence.saveLyricsSwitchHints(this, it) },
         )
     }
 
