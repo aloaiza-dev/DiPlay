@@ -40,6 +40,7 @@ class LyricsControllerTest {
     private var hideWhileDriving = false
     private var night = true
     private var sidePanelOpen = false
+    private var offsetMillis = 0L
 
     private val speed = object : LyricsSpeedSource {
         override val available get() = speedAvailable
@@ -62,7 +63,7 @@ class LyricsControllerTest {
             pill, rail, repository, speed, android.os.Handler(looper),
             observeNowPlaying = { listener -> onNowPlaying = listener; { onNowPlaying = null } },
             placement = { placement }, hideWhileDriving = { hideWhileDriving }, night = { night },
-            sidePanelOpen = { sidePanelOpen }, nowMillis = ::now,
+            sidePanelOpen = { sidePanelOpen }, nowMillis = ::now, offsetMillis = { offsetMillis },
         )
     }
 
@@ -391,6 +392,68 @@ class LyricsControllerTest {
         assertEquals(View.GONE, pill.visibility)
         assertEquals(View.GONE, rail.visibility)
         assertNull(onNowPlaying)
+    }
+
+    @Test
+    fun aPositiveOffsetShowsALineEarlier() {
+        lrc = { "[00:01.00]one\n[00:03.00]two" }
+        offsetMillis = 600L
+        controller.start()
+        publish(np("Song", elapsed = 2_500L))
+        runJobs()
+        assertEquals("two", pillText().first())
+    }
+
+    @Test
+    fun withoutAnOffsetTheSameMomentStillShowsTheEarlierLine() {
+        lrc = { "[00:01.00]one\n[00:03.00]two" }
+        controller.start()
+        publish(np("Song", elapsed = 2_500L))
+        runJobs()
+        assertEquals("one", pillText().first())
+    }
+
+    @Test
+    fun aNegativeOffsetShowsALineLater() {
+        lrc = { "[00:01.00]one\n[00:03.00]two" }
+        offsetMillis = -500L
+        controller.start()
+        publish(np("Song", elapsed = 3_200L))
+        runJobs()
+        assertEquals("one", pillText().first())
+    }
+
+    @Test
+    fun anOffsetThatPushesBeforeTheStartDoesNotBreak() {
+        lrc = { "[00:20.00]one" }
+        offsetMillis = -2_000L
+        controller.start()
+        publish(np("Song", elapsed = 500L))
+        runJobs()
+        assertEquals(View.GONE, pill.visibility)
+    }
+
+    @Test
+    fun aLineChangesOnTimeAndNotOnTheNextTick() {
+        lrc = { "[00:01.00]a\n[00:01.10]b\n[00:09.00]c" }
+        controller.start()
+        publish(np("Song", elapsed = 1_000L))
+        runJobs()
+        assertEquals("a", pillText().first())
+        advance(130L)
+        assertEquals("b", pillText().first())
+    }
+
+    @Test
+    fun exactSchedulingCountsTheOffset() {
+        lrc = { "[00:01.00]a\n[00:02.00]b\n[00:09.00]c" }
+        offsetMillis = 500L
+        controller.start()
+        publish(np("Song", elapsed = 600L))
+        runJobs()
+        assertEquals("a", pillText().first())
+        advance(950L)
+        assertEquals("b", pillText().first())
     }
 
     @Test

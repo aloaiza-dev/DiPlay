@@ -22,13 +22,15 @@ internal class LyricsController(
     private val night: () -> Boolean,
     private val sidePanelOpen: () -> Boolean,
     private val nowMillis: () -> Long,
+    /** How much earlier the lyrics show than their timestamps say; see [LyricsTiming]. Read on every render. */
+    private val offsetMillis: () -> Long,
 ) {
     private var clock = LyricsClock(nowMillis)
     private var gate = DrivingGate(nowMillis)
     private var stopNowPlaying: (() -> Unit)? = null
     private var stopSpeed: (() -> Unit)? = null
     private var started = false
-    private var ticking = false
+    private var nextChangeMillis: Long? = null
     private var identity: TrackQuery? = null
     private var generation = 0
     private var lyrics: SyncedLyrics? = null
@@ -39,9 +41,8 @@ internal class LyricsController(
     private val titleChanges = ArrayDeque<Long>()
 
     private val tick = Runnable {
-        ticking = false
         render()
-        ensureTicking()
+        scheduleTick()
     }
 
     fun start() {
@@ -58,7 +59,7 @@ internal class LyricsController(
 
     fun stop() {
         started = false
-        ticking = false
+        nextChangeMillis = null
         handler.removeCallbacks(tick)
         stopNowPlaying?.invoke()
         stopNowPlaying = null
@@ -99,7 +100,7 @@ internal class LyricsController(
             lookUp(query)
         }
         render()
-        ensureTicking()
+        scheduleTick()
     }
 
     private fun trackOf(update: CarPlayNowPlaying): TrackQuery? {
@@ -159,7 +160,8 @@ internal class LyricsController(
         if (!started) return
         val mode = placement()
         val lines = lyrics
-        val position = clock.positionMillis()
+        // The timing offset moves the position the lines are looked up at: earlier lyrics for a positive one.
+        val position = clock.positionMillis()?.let { (it + offsetMillis()).coerceAtLeast(0L) }
         val hiddenForDriving = hideWhileDriving() && gate.moving
         val railBlocked = mode == LyricsPlacement.SIDE_RAIL && sidePanelOpen()
         val stopped = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_HIDE_MILLIS } == true
@@ -167,9 +169,11 @@ internal class LyricsController(
             // Music that stops and a car that moves fade the overlay out; every other reason clears it at once.
             if (hiddenForDriving || stopped) pill.fadeOut() else pill.hide()
             rail.hide()
+            nextChangeMillis = null
             return
         }
         val index = lines.indexAt(position)
+        nextChangeMillis = if (!playing) null else untilNextChange(lines, index, position)
         val dimmed = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_DIM_MILLIS } == true
         pill.setDimmed(dimmed)
         rail.setDimmed(dimmed)
@@ -193,15 +197,24 @@ internal class LyricsController(
         pill.show(lyrics.lines[index].text.ifBlank { NOTE }, lyrics.lines.getOrNull(index + 1)?.text, animate)
     }
 
-    private fun ensureTicking() {
-        if (!started || ticking || identity == null) return
-        ticking = true
-        handler.postDelayed(tick, TICK_MILLIS)
+    /** Milliseconds until what the views show changes: the next line, or the first line's pre-roll. */
+    private fun untilNextChange(lyrics: SyncedLyrics, index: Int, position: Long): Long? {
+        if (index >= 0) return lyrics.lines.getOrNull(index + 1)?.let { it.startMillis - position }
+        val untilFirst = lyrics.lines.first().startMillis - position
+        return if (untilFirst > PRE_ROLL_MILLIS) untilFirst - PRE_ROLL_MILLIS else untilFirst
+    }
+
+    // Wake at the exact moment the line changes, and at least every tick for the other things that change.
+    private fun scheduleTick() {
+        if (!started || identity == null) return
+        handler.removeCallbacks(tick)
+        handler.postDelayed(tick, (nextChangeMillis ?: TICK_MILLIS).coerceIn(MIN_WAIT_MILLIS, TICK_MILLIS))
     }
 
     private companion object {
         const val NOTE = "♪"
         const val TICK_MILLIS = 250L
+        const val MIN_WAIT_MILLIS = 16L
         const val TAG = "DiPlay-Lyrics"
         val RETRY_DELAYS_MILLIS = listOf(3_000L, 10_000L, 30_000L, 60_000L, 60_000L)
         const val PAUSE_DIM_MILLIS = 1_000L

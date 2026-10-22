@@ -1037,4 +1037,9 @@
     <string name="settings_lyrics_hide_while_driving">Hide lyrics while driving</string>
     <string name="settings_lyrics_hide_while_driving_description">Hides lyrics when the car moves. Needs the car’s speed from GPS location. If DiPlay cannot read the speed, the lyrics stay visible.</string>
     <string name="settings_lyrics_speed_unavailable">DiPlay cannot read the speed. Allow precise Location for DiPlay in the head unit’s app permissions.</string>
+    <string name="settings_lyrics_timing">Lyrics timing</string>
+    <string name="settings_lyrics_timing_on_time">On time</string>
+    <string name="settings_lyrics_timing_earlier">%1$s s earlier</string>
+    <string name="settings_lyrics_timing_later">%1$s s later</string>
+    <string name="settings_lyrics_timing_description">Shows each line earlier or later to match the sound. If the lyrics come after the song, choose earlier. Applies when you return to CarPlay.</string>
 </resources>

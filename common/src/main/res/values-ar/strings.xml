@@ -983,4 +983,9 @@
     <string name="settings_lyrics_hide_while_driving">إخفاء الكلمات أثناء القيادة</string>
     <string name="settings_lyrics_hide_while_driving_description">يخفي الكلمات عندما تتحرك السيارة. يحتاج إلى السرعة من موقع GPS. إذا تعذّرت قراءة السرعة على DiPlay، تبقى الكلمات ظاهرة.</string>
     <string name="settings_lyrics_speed_unavailable">لا يستطيع DiPlay قراءة السرعة. اسمح لـ DiPlay بالوصول إلى الموقع الدقيق من أذونات التطبيقات في وحدة القيادة.</string>
+    <string name="settings_lyrics_timing">توقيت الكلمات</string>
+    <string name="settings_lyrics_timing_on_time">في الوقت</string>
+    <string name="settings_lyrics_timing_earlier">أبكر بمقدار %1$s ث</string>
+    <string name="settings_lyrics_timing_later">أبطأ بمقدار %1$s ث</string>
+    <string name="settings_lyrics_timing_description">يعرض كل سطر أبكر أو أبطأ ليتوافق مع الصوت. إذا تأخرت الكلمات عن الأغنية فاختر أبكر. يُطبَّق عند العودة إلى CarPlay.</string>
 </resources>

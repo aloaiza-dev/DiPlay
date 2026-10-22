@@ -1024,4 +1024,9 @@
     <string name="settings_lyrics_hide_while_driving">Nascondi i testi alla guida</string>
     <string name="settings_lyrics_hide_while_driving_description">Nasconde i testi quando l’auto è in movimento. Richiede la velocità dalla posizione GPS. Se DiPlay non riesce a leggere la velocità, i testi restano visibili.</string>
     <string name="settings_lyrics_speed_unavailable">DiPlay non riesce a leggere la velocità. Consenti la posizione precisa per DiPlay nelle autorizzazioni app della head unit.</string>
+    <string name="settings_lyrics_timing">Sincronia dei testi</string>
+    <string name="settings_lyrics_timing_on_time">In tempo</string>
+    <string name="settings_lyrics_timing_earlier">%1$s s prima</string>
+    <string name="settings_lyrics_timing_later">%1$s s dopo</string>
+    <string name="settings_lyrics_timing_description">Mostra ogni riga prima o dopo per seguire il suono. Se i testi arrivano dopo il brano, scegli prima. Si applica quando torni a CarPlay.</string>
 </resources>

@@ -934,4 +934,9 @@
     <string name="settings_lyrics_hide_while_driving">Ocultar letras al conducir</string>
     <string name="settings_lyrics_hide_while_driving_description">Oculta la letra cuando el coche se mueve. Necesita la velocidad obtenida por ubicación GPS. Si DiPlay no puede leer la velocidad, la letra sigue visible.</string>
     <string name="settings_lyrics_speed_unavailable">DiPlay no puede leer la velocidad. Permite la ubicación precisa para DiPlay en los permisos de aplicaciones de la unidad principal.</string>
+    <string name="settings_lyrics_timing">Sincronización de letras</string>
+    <string name="settings_lyrics_timing_on_time">A tiempo</string>
+    <string name="settings_lyrics_timing_earlier">%1$s s antes</string>
+    <string name="settings_lyrics_timing_later">%1$s s después</string>
+    <string name="settings_lyrics_timing_description">Muestra cada línea antes o después para coincidir con el sonido. Si la letra llega después de la canción, elige antes. Se aplica al volver a CarPlay.</string>
 </resources>

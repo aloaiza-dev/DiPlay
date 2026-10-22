@@ -946,4 +946,9 @@
     <string name="settings_lyrics_hide_while_driving">Ховати текст під час руху</string>
     <string name="settings_lyrics_hide_while_driving_description">Ховає текст, коли автомобіль їде. Швидкість береться з GPS-геолокації. Якщо DiPlay не може прочитати швидкість, текст залишається на екрані.</string>
     <string name="settings_lyrics_speed_unavailable">DiPlay не може прочитати швидкість. Дозвольте DiPlay точну геолокацію в дозволах застосунків головного пристрою.</string>
+    <string name="settings_lyrics_timing">Синхронізація тексту</string>
+    <string name="settings_lyrics_timing_on_time">Точно</string>
+    <string name="settings_lyrics_timing_earlier">На %1$s с раніше</string>
+    <string name="settings_lyrics_timing_later">На %1$s с пізніше</string>
+    <string name="settings_lyrics_timing_description">Показує кожен рядок раніше або пізніше, щоб збігатися зі звуком. Якщо текст відстає від пісні, оберіть «раніше». Застосовується після повернення в CarPlay.</string>
 </resources>

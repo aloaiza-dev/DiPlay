@@ -14,6 +14,7 @@ import com.shilapi.xcertplay.airplay.PairingStore
 import com.shilapi.xcertplay.airplay.SafeAreaCodec
 import com.shilapi.xcertplay.airplay.SafeAreaRect
 import com.shilapi.xcertplay.lyrics.LyricsPlacement
+import com.shilapi.xcertplay.lyrics.LyricsTiming
 import com.shilapi.xcertplay.orchestration.ManualHotspotBand
 import com.shilapi.xcertplay.orchestration.ManualHotspotSecurity
 import com.shilapi.xcertplay.orchestration.MfiTarget
@@ -88,6 +89,7 @@ object AirPlayPersistence {
     private const val KEY_FPS_COUNTER = "fps_counter"
     private const val KEY_LYRICS_PLACEMENT = "lyrics_placement"
     private const val KEY_HIDE_LYRICS_WHILE_DRIVING = "hide_lyrics_while_driving"
+    private const val KEY_LYRICS_OFFSET_MS = "lyrics_offset_ms"
     private const val KEY_CLUSTER_MAP = "cluster_map_enabled"
 
     /**
@@ -743,6 +745,15 @@ object AirPlayPersistence {
 
     fun saveLyricsPlacement(context: Context, placement: LyricsPlacement) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_LYRICS_PLACEMENT, placement.key).apply()
+    }
+
+    /** How much earlier the lyrics show than their timestamps say, in ms; see [LyricsTiming]. */
+    fun loadLyricsOffsetMillis(context: Context): Int = LyricsTiming.clamp(
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_LYRICS_OFFSET_MS, LyricsTiming.DEFAULT_MILLIS),
+    )
+
+    fun saveLyricsOffsetMillis(context: Context, millis: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_LYRICS_OFFSET_MS, LyricsTiming.clamp(millis)).apply()
     }
 
     fun loadHideLyricsWhileDriving(context: Context): Boolean =

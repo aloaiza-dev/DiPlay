@@ -41,6 +41,24 @@ class LyricsSettingsTest {
         assertEquals(true, AirPlayPersistence.loadHideLyricsWhileDriving(context))
     }
 
+    @Test fun timingDefaultsToAHalfSecondEarlier() {
+        assertEquals(500, AirPlayPersistence.loadLyricsOffsetMillis(context))
+    }
+
+    @Test fun timingRoundTripsIncludingNegativeValues() {
+        for (millis in listOf(1000, -250, 0, 2000)) {
+            AirPlayPersistence.saveLyricsOffsetMillis(context, millis)
+            assertEquals(millis, AirPlayPersistence.loadLyricsOffsetMillis(context))
+        }
+    }
+
+    @Test fun aStoredTimingOutsideTheRangeIsClamped() {
+        prefs.edit().putInt("lyrics_offset_ms", 99_999).apply()
+        assertEquals(2000, AirPlayPersistence.loadLyricsOffsetMillis(context))
+        prefs.edit().putInt("lyrics_offset_ms", -99_999).apply()
+        assertEquals(-2000, AirPlayPersistence.loadLyricsOffsetMillis(context))
+    }
+
     @Test fun lyricsSectionIsInDisplayOnly() {
         val owners = SettingsInformationArchitecture.sectionsByCategory
             .filterValues { SettingsSection.LYRICS in it }.keys

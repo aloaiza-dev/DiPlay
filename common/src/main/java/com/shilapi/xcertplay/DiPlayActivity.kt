@@ -60,6 +60,7 @@ import com.shilapi.xcertplay.compat.closeCompat
 import com.shilapi.xcertplay.hud.BydAdbAccess
 import com.shilapi.xcertplay.lyrics.LocationLyricsSpeedSource
 import com.shilapi.xcertplay.lyrics.LyricsPlacement
+import com.shilapi.xcertplay.lyrics.LyricsTiming
 import com.shilapi.xcertplay.hud.BydNavigationOutputs
 import com.shilapi.xcertplay.hud.BydFieldSource
 import com.shilapi.xcertplay.hud.BydOutputSettings
@@ -1954,6 +1955,13 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 placements.indexOf(AirPlayPersistence.loadLyricsPlacement(this)), reconnects = false) {
                 AirPlayPersistence.saveLyricsPlacement(this, placements[it])
             }
+            choice(card, getString(R.string.settings_lyrics_timing), LyricsTiming.PRESETS_MILLIS.map(::lyricsTimingLabel),
+                LyricsTiming.nearestPresetIndex(AirPlayPersistence.loadLyricsOffsetMillis(this)), reconnects = false) {
+                AirPlayPersistence.saveLyricsOffsetMillis(this, LyricsTiming.PRESETS_MILLIS[it])
+            }
+            card.addView(label(getString(R.string.settings_lyrics_timing_description), 14, MUTED).apply {
+                setPadding(0, 0, 0, dp(SETTINGS_BLOCK_GAP_DP))
+            })
             toggle(card, getString(R.string.settings_lyrics_hide_while_driving),
                 getString(R.string.settings_lyrics_hide_while_driving_description),
                 AirPlayPersistence.loadHideLyricsWhileDriving(this)) { AirPlayPersistence.saveHideLyricsWhileDriving(this, it) }
@@ -6454,6 +6462,13 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             reconnects = sessionTransport) {
             AirPlayPersistence.saveMediaBufferMillis(this, wireless, presets[it])
         }
+    }
+
+    // "0.5 s earlier", "On time", "1 s later": the number follows the locale.
+    private fun lyricsTimingLabel(millis: Int): String {
+        if (millis == 0) return getString(R.string.settings_lyrics_timing_on_time)
+        val seconds = java.text.NumberFormat.getInstance().apply { maximumFractionDigits = 2 }.format(Math.abs(millis) / 1000.0)
+        return getString(if (millis > 0) R.string.settings_lyrics_timing_earlier else R.string.settings_lyrics_timing_later, seconds)
     }
 
     // [announcesReconnect] labels a choice whose [save] reconnects by itself.

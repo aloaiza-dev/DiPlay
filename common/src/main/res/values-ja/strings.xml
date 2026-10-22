@@ -1036,4 +1036,9 @@
     <string name="settings_lyrics_hide_while_driving">走行中は歌詞を非表示</string>
     <string name="settings_lyrics_hide_while_driving_description">車が動いている間は歌詞を隠します。GPSの位置情報から速度を取得します。DiPlayが速度を読み取れない場合、歌詞は表示されたままです。</string>
     <string name="settings_lyrics_speed_unavailable">DiPlayが速度を読み取れません。車載機のアプリ権限でDiPlayに正確な位置情報を許可してください。</string>
+    <string name="settings_lyrics_timing">歌詞のタイミング</string>
+    <string name="settings_lyrics_timing_on_time">ちょうど</string>
+    <string name="settings_lyrics_timing_earlier">%1$s秒早く</string>
+    <string name="settings_lyrics_timing_later">%1$s秒遅く</string>
+    <string name="settings_lyrics_timing_description">音に合わせて各行を早く、または遅く表示します。歌詞が曲より遅れる場合は「早く」を選びます。CarPlayに戻ると反映されます。</string>
 </resources>

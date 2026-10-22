@@ -994,4 +994,9 @@
     <string name="settings_lyrics_hide_while_driving">行駛時隱藏歌詞</string>
     <string name="settings_lyrics_hide_while_driving_description">車輛行駛時隱藏歌詞。需要透過 GPS 定位取得車速。若 DiPlay 無法讀取車速，歌詞會持續顯示。</string>
     <string name="settings_lyrics_speed_unavailable">DiPlay 無法讀取車速。請在車機的應用程式權限中允許 DiPlay 使用精確位置。</string>
+    <string name="settings_lyrics_timing">歌詞時間</string>
+    <string name="settings_lyrics_timing_on_time">準時</string>
+    <string name="settings_lyrics_timing_earlier">提前 %1$s 秒</string>
+    <string name="settings_lyrics_timing_later">延後 %1$s 秒</string>
+    <string name="settings_lyrics_timing_description">讓每行歌詞提前或延後顯示，以配合聲音。若歌詞比歌曲慢，請選擇提前。返回 CarPlay 後生效。</string>
 </resources>

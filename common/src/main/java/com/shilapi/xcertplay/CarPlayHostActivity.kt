@@ -1229,6 +1229,7 @@ class CarPlayHostActivity : ComponentActivity() {
             night = { darkMode },
             sidePanelOpen = { sidePanel?.visibility == View.VISIBLE },
             nowMillis = SystemClock::elapsedRealtime,
+            offsetMillis = { AirPlayPersistence.loadLyricsOffsetMillis(this).toLong() },
         )
     }
 
