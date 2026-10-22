@@ -1001,4 +1001,6 @@
     <string name="settings_lyrics_timing_description">让每行歌词提前或延后显示，以匹配声音。如果歌词比歌曲慢，请选择提前。返回 CarPlay 后生效。</string>
     <string name="lyrics_control_earlier">提前</string>
     <string name="lyrics_control_later">延后</string>
+    <string name="lyrics_control_pill">切换到胶囊视图</string>
+    <string name="settings_lyrics_switch_hint">在车机屏幕上双击胶囊可打开侧边栏；在侧边栏上点按胶囊图标可返回。两者都仅在车辆静止时可用。</string>
 </resources>

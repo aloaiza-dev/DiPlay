@@ -760,6 +760,8 @@ class AdaptiveSettingsUiTest {
         assertTrue(display.any { it.startsWith(text(R.string.settings_lyrics_title)) })
         assertTrue(display.any { it.startsWith(text(R.string.settings_lyrics_hide_while_driving)) })
         assertTrue(display.any { it.startsWith(text(R.string.settings_lyrics_timing)) })
+        assertTrue(display.any { it.startsWith(text(R.string.settings_lyrics_switch_hint)) })
+        assertFalse(advanced.any { it.startsWith(text(R.string.settings_lyrics_switch_hint)) })
         assertFalse(advanced.any { it.startsWith(text(R.string.settings_lyrics_timing)) })
         assertFalse(advanced.any { it.startsWith(text(R.string.settings_lyrics_title)) })
         assertFalse(vehicle.any { it.startsWith(text(R.string.settings_lyrics_title)) })

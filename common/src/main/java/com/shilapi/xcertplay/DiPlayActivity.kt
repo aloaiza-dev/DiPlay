@@ -1952,6 +1952,9 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             card.addView(label(getString(R.string.settings_lyrics_description), 14, MUTED).apply {
                 setPadding(0, 0, 0, dp(SETTINGS_BLOCK_GAP_DP))
             })
+            card.addView(label(getString(R.string.settings_lyrics_switch_hint), 14, MUTED).apply {
+                setPadding(0, 0, 0, dp(SETTINGS_BLOCK_GAP_DP))
+            })
             choice(card, getString(R.string.settings_lyrics_title), placementLabels,
                 placements.indexOf(AirPlayPersistence.loadLyricsPlacement(this)), reconnects = false) {
                 AirPlayPersistence.saveLyricsPlacement(this, placements[it])

@@ -1231,6 +1231,7 @@ class CarPlayHostActivity : ComponentActivity() {
             nowMillis = SystemClock::elapsedRealtime,
             offsetMillis = { AirPlayPersistence.loadLyricsOffsetMillis(this).toLong() },
             saveOffsetMillis = { AirPlayPersistence.saveLyricsOffsetMillis(this, it) },
+            savePlacement = { AirPlayPersistence.saveLyricsPlacement(this, it) },
         )
     }
 

@@ -941,4 +941,6 @@
     <string name="settings_lyrics_timing_description">Показывает каждую строку раньше или позже, чтобы совпасть со звуком. Если текст отстаёт от песни, выберите «раньше». Применяется при возврате в CarPlay.</string>
     <string name="lyrics_control_earlier">Раньше</string>
     <string name="lyrics_control_later">Позже</string>
+    <string name="lyrics_control_pill">Переключить на плашку</string>
+    <string name="settings_lyrics_switch_hint">Дважды коснитесь плашки на экране автомобиля, чтобы открыть боковую панель. На панели коснитесь значка плашки, чтобы вернуться. Оба жеста работают только на стоящем автомобиле.</string>
 </resources>

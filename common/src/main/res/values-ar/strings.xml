@@ -990,4 +990,6 @@
     <string name="settings_lyrics_timing_description">يعرض كل سطر أبكر أو أبطأ ليتوافق مع الصوت. إذا تأخرت الكلمات عن الأغنية فاختر أبكر. يُطبَّق عند العودة إلى CarPlay.</string>
     <string name="lyrics_control_earlier">أبكر</string>
     <string name="lyrics_control_later">أبطأ</string>
+    <string name="lyrics_control_pill">التبديل إلى الشريط العلوي</string>
+    <string name="settings_lyrics_switch_hint">انقر مرتين على الشريط العلوي في شاشة السيارة لفتح اللوحة الجانبية. وعلى اللوحة، انقر أيقونة الشريط للعودة. يعمل الاثنان فقط والسيارة متوقفة.</string>
 </resources>

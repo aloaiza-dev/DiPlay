@@ -1044,4 +1044,6 @@
     <string name="settings_lyrics_timing_description">Shows each line earlier or later to match the sound. If the lyrics come after the song, choose earlier. Applies when you return to CarPlay.</string>
     <string name="lyrics_control_earlier">Earlier</string>
     <string name="lyrics_control_later">Later</string>
+    <string name="lyrics_control_pill">Switch to pill view</string>
+    <string name="settings_lyrics_switch_hint">Double-tap the pill on the car’s screen to open the side rail. On the rail, tap the pill icon to go back. Both only work while the car is still.</string>
 </resources>

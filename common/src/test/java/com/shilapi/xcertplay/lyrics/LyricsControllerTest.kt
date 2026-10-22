@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import com.shilapi.xcertplay.media.CarPlayNowPlaying
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -42,6 +43,7 @@ class LyricsControllerTest {
     private var sidePanelOpen = false
     private var offsetMillis = 0L
     private val saved = mutableListOf<Int>()
+    private val placements = mutableListOf<LyricsPlacement>()
 
     private val speed = object : LyricsSpeedSource {
         override val available get() = speedAvailable
@@ -66,6 +68,7 @@ class LyricsControllerTest {
             placement = { placement }, hideWhileDriving = { hideWhileDriving }, night = { night },
             sidePanelOpen = { sidePanelOpen }, nowMillis = ::now, offsetMillis = { offsetMillis },
             saveOffsetMillis = { saved += it; offsetMillis = it.toLong() },
+            savePlacement = { placements += it; placement = it },
         )
     }
 
@@ -502,12 +505,93 @@ class LyricsControllerTest {
     }
 
     @Test
-    fun thePillNeverWatchesTheSpeedUnlessTheHideOptionIsOn() {
+    fun thePillWatchesTheSpeedSoItsDoubleTapCanBeTakenAwayWhileDriving() {
         placement = LyricsPlacement.TOP_PILL
         hideWhileDriving = false
         controller.start()
-        assertNull(onSpeed)
-        assertEquals(View.GONE, rail.gearButton.visibility)
+        assertNotNull(onSpeed)
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertTrue("still: the pill takes the double tap", pill.isClickable)
+        repeat(8) { onSpeed?.invoke(30); advance(500L) }
+        assertFalse("moving: taps go through to CarPlay", pill.isClickable)
+        assertEquals("the lyrics stay", View.VISIBLE, pill.visibility)
+        repeat(10) { onSpeed?.invoke(0); advance(500L) }
+        assertTrue(pill.isClickable)
+    }
+
+    private fun tap(view: View, downAt: Long) {
+        val down = android.view.MotionEvent.obtain(downAt, downAt, android.view.MotionEvent.ACTION_DOWN, 5f, 5f, 0)
+        view.dispatchTouchEvent(down)
+        val up = android.view.MotionEvent.obtain(downAt, downAt + 40, android.view.MotionEvent.ACTION_UP, 5f, 5f, 0)
+        view.dispatchTouchEvent(up)
+        down.recycle()
+        up.recycle()
+    }
+
+    @Test
+    fun aDoubleTapOnThePillSavesTheRailAndShowsIt() {
+        placement = LyricsPlacement.TOP_PILL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        tap(pill, 10_000L)
+        tap(pill, 10_150L)
+        shadowOf(looper).idle()
+        assertEquals(listOf(LyricsPlacement.SIDE_RAIL), placements)
+        advance(400L)
+        assertEquals(View.VISIBLE, rail.visibility)
+        assertEquals("the pill fades out", View.GONE, pill.visibility)
+    }
+
+    @Test
+    fun theRailsPillButtonSavesThePillAndShowsIt() {
+        placement = LyricsPlacement.SIDE_RAIL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        rail.pillButton.performClick()
+        shadowOf(looper).idle()
+        assertEquals(listOf(LyricsPlacement.TOP_PILL), placements)
+        advance(400L)
+        assertEquals(View.VISIBLE, pill.visibility)
+        assertEquals(View.GONE, rail.visibility)
+    }
+
+    @Test
+    fun theViewYouLeaveFadesOutWhileTheNewOneFadesIn() {
+        placement = LyricsPlacement.TOP_PILL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        tap(pill, 10_000L)
+        tap(pill, 10_150L)
+        // Right after the tap both views are on screen: the pill is on its way out, the rail already coming in.
+        // (Robolectric steps its animation clock in one jump, so only this moment and the end can be checked.)
+        assertEquals("the old view is still on its way out", View.VISIBLE, pill.visibility)
+        assertEquals("the new view is already coming in", View.VISIBLE, rail.visibility)
+        advance(400L)
+        assertEquals(View.GONE, pill.visibility)
+        assertEquals(View.VISIBLE, rail.visibility)
+    }
+
+    @Test
+    fun afterSwitchingToTheRailTheRailKeepsItsTimingControl() {
+        placement = LyricsPlacement.TOP_PILL
+        offsetMillis = 500L
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        tap(pill, 10_000L)
+        tap(pill, 10_150L)
+        advance(400L)
+        assertEquals(View.VISIBLE, rail.gearButton.visibility)
+        assertEquals(View.VISIBLE, rail.pillButton.visibility)
     }
 
     @Test

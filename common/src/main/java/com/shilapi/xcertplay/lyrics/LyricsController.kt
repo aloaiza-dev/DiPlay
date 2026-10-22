@@ -26,6 +26,8 @@ internal class LyricsController(
     private val offsetMillis: () -> Long,
     /** Persists the timing the rail's control sets, so Settings and the rail always agree. */
     private val saveOffsetMillis: (Int) -> Unit,
+    /** Persists the layout the rail's pill icon or a double tap on the pill switches to. */
+    private val savePlacement: (LyricsPlacement) -> Unit,
 ) {
     private var clock = LyricsClock(nowMillis)
     private var gate = DrivingGate(nowMillis)
@@ -53,17 +55,25 @@ internal class LyricsController(
         started = true
         onNightChanged(night())
         stopNowPlaying = observeNowPlaying(::onNowPlaying)
-        val railMode = placement() == LyricsPlacement.SIDE_RAIL
         // The rail's timing control: each tap is saved and takes effect on the next render.
-        if (railMode) rail.setTimingControl(offsetMillis().toInt()) { millis ->
+        rail.setTimingControl(offsetMillis().toInt()) { millis ->
             saveOffsetMillis(millis)
             render()
         }
-        // The speed is wanted to hide the lyrics while driving, and to take the rail's control away.
-        if (hideWhileDriving() || railMode) stopSpeed = speed.observe { kmh ->
+        // Either view switches to the other: the pill by a double tap, the rail by its pill icon.
+        rail.setSwitchAction { switchTo(LyricsPlacement.TOP_PILL) }
+        pill.setSwitchAction { switchTo(LyricsPlacement.SIDE_RAIL) }
+        // The speed hides the lyrics while driving when asked, and in every case takes the touch controls
+        // away (the pill's double tap, the rail's icons): a moving car must not get a tap target.
+        stopSpeed = speed.observe { kmh ->
             gate.onSpeed(kmh)
             render()
         }
+    }
+
+    private fun switchTo(target: LyricsPlacement) {
+        savePlacement(target)
+        render()
     }
 
     fun stop() {
@@ -82,6 +92,8 @@ internal class LyricsController(
         pausedSince = null
         clock = LyricsClock(nowMillis)
         gate = DrivingGate(nowMillis)
+        pill.setSwitchAction(null)
+        rail.setSwitchAction(null)
         pill.hide()
         rail.hide()
     }
@@ -189,11 +201,13 @@ internal class LyricsController(
         rail.setDimmed(dimmed)
         val animate = !jumped
         jumped = false
+        // The view that is not wanted fades out while the wanted one comes in: a switch reads as one move.
         if (mode == LyricsPlacement.TOP_PILL) {
-            rail.hide()
+            rail.fadeOut()
+            pill.setInteractive(!moving)
             showPill(lines, index, position, animate)
         } else {
-            pill.hide()
+            pill.fadeOut()
             rail.setControlsAvailable(!moving)
             rail.show(lines.lines.map { it.text.ifBlank { NOTE } }, index)
         }

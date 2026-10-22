@@ -398,6 +398,76 @@ class LyricsOverlayViewsTest {
         assertEquals(View.GONE, rail.visibility)
     }
 
+    private var switches = 0
+
+    private fun tap(view: View, downAt: Long, x: Float = 5f, y: Float = 5f): Boolean {
+        val down = MotionEvent.obtain(downAt, downAt, MotionEvent.ACTION_DOWN, x, y, 0)
+        val consumed = view.dispatchTouchEvent(down)
+        val up = MotionEvent.obtain(downAt, downAt + 40, MotionEvent.ACTION_UP, x, y, 0)
+        view.dispatchTouchEvent(up)
+        down.recycle()
+        up.recycle()
+        return consumed
+    }
+
+    private fun interactivePill(): LyricsPillView {
+        switches = 0
+        val pill = LyricsPillView(context)
+        laidOut(pill)
+        pill.show("one", "two", animate = false)
+        pill.setSwitchAction { switches++ }
+        pill.setInteractive(true)
+        return pill
+    }
+
+    @Test
+    fun aDoubleTapOnThePillRunsTheSwitchAction() {
+        val pill = interactivePill()
+        tap(pill, 0L)
+        tap(pill, 150L)
+        assertEquals(1, switches)
+    }
+
+    @Test
+    fun aSingleTapOnThePillDoesNothing() {
+        val pill = interactivePill()
+        tap(pill, 0L)
+        assertEquals(0, switches)
+    }
+
+    @Test
+    fun twoSlowTapsAreNotADoubleTap() {
+        val pill = interactivePill()
+        tap(pill, 0L)
+        tap(pill, 900L)
+        assertEquals(0, switches)
+    }
+
+    @Test
+    fun aPillThatIsNotInteractiveTakesNoTouches() {
+        val pill = interactivePill()
+        pill.setInteractive(false)
+        assertFalse(pill.isClickable)
+        assertFalse("the tap goes through to CarPlay", tap(pill, 0L))
+        tap(pill, 150L)
+        assertEquals(0, switches)
+    }
+
+    @Test
+    fun anInteractivePillTakesTheTapsInsideItsGlass() {
+        val pill = interactivePill()
+        assertTrue(tap(pill, 0L))
+    }
+
+    @Test
+    fun aPillWithoutAnActionTakesNoTouchesEvenWhenInteractive() {
+        val pill = LyricsPillView(context)
+        laidOut(pill)
+        pill.show("one", "two", animate = false)
+        pill.setInteractive(true)
+        assertFalse(tap(pill, 0L))
+    }
+
     private val timingCalls = mutableListOf<Int>()
 
     private fun controlledRail(initial: Int = 500): Pair<LyricsRailView, FrameLayout> {
@@ -526,6 +596,56 @@ class LyricsOverlayViewsTest {
         rail.hide()
         rail.show(ten, 4, animate = false)
         assertEquals(View.GONE, rail.timingStrip.visibility)
+    }
+
+    private fun railWithSwitch(): LyricsRailView {
+        switches = 0
+        val (rail, root) = controlledRail()
+        rail.setSwitchAction { switches++ }
+        relayout(root)
+        return rail
+    }
+
+    @Test
+    fun theRailHasAPillButtonInTheUpperLeftCornerWithAName() {
+        val rail = railWithSwitch()
+        val button = rail.pillButton
+        assertEquals(View.VISIBLE, button.visibility)
+        assertEquals(context.getString(R.string.lyrics_control_pill), button.contentDescription)
+        assertTrue("left of the gear", button.right <= rail.gearButton.left)
+        assertTrue("upper left", button.left < rail.width / 2 && button.top >= 0)
+        val minimum = 48 * context.resources.displayMetrics.density
+        assertTrue("target ${button.width}x${button.height}", button.width >= minimum && button.height >= minimum)
+    }
+
+    @Test
+    fun tappingThePillButtonRunsTheSwitchAction() {
+        val rail = railWithSwitch()
+        rail.pillButton.performClick()
+        assertEquals(1, switches)
+    }
+
+    @Test
+    fun thePillButtonTakesTapsAndTheCardStillDoesNot() {
+        val rail = railWithSwitch()
+        val (x, y) = centreOf(rail.pillButton)
+        assertTrue(touchAt(rail, x, y))
+        assertFalse(touchAt(rail, rail.width / 2f, rail.height / 2f))
+    }
+
+    @Test
+    fun withoutASwitchActionThereIsNoPillButton() {
+        val (rail, _) = controlledRail()
+        assertEquals(View.GONE, rail.pillButton.visibility)
+    }
+
+    @Test
+    fun whileTheCarMovesThePillButtonGoesAwayToo() {
+        val rail = railWithSwitch()
+        rail.setControlsAvailable(false)
+        assertEquals(View.GONE, rail.pillButton.visibility)
+        rail.setControlsAvailable(true)
+        assertEquals(View.VISIBLE, rail.pillButton.visibility)
     }
 
     @Test

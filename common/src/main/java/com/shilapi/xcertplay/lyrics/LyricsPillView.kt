@@ -8,6 +8,8 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.text.Layout
 import android.util.TypedValue
+import android.view.GestureDetector
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.PathInterpolator
@@ -16,7 +18,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * The current and the next lyric line on frosted glass. It never takes touches.
+ * The current and the next lyric line on frosted glass. It takes touches only for its double tap (see
+ * [setSwitchAction]); otherwise a tap goes through to CarPlay.
  *
  * Four text roles share one layout. The two real rows hold the lines now shown. During a roll, two ghost
  * rows carry the lines that were shown: the old current line leaves upward and the old next line rises into
@@ -42,6 +45,35 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     private var fromHeight = 0
     private var rowDistance = 0f
     private var animator: ValueAnimator? = null
+
+    // A double tap on the pill switches to the side rail. The pill takes touches only while it is interactive
+    // (the car is still) and has an action; otherwise every tap goes through to CarPlay, as before.
+    private var switchAction: (() -> Unit)? = null
+    private var interactive = false
+    private val doubleTap = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
+        override fun onDown(e: MotionEvent) = true
+
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            switchAction?.invoke()
+            return true
+        }
+    })
+
+    fun setSwitchAction(action: (() -> Unit)?) {
+        switchAction = action
+        isClickable = interactive && action != null
+    }
+
+    fun setInteractive(interactive: Boolean) {
+        this.interactive = interactive
+        isClickable = interactive && switchAction != null
+    }
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        if (!isClickable) return false
+        doubleTap.onTouchEvent(event)
+        return true
+    }
 
     internal val currentRow: TextView get() = current
     internal val nextRow: TextView get() = next

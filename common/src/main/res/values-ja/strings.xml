@@ -1043,4 +1043,6 @@
     <string name="settings_lyrics_timing_description">音に合わせて各行を早く、または遅く表示します。歌詞が曲より遅れる場合は「早く」を選びます。CarPlayに戻ると反映されます。</string>
     <string name="lyrics_control_earlier">早く</string>
     <string name="lyrics_control_later">遅く</string>
+    <string name="lyrics_control_pill">上部バー表示に切り替え</string>
+    <string name="settings_lyrics_switch_hint">車の画面で上部バーをダブルタップするとサイドパネルが開きます。パネルではバーのアイコンをタップすると戻ります。どちらも停車中のみ使えます。</string>
 </resources>

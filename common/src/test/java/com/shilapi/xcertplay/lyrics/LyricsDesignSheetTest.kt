@@ -79,7 +79,10 @@ class LyricsDesignSheetTest {
         val rail = LyricsRailView(root.context)
         rail.setWindowSizeDp(widthPx / density(), heightPx / density())
         rail.setNight(night)
-        if (timing != null) rail.setTimingControl(timing) {}
+        if (timing != null) {
+            rail.setTimingControl(timing) {}
+            rail.setSwitchAction {}
+        }
         rail.show(lines, index, animate = false)
         if (open) rail.gearButton.performClick()
         root.addView(rail, FrameLayout.LayoutParams(rail.preferredWidthPx(), rail.preferredHeightPx(), Gravity.RIGHT or Gravity.CENTER_VERTICAL).apply {
