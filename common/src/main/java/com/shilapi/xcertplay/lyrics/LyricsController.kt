@@ -42,7 +42,7 @@ internal class LyricsController(
     private var started = false
     private var nextChangeMillis: Long? = null
     private var identity: TrackQuery? = null
-    private var generation = 0
+    @Volatile private var generation = 0
     private var lyrics: SyncedLyrics? = null
     private var playing = false
     private var pausedSince: Long? = null
@@ -115,13 +115,15 @@ internal class LyricsController(
     }
 
     private fun onNowPlaying(update: CarPlayNowPlaying) {
+        val query = trackOf(update)
+        // The old track's position is no use to a new one: wait for the phone to report its own.
+        if (query != identity) clock = LyricsClock(nowMillis)
         val expected = clock.positionMillis()
         clock.sync(update.elapsedMillis, update.playing)
         val actual = clock.positionMillis()
         if (expected != null && actual != null && abs(actual - expected) > SEEK_MILLIS) jumped = true
         playing = update.playing
         if (update.playing) pausedSince = null else if (pausedSince == null) pausedSince = nowMillis()
-        val query = trackOf(update)
         if (query == null) {
             identity = null
             lyrics = null
@@ -165,7 +167,7 @@ internal class LyricsController(
     // network can be slow to come up after CarPlay connects, so ask again with growing pauses.
     private fun request(query: TrackQuery, attempt: Int) {
         val forTrack = generation
-        repository.lookup(query) { _, outcome ->
+        repository.lookup(query, isStale = { forTrack != generation }) { _, outcome ->
             handler.post {
                 if (forTrack != generation) return@post
                 when (outcome) {
@@ -200,8 +202,13 @@ internal class LyricsController(
         val stopped = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_HIDE_MILLIS } == true
         if (mode == LyricsPlacement.OFF || lines == null || position == null || suppressed || hiddenForDriving || railBlocked || stopped) {
             // Music that stops and a car that moves fade the overlay out; every other reason clears it at once.
-            if (hiddenForDriving || stopped) pill.fadeOut() else pill.hide()
-            rail.hide()
+            if (hiddenForDriving || stopped) {
+                pill.fadeOut()
+                rail.fadeOut()
+            } else {
+                pill.hide()
+                rail.hide()
+            }
             nextChangeMillis = null
             return
         }

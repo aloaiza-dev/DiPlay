@@ -69,6 +69,14 @@ class LyricsRepositoryTest {
     }
 
     @Test
+    fun aLookupThatWentStaleBeforeItsTurnIsSkippedWithoutARequest() {
+        var answered = false
+        repository().lookup(query, isStale = { true }) { _, _ -> answered = true }
+        assertEquals(0, calls)
+        assertEquals(false, answered)
+    }
+
+    @Test
     fun doesNotCacheNetworkFailure() {
         reply = { throw IOException("busy") }
         assertNull(lookup(repository()))

@@ -1033,7 +1033,7 @@
     <string name="settings_lyrics_off">Off</string>
     <string name="settings_lyrics_top_pill">Top pill</string>
     <string name="settings_lyrics_side_rail">Side rail</string>
-    <string name="settings_lyrics_description">Shows synced lyrics over CarPlay. DiPlay sends the song title and artist to the LRCLIB lyrics service to find them. The head unit needs internet. Applies when you return to CarPlay.</string>
+    <string name="settings_lyrics_description">Shows synced lyrics over CarPlay. To find them, DiPlay sends the song title, artist, album and length to the LRCLIB lyrics service, which also sees the head unit’s IP address. The head unit needs internet. DiPlay also reads the car’s speed from GPS location, to take the touch controls away while the car moves. Applies when you return to CarPlay.</string>
     <string name="settings_lyrics_hide_while_driving">Hide lyrics while driving</string>
     <string name="settings_lyrics_hide_while_driving_description">Hides lyrics when the car moves. Needs the car’s speed from GPS location. If DiPlay cannot read the speed, the lyrics stay visible.</string>
     <string name="settings_lyrics_speed_unavailable">DiPlay cannot read the speed. Allow precise Location for DiPlay in the head unit’s app permissions.</string>

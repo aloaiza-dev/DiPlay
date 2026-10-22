@@ -143,7 +143,7 @@ class LyricsControllerTest {
         advance(1_000L)
         publish(np("line four", elapsed = 4_000L))
         runJobs()
-        assertEquals(2, calls)
+        assertEquals("the lookups queued for earlier titles went stale and never asked", 0, calls)
         assertEquals(View.GONE, pill.visibility)
     }
 
@@ -155,7 +155,7 @@ class LyricsControllerTest {
         publish(np("line three"))
         publish(np("New song", artist = "Someone else"))
         runJobs()
-        assertEquals(3, calls)
+        assertEquals("only the real track is asked; the churned titles went stale", 1, calls)
         assertEquals(View.VISIBLE, pill.visibility)
     }
 
@@ -675,6 +675,40 @@ class LyricsControllerTest {
         advance(400L)
         assertEquals(View.VISIBLE, rail.gearButton.visibility)
         assertEquals(View.VISIBLE, rail.pillButton.visibility)
+    }
+
+    @Test
+    fun aNewTrackWithoutAPositionDoesNotInheritTheOldTracksPosition() {
+        lrc = { "[00:01.00]a\n[00:03.00]b\n[01:00.00]c" }
+        controller.start()
+        publish(np("Song A", elapsed = 2_000L, artist = "A"))
+        runJobs()
+        assertEquals(View.VISIBLE, pill.visibility)
+        publish(np("Song B", elapsed = null, artist = "B"))
+        runJobs()
+        advance(400L)
+        assertEquals("no position yet: nothing is shown", View.GONE, pill.visibility)
+        publish(np("Song B", elapsed = 100L, artist = "B"))
+        advance(400L)
+        assertEquals(View.VISIBLE, pill.visibility)
+    }
+
+    @Test
+    fun theRailFadesOutLikeThePillWhenDrivingHidesIt() {
+        placement = LyricsPlacement.SIDE_RAIL
+        hideWhileDriving = true
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        assertEquals(View.VISIBLE, rail.visibility)
+        val steps = mutableListOf<Pair<Int, Int>>()
+        repeat(8) {
+            onSpeed?.invoke(30)
+            val right = rail.visibility
+            advance(500L)
+            steps += right to rail.visibility
+        }
+        assertTrue("on the step the car counts as moving the rail is still on its way out", steps.contains(View.VISIBLE to View.GONE))
     }
 
     @Test

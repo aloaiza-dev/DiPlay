@@ -21,9 +21,12 @@ class LyricsRepository(
     private val worker: Executor,
     private val nowMillis: () -> Long,
 ) {
-    /** [onResult] runs on [worker]. */
-    fun lookup(query: TrackQuery, onResult: (TrackQuery, LyricsOutcome) -> Unit) {
-        worker.execute { onResult(query, resolve(query)) }
+    /**
+     * [onResult] runs on [worker]. A lookup whose turn comes when [isStale] is true is dropped without a request
+     * or a reply: the worker is one thread, and a stale lookup must not hold up the next track's.
+     */
+    fun lookup(query: TrackQuery, isStale: () -> Boolean = { false }, onResult: (TrackQuery, LyricsOutcome) -> Unit) {
+        worker.execute { if (!isStale()) onResult(query, resolve(query)) }
     }
 
     private fun resolve(query: TrackQuery): LyricsOutcome {
