@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Typeface
+import android.text.Layout
 import android.util.TypedValue
 import android.view.ViewGroup
 import android.view.animation.PathInterpolator
@@ -270,7 +271,9 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
     private fun rebuildRows() {
         removeAllViews()
         reach = slotReachFor(windowHeightDp)
-        rows = List(2 * reach + 1) { lyricsLine(context).apply { typeface = Typeface.DEFAULT_BOLD; maxLines = 2 } }
+        rows = List(2 * reach + 1) {
+            lyricsLine(context).apply { typeface = Typeface.DEFAULT_BOLD; maxLines = 2; breakStrategy = Layout.BREAK_STRATEGY_BALANCED }
+        }
         rows.forEach { addView(it) }
         applySizes()
         applyTheme()

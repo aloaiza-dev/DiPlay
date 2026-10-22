@@ -5,9 +5,9 @@ object LyricsLayout {
     const val PILL_TOP_MARGIN_DP = 12
     const val PILL_MAX_WIDTH_FRACTION = 0.55f
     const val PILL_MIN_TEXT_SCALE = 0.8f
-    const val RAIL_WIDTH_FRACTION = 0.32f
+    const val RAIL_WIDTH_FRACTION = 0.36f
     const val RAIL_MIN_DP = 240f
-    const val RAIL_MAX_DP = 420f
+    const val RAIL_MAX_DP = 480f
     const val RAIL_MAX_FRACTION = 0.45f
     const val NARROW_HEIGHT_DP = 360f
     const val NARROW_TYPE_SCALE = 0.8f
@@ -18,7 +18,7 @@ object LyricsLayout {
     const val PILL_ROW_GAP_EM = 0.12f
     const val PILL_RADIUS_EM = 0.5f
     const val PILL_ELEVATION_EM = 0.2f
-    const val RAIL_PADDING_H_EM = 0.7f
+    const val RAIL_PADDING_H_EM = 0.45f
     const val RAIL_PADDING_V_EM = 0.6f
     const val RAIL_ROW_GAP_EM = 0.22f
     const val RAIL_RADIUS_EM = 0.7f
@@ -26,13 +26,13 @@ object LyricsLayout {
     const val RIM_DP = 1.2f
     const val LINE_SPACING_MULTIPLIER = 1.15f
 
-    // The rail is a card that floats at the edge: about 62% of the window height, centred, off the edge by 3%.
+    // The rail is a card that floats at the edge: about 62% of the window height, centred, off the edge by 1.2%.
     const val RAIL_HEIGHT_FRACTION = 0.62f
-    const val RAIL_EDGE_MARGIN_FRACTION = 0.03f
+    const val RAIL_EDGE_MARGIN_FRACTION = 0.012f
 
     const val PILL_CURRENT_SP = 28f
     const val PILL_NEXT_SP = 20f
-    const val RAIL_TEXT_SP = 28f
+    const val RAIL_TEXT_SP = 32f
 
     // Head units differ a lot in density. XPENG runs 2400 px at 144 dpi, which is 2666 dp wide: type sized
     // for a 1280 dp window would be tiny there, so type and the rail limits grow with the window, up to 2x.

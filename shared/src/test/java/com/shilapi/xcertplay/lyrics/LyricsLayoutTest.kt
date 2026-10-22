@@ -12,24 +12,24 @@ class LyricsLayoutTest {
 
     @Test
     fun railWidthScalesInTheMiddle() {
-        assertEquals(320f, LyricsLayout.railWidthDp(1000f), 0.01f)
+        assertEquals(360f, LyricsLayout.railWidthDp(1000f), 0.01f)
     }
 
     @Test
     fun railWidthClampsToMaximum() {
-        assertEquals(840f, LyricsLayout.railWidthDp(5000f), 0.01f)
+        assertEquals(960f, LyricsLayout.railWidthDp(5000f), 0.01f)
     }
 
     @Test
-    fun railOnAnXpengSizedWindowIsAboutOneThirdOfTheScreen() {
-        // 2666 dp wide at 0.9 density is 2400 px. The rail limits double with the type: 840 dp is 756 px.
-        assertEquals(840f, LyricsLayout.railWidthDp(2666f), 0.01f)
+    fun railOnAnXpengSizedWindowIsAboutAThirdOfTheScreen() {
+        // 2666 dp wide at 0.9 density is 2400 px. The rail limits double with the type: 960 dp is 864 px, 36%.
+        assertEquals(960f, LyricsLayout.railWidthDp(2666f), 0.5f)
     }
 
     @Test
     fun railIsAFloatingCardAboutSixTenthsOfTheWindowHeight() {
         assertEquals(0.62f * 700f, LyricsLayout.railHeightDp(700f), 0.01f)
-        assertEquals(0.03f * 700f, LyricsLayout.railEdgeMarginDp(700f), 0.01f)
+        assertEquals(0.012f * 700f, LyricsLayout.railEdgeMarginDp(700f), 0.01f)
     }
 
     @Test

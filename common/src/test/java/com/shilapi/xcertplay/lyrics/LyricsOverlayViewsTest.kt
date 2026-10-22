@@ -293,6 +293,12 @@ class LyricsOverlayViewsTest {
     }
 
     @Test
+    fun railLinesWrapInBalancedRowsSoNoSingleWordIsLeftAlone() {
+        val rail = LyricsRailView(context)
+        assertTrue((-rail.slotReach..rail.slotReach).all { rail.row(it).breakStrategy == android.text.Layout.BREAK_STRATEGY_BALANCED })
+    }
+
+    @Test
     fun theWheelScalesAndFadesLinesByDistance() {
         val rail = LyricsRailView(context)
         val root = laidOutRail(rail)
@@ -341,9 +347,9 @@ class LyricsOverlayViewsTest {
     fun theRailCardFollowsTheLayoutRule() {
         val rail = LyricsRailView(context).apply { setWindowSizeDp(1000f, 480f) }
         val density = context.resources.displayMetrics.density
-        assertEquals((320 * density).toInt(), rail.preferredWidthPx())
+        assertEquals((360 * density).toInt(), rail.preferredWidthPx())
         assertEquals((0.62f * 480f * density).toInt(), rail.preferredHeightPx())
-        assertEquals((0.03f * 480f * density).toInt(), rail.edgeMarginPx())
+        assertEquals((0.012f * 480f * density).toInt(), rail.edgeMarginPx())
     }
 
     @Test
