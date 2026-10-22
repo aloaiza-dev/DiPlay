@@ -13,6 +13,7 @@ import com.shilapi.xcertplay.airplay.AirPlayIdentity
 import com.shilapi.xcertplay.airplay.PairingStore
 import com.shilapi.xcertplay.airplay.SafeAreaCodec
 import com.shilapi.xcertplay.airplay.SafeAreaRect
+import com.shilapi.xcertplay.lyrics.LyricsPlacement
 import com.shilapi.xcertplay.orchestration.ManualHotspotBand
 import com.shilapi.xcertplay.orchestration.ManualHotspotSecurity
 import com.shilapi.xcertplay.orchestration.MfiTarget
@@ -85,6 +86,8 @@ object AirPlayPersistence {
     private const val KEY_DIRECT_VIDEO_OUTPUT = "direct_video_output"
     private const val KEY_LOW_LATENCY_DECODER = "low_latency_decoder"
     private const val KEY_FPS_COUNTER = "fps_counter"
+    private const val KEY_LYRICS_PLACEMENT = "lyrics_placement"
+    private const val KEY_HIDE_LYRICS_WHILE_DRIVING = "hide_lyrics_while_driving"
     private const val KEY_CLUSTER_MAP = "cluster_map_enabled"
 
     /**
@@ -732,6 +735,21 @@ object AirPlayPersistence {
 
     fun saveFpsCounter(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_FPS_COUNTER, enabled).apply()
+    }
+
+    fun loadLyricsPlacement(context: Context): LyricsPlacement = LyricsPlacement.fromKey(
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_LYRICS_PLACEMENT, null),
+    )
+
+    fun saveLyricsPlacement(context: Context, placement: LyricsPlacement) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_LYRICS_PLACEMENT, placement.key).apply()
+    }
+
+    fun loadHideLyricsWhileDriving(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_HIDE_LYRICS_WHILE_DRIVING, false)
+
+    fun saveHideLyricsWhileDriving(context: Context, hide: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_HIDE_LYRICS_WHILE_DRIVING, hide).apply()
     }
 
     fun loadLowLatencyDecoder(context: Context): Boolean =

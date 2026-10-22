@@ -986,4 +986,12 @@
     <string name="cluster_projection_shape_description">半螢幕會在儀表板地圖旁保留儀表原本的車速與狀態資訊；全螢幕則讓地圖佔滿整個儀表板。CarPlay 地圖出現時 DiPlay 會設定該形態，否則會覆蓋你在車機上選好的導航模式。需要車機已授權網路 ADB。</string>
     <string name="settings_cluster_speedometer_album_color">速度表背景使用專輯顏色</string>
     <string name="settings_cluster_speedometer_album_color_description">平滑過渡至專輯邊框的顏色，並保留所選的不透明度。</string>
+    <string name="settings_lyrics_title">歌詞（實驗性）</string>
+    <string name="settings_lyrics_off">關閉</string>
+    <string name="settings_lyrics_top_pill">頂部膠囊</string>
+    <string name="settings_lyrics_side_rail">側邊欄</string>
+    <string name="settings_lyrics_description">在 CarPlay 上方顯示同步歌詞。DiPlay 會將歌曲名稱與演出者傳送到 LRCLIB 歌詞服務以尋找歌詞。車機需要連網。返回 CarPlay 後生效。</string>
+    <string name="settings_lyrics_hide_while_driving">行駛時隱藏歌詞</string>
+    <string name="settings_lyrics_hide_while_driving_description">車輛行駛時隱藏歌詞。需要透過 GPS 定位取得車速。若 DiPlay 無法讀取車速，歌詞會持續顯示。</string>
+    <string name="settings_lyrics_speed_unavailable">DiPlay 無法讀取車速。請在車機的應用程式權限中允許 DiPlay 使用精確位置。</string>
 </resources>

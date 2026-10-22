@@ -938,4 +938,12 @@
     <string name="cluster_projection_shape_description">На пів екрана швидкість і стан, які панель зазвичай показує, залишаються поруч із картою; на весь екран карта займає всю панель. DiPlay задає цей вигляд щоразу, коли з&#8217;являється карта CarPlay, інакше він перекриває вигляд, вибраний в автомобілі. Потрібен ADB через мережу на головному пристрої.</string>
     <string name="settings_cluster_speedometer_album_color">Колір альбому для тла спідометра</string>
     <string name="settings_cluster_speedometer_album_color_description">Плавно змінює тло на колір рамки альбому. Зберігає вибрану непрозорість.</string>
+    <string name="settings_lyrics_title">Тексти пісень (експериментально)</string>
+    <string name="settings_lyrics_off">Вимк.</string>
+    <string name="settings_lyrics_top_pill">Плашка вгорі</string>
+    <string name="settings_lyrics_side_rail">Бічна панель</string>
+    <string name="settings_lyrics_description">Показує синхронізований текст пісні поверх CarPlay. DiPlay надсилає назву й виконавця до сервісу текстів LRCLIB, щоб знайти текст. Головному пристрою потрібен інтернет. Застосовується після повернення в CarPlay.</string>
+    <string name="settings_lyrics_hide_while_driving">Ховати текст під час руху</string>
+    <string name="settings_lyrics_hide_while_driving_description">Ховає текст, коли автомобіль їде. Швидкість береться з GPS-геолокації. Якщо DiPlay не може прочитати швидкість, текст залишається на екрані.</string>
+    <string name="settings_lyrics_speed_unavailable">DiPlay не може прочитати швидкість. Дозвольте DiPlay точну геолокацію в дозволах застосунків головного пристрою.</string>
 </resources>

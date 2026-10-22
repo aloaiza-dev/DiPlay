@@ -926,4 +926,12 @@
     <string name="cluster_projection_shape_description">La pantalla partida mantiene junto al mapa la velocidad y el estado que el panel muestra normalmente; la pantalla completa deja que el mapa ocupe todo el panel. DiPlay fija la forma cada vez que aparece el mapa de CarPlay, que de lo contrario anula la forma elegida en el coche. Requiere ADB por red en la unidad principal.</string>
     <string name="settings_cluster_speedometer_album_color">Usar el color del álbum en el fondo del velocímetro</string>
     <string name="settings_cluster_speedometer_album_color_description">Iguala el color del borde del álbum con transiciones suaves. Conserva la opacidad elegida.</string>
+    <string name="settings_lyrics_title">Letras (experimental)</string>
+    <string name="settings_lyrics_off">Desactivado</string>
+    <string name="settings_lyrics_top_pill">Cápsula superior</string>
+    <string name="settings_lyrics_side_rail">Panel lateral</string>
+    <string name="settings_lyrics_description">Muestra la letra sincronizada sobre CarPlay. DiPlay envía el título y el artista de la canción al servicio de letras LRCLIB para encontrarla. La unidad principal necesita internet. Se aplica al volver a CarPlay.</string>
+    <string name="settings_lyrics_hide_while_driving">Ocultar letras al conducir</string>
+    <string name="settings_lyrics_hide_while_driving_description">Oculta la letra cuando el coche se mueve. Necesita la velocidad obtenida por ubicación GPS. Si DiPlay no puede leer la velocidad, la letra sigue visible.</string>
+    <string name="settings_lyrics_speed_unavailable">DiPlay no puede leer la velocidad. Permite la ubicación precisa para DiPlay en los permisos de aplicaciones de la unidad principal.</string>
 </resources>

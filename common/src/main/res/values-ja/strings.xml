@@ -1028,4 +1028,12 @@
     <string name="cluster_projection_shape_description">小画面ではメーター本来の車速や状態表示が地図の横に残ります。全画面では地図がメーター全体を覆います。CarPlayの地図が表示されるとDiPlayがこの形態を設定するため、クルマ側で選んだナビモードは上書きされます。車載機のネットワークADBが必要です。</string>
     <string name="settings_cluster_speedometer_album_color">速度計の背景にアルバムの色を使用</string>
     <string name="settings_cluster_speedometer_album_color_description">アルバムの枠の色に滑らかに切り替わります。選択した不透明度は維持されます。</string>
+    <string name="settings_lyrics_title">歌詞（実験的機能）</string>
+    <string name="settings_lyrics_off">オフ</string>
+    <string name="settings_lyrics_top_pill">上部バー</string>
+    <string name="settings_lyrics_side_rail">サイドパネル</string>
+    <string name="settings_lyrics_description">CarPlayの上に同期した歌詞を表示します。歌詞を探すため、DiPlayは曲名とアーティスト名を歌詞サービスLRCLIBに送信します。車載機にはインターネット接続が必要です。CarPlayに戻ると反映されます。</string>
+    <string name="settings_lyrics_hide_while_driving">走行中は歌詞を非表示</string>
+    <string name="settings_lyrics_hide_while_driving_description">車が動いている間は歌詞を隠します。GPSの位置情報から速度を取得します。DiPlayが速度を読み取れない場合、歌詞は表示されたままです。</string>
+    <string name="settings_lyrics_speed_unavailable">DiPlayが速度を読み取れません。車載機のアプリ権限でDiPlayに正確な位置情報を許可してください。</string>
 </resources>

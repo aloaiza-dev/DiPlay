@@ -757,6 +757,10 @@ class AdaptiveSettingsUiTest {
 
         assertTrue(display.any { it.startsWith(text(R.string.carplay_dock)) })
         assertFalse(vehicle.any { it.startsWith(text(R.string.carplay_dock)) })
+        assertTrue(display.any { it.startsWith(text(R.string.settings_lyrics_title)) })
+        assertTrue(display.any { it.startsWith(text(R.string.settings_lyrics_hide_while_driving)) })
+        assertFalse(advanced.any { it.startsWith(text(R.string.settings_lyrics_title)) })
+        assertFalse(vehicle.any { it.startsWith(text(R.string.settings_lyrics_title)) })
 
         assertTrue(connection.any { it.startsWith(text(R.string.settings_usb_charging)) })
         assertFalse(advanced.any { it.startsWith(text(R.string.settings_usb_charging)) })

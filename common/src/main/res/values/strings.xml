@@ -1029,4 +1029,12 @@
     <string name="cluster_projection_shape_description">Half screen keeps the speed and status readouts the cluster normally shows beside the map; full screen lets the map fill the cluster. DiPlay sets the shape whenever the CarPlay map appears, which otherwise overrides the shape picked on the car. Needs ADB over network on the head unit.</string>
     <string name="settings_cluster_speedometer_album_color">Use album color for speedometer background</string>
     <string name="settings_cluster_speedometer_album_color_description">Match the album frame color with smooth transitions. Keeps the selected opacity.</string>
+    <string name="settings_lyrics_title">Lyrics (experimental)</string>
+    <string name="settings_lyrics_off">Off</string>
+    <string name="settings_lyrics_top_pill">Top pill</string>
+    <string name="settings_lyrics_side_rail">Side rail</string>
+    <string name="settings_lyrics_description">Shows synced lyrics over CarPlay. DiPlay sends the song title and artist to the LRCLIB lyrics service to find them. The head unit needs internet. Applies when you return to CarPlay.</string>
+    <string name="settings_lyrics_hide_while_driving">Hide lyrics while driving</string>
+    <string name="settings_lyrics_hide_while_driving_description">Hides lyrics when the car moves. Needs the car’s speed from GPS location. If DiPlay cannot read the speed, the lyrics stay visible.</string>
+    <string name="settings_lyrics_speed_unavailable">DiPlay cannot read the speed. Allow precise Location for DiPlay in the head unit’s app permissions.</string>
 </resources>
