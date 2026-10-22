@@ -60,6 +60,7 @@ import com.shilapi.xcertplay.compat.closeCompat
 import com.shilapi.xcertplay.hud.BydAdbAccess
 import com.shilapi.xcertplay.lyrics.LocationLyricsSpeedSource
 import com.shilapi.xcertplay.lyrics.LyricsPlacement
+import com.shilapi.xcertplay.lyrics.LyricsRailSide
 import com.shilapi.xcertplay.lyrics.LyricsTiming
 import com.shilapi.xcertplay.lyrics.lyricsTimingLabel
 import com.shilapi.xcertplay.hud.BydNavigationOutputs
@@ -1958,6 +1959,12 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             choice(card, getString(R.string.settings_lyrics_title), placementLabels,
                 placements.indexOf(AirPlayPersistence.loadLyricsPlacement(this)), reconnects = false) {
                 AirPlayPersistence.saveLyricsPlacement(this, placements[it])
+            }
+            val sides = LyricsRailSide.entries
+            choice(card, getString(R.string.settings_lyrics_rail_side), listOf(R.string.settings_lyrics_rail_side_auto,
+                R.string.settings_lyrics_rail_side_left, R.string.settings_lyrics_rail_side_right).map { getString(it) },
+                sides.indexOf(AirPlayPersistence.loadLyricsRailSide(this)), reconnects = false) {
+                AirPlayPersistence.saveLyricsRailSide(this, sides[it])
             }
             choice(card, getString(R.string.settings_lyrics_timing), LyricsTiming.PRESETS_MILLIS.map { lyricsTimingLabel(this, it) },
                 LyricsTiming.nearestPresetIndex(AirPlayPersistence.loadLyricsOffsetMillis(this)), reconnects = false) {

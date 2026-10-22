@@ -939,6 +939,10 @@
     <string name="settings_lyrics_timing_earlier">%1$s s antes</string>
     <string name="settings_lyrics_timing_later">%1$s s después</string>
     <string name="settings_lyrics_timing_description">Muestra cada línea antes o después para coincidir con el sonido. Si la letra llega después de la canción, elige antes. Se aplica al volver a CarPlay.</string>
+    <string name="settings_lyrics_rail_side">Lado del panel</string>
+    <string name="settings_lyrics_rail_side_auto">Automático</string>
+    <string name="settings_lyrics_rail_side_left">Izquierda</string>
+    <string name="settings_lyrics_rail_side_right">Derecha</string>
     <string name="lyrics_control_earlier">Antes</string>
     <string name="lyrics_control_later">Después</string>
     <string name="lyrics_control_pill">Cambiar a la cápsula</string>

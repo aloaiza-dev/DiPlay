@@ -2,6 +2,7 @@ package com.shilapi.xcertplay
 
 import android.content.Context
 import com.shilapi.xcertplay.lyrics.LyricsPlacement
+import com.shilapi.xcertplay.lyrics.LyricsRailSide
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -57,6 +58,19 @@ class LyricsSettingsTest {
         assertEquals(2000, AirPlayPersistence.loadLyricsOffsetMillis(context))
         prefs.edit().putInt("lyrics_offset_ms", -99_999).apply()
         assertEquals(-2000, AirPlayPersistence.loadLyricsOffsetMillis(context))
+    }
+
+    @Test fun railSideDefaultsToAutoAndRoundTrips() {
+        assertEquals(LyricsRailSide.AUTO, AirPlayPersistence.loadLyricsRailSide(context))
+        for (side in LyricsRailSide.entries) {
+            AirPlayPersistence.saveLyricsRailSide(context, side)
+            assertEquals(side, AirPlayPersistence.loadLyricsRailSide(context))
+        }
+    }
+
+    @Test fun anUnknownRailSideFallsBackToAuto() {
+        prefs.edit().putString("lyrics_rail_side", "top").apply()
+        assertEquals(LyricsRailSide.AUTO, AirPlayPersistence.loadLyricsRailSide(context))
     }
 
     @Test fun lyricsSectionIsInDisplayOnly() {

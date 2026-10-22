@@ -999,6 +999,10 @@
     <string name="settings_lyrics_timing_earlier">提前 %1$s 秒</string>
     <string name="settings_lyrics_timing_later">延后 %1$s 秒</string>
     <string name="settings_lyrics_timing_description">让每行歌词提前或延后显示，以匹配声音。如果歌词比歌曲慢，请选择提前。返回 CarPlay 后生效。</string>
+    <string name="settings_lyrics_rail_side">侧栏位置</string>
+    <string name="settings_lyrics_rail_side_auto">自动</string>
+    <string name="settings_lyrics_rail_side_left">左侧</string>
+    <string name="settings_lyrics_rail_side_right">右侧</string>
     <string name="lyrics_control_earlier">提前</string>
     <string name="lyrics_control_later">延后</string>
     <string name="lyrics_control_pill">切换到胶囊视图</string>

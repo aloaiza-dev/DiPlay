@@ -1181,8 +1181,9 @@ class CarPlayHostActivity : ComponentActivity() {
         lyricsController?.start()
     }
 
-    // The rail sits on the edge opposite CarPlay's dock. The dock follows the driving side; unverified on a car.
-    private fun lyricsRailGravity() = Gravity.CENTER_VERTICAL or if (rightHandDrive) Gravity.LEFT else Gravity.RIGHT
+    // Auto puts the rail on the edge opposite CarPlay's dock. The dock follows the driving side; unverified on a car.
+    private fun lyricsRailGravity() = Gravity.CENTER_VERTICAL or
+        if (AirPlayPersistence.loadLyricsRailSide(this).onLeft(rightHandDrive)) Gravity.LEFT else Gravity.RIGHT
 
     // A floating card: its size and its off-the-edge margin follow the window, and its side the driving side.
     private fun fitLyricsRail(rail: LyricsRailView) {

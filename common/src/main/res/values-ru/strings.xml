@@ -939,6 +939,10 @@
     <string name="settings_lyrics_timing_earlier">На %1$s с раньше</string>
     <string name="settings_lyrics_timing_later">На %1$s с позже</string>
     <string name="settings_lyrics_timing_description">Показывает каждую строку раньше или позже, чтобы совпасть со звуком. Если текст отстаёт от песни, выберите «раньше». Применяется при возврате в CarPlay.</string>
+    <string name="settings_lyrics_rail_side">Сторона панели</string>
+    <string name="settings_lyrics_rail_side_auto">Авто</string>
+    <string name="settings_lyrics_rail_side_left">Слева</string>
+    <string name="settings_lyrics_rail_side_right">Справа</string>
     <string name="lyrics_control_earlier">Раньше</string>
     <string name="lyrics_control_later">Позже</string>
     <string name="lyrics_control_pill">Переключить на плашку</string>

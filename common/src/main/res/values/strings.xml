@@ -1042,6 +1042,10 @@
     <string name="settings_lyrics_timing_earlier">%1$s s earlier</string>
     <string name="settings_lyrics_timing_later">%1$s s later</string>
     <string name="settings_lyrics_timing_description">Shows each line earlier or later to match the sound. If the lyrics come after the song, choose earlier. Applies when you return to CarPlay.</string>
+    <string name="settings_lyrics_rail_side">Rail side</string>
+    <string name="settings_lyrics_rail_side_auto">Auto</string>
+    <string name="settings_lyrics_rail_side_left">Left</string>
+    <string name="settings_lyrics_rail_side_right">Right</string>
     <string name="lyrics_control_earlier">Earlier</string>
     <string name="lyrics_control_later">Later</string>
     <string name="lyrics_control_pill">Switch to pill view</string>
