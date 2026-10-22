@@ -20,7 +20,7 @@ fun interface LyricsSource {
 }
 
 /**
- * [get] returns the body, null for "not found", and throws [IOException] for any other failure.
+ * [get] returns the body, null for "not found" (404 or 400), and throws [IOException] for any other failure.
  *
  * The exact lookup needs the spelling LRCLIB stores, and one song has many ("Song (Remastered 2008)",
  * "Song - Remastered 2008", other albums). So a miss falls back to a search, matched by title without its
@@ -36,8 +36,9 @@ class LrclibSource(private val get: (url: String) -> String?) : LyricsSource {
         return null
     }
 
+    // A reply that is not JSON (a captive portal's page) is a failure to retry, not "no lyrics" to cache.
     private fun syncedLyricsOf(body: String?): String? {
-        val json = body?.let { runCatching { JSONObject(it) }.getOrNull() } ?: return null
+        val json = body?.let { runCatching { JSONObject(it) }.getOrElse { throw IOException("Lyrics reply is not JSON") } } ?: return null
         return synced(json)
     }
 
@@ -47,7 +48,7 @@ class LrclibSource(private val get: (url: String) -> String?) : LyricsSource {
     }
 
     private fun pick(body: String?, query: TrackQuery): String? {
-        val results = body?.let { runCatching { JSONArray(it) }.getOrNull() } ?: return null
+        val results = body?.let { runCatching { JSONArray(it) }.getOrElse { throw IOException("Lyrics reply is not JSON") } } ?: return null
         val wantedTitle = baseTitle(query.title)
         val wantedArtist = plain(query.artist)
         var best: String? = null
@@ -117,7 +118,8 @@ internal fun lrclibHttpGet(url: String): String? {
         connection.setRequestProperty("User-Agent", USER_AGENT)
         connection.setRequestProperty("Accept", "application/json")
         val status = connection.responseCode
-        if (status == HttpURLConnection.HTTP_NOT_FOUND) return null
+        // 400 too: LRCLIB can refuse an exact lookup it cannot match, and the search fallback must still run.
+        if (status == HttpURLConnection.HTTP_NOT_FOUND || status == HttpURLConnection.HTTP_BAD_REQUEST) return null
         if (status !in 200..299) throw IOException("Lyrics service answered $status")
         val output = ByteArrayOutputStream()
         val buffer = ByteArray(8 * 1024)

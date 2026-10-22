@@ -134,9 +134,15 @@ class LrclibSourceTest {
         assertNull(source().fetch(query))
     }
 
-    @Test
-    fun returnsNullForAReplyThatIsNotJson() {
-        assertNull(source("api" to "<html>busy</html>").fetch(TrackQuery("s", "a", null, null)))
+    // A captive portal answers 200 with a page: that is a failed lookup, not "no lyrics".
+    @Test(expected = IOException::class)
+    fun aReplyThatIsNotJsonIsAFailure() {
+        source("api" to "<html>busy</html>").fetch(TrackQuery("s", "a", null, null))
+    }
+
+    @Test(expected = IOException::class)
+    fun aSearchReplyThatIsNotJsonIsAFailure() {
+        source("api/search" to "<html>busy</html>").fetch(TrackQuery("s", "a", null, null))
     }
 
     @Test(expected = IOException::class)

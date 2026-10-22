@@ -61,6 +61,14 @@ class LyricsRepositoryTest {
     }
 
     @Test
+    fun lyricsAreStillReturnedWhenTheCacheCannotBeWritten() {
+        val blocked = folder.newFile("not-a-directory")
+        assertNotNull(lookup(repository(blocked)))
+        reply = { null }
+        assertEquals(LyricsOutcome.None, outcome(repository(blocked), query.copy(title = "Other")))
+    }
+
+    @Test
     fun doesNotCacheNetworkFailure() {
         reply = { throw IOException("busy") }
         assertNull(lookup(repository()))

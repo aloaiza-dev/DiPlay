@@ -48,9 +48,12 @@ class LyricsRepository(
             return LyricsOutcome.Failed
         }
         val lyrics = raw?.let(LrcParser::parse)?.takeIf { fitsDuration(it, query) }
-        cacheDir.mkdirs()
-        if (lyrics != null) write(hit, checkNotNull(raw)) else write(miss, "")
-        prune()
+        // A full or read-only disk must not cost the lyrics already fetched, or crash the worker.
+        runCatching {
+            cacheDir.mkdirs()
+            if (lyrics != null) write(hit, checkNotNull(raw)) else write(miss, "")
+            prune()
+        }
         return if (lyrics != null) LyricsOutcome.Found(lyrics) else LyricsOutcome.None
     }
 
