@@ -31,21 +31,21 @@ class LrclibSourceTest {
         source().fetch(TrackQuery("A & B", "Artist", "Album", 215_500L))
         assertEquals(
             "https://lrclib.net/api/get?track_name=A+%26+B&artist_name=Artist&album_name=Album&duration=216",
-            urls.first(),
+            urls.first { it.contains("api/get") },
         )
     }
 
     @Test
     fun omitsAlbumAndDurationWhenUnknown() {
         source().fetch(TrackQuery("Song", "Artist", null, null))
-        assertEquals("https://lrclib.net/api/get?track_name=Song&artist_name=Artist", urls.first())
+        assertEquals("https://lrclib.net/api/get?track_name=Song&artist_name=Artist", urls.first { it.contains("api/get") })
     }
 
     @Test
-    fun returnsSyncedLyricsFromTheExactLookup() {
+    fun returnsSyncedLyricsFromTheExactLookupWhenTheSearchFindsNothing() {
         val reply = """{"id":1,"instrumental":false,"plainLyrics":"x","syncedLyrics":"[00:01.00] a"}"""
         assertEquals("[00:01.00] a", source("api/get" to reply).fetch(query))
-        assertEquals(1, urls.size)
+        assertTrue("the exact lookup is the last resort: $urls", urls.last().contains("api/get"))
     }
 
     @Test
@@ -113,11 +113,65 @@ class LrclibSourceTest {
     }
 
     @Test
-    fun asksForAtMostThreeRequests() {
+    fun asksForAtMostThreeRequestsSearchesFirstAndTheExactLookupLast() {
         source().fetch(query)
         assertTrue("requests: $urls", urls.size <= 3)
-        assertTrue(urls.first().contains("api/get"))
-        assertTrue(urls.drop(1).all { it.contains("api/search") })
+        assertTrue(urls.first().contains("api/search"))
+        assertTrue(urls.last().contains("api/get"))
+        assertTrue(urls.dropLast(1).all { it.contains("api/search") })
+    }
+
+    // LRCLIB's exact lookup answers 503 the first time it sees a track, and its search is steadier.
+    @Test
+    fun aMatchFromTheSearchNeedsNoExactLookup() {
+        val results = "[" + entry("Matador", "Los Fabulosos Cadillacs", 276.0, synced = "[00:01.00] ok") + "]"
+        assertEquals("[00:01.00] ok", source("api/search" to results).fetch(query))
+        assertTrue("requests: $urls", urls.none { it.contains("api/get") })
+    }
+
+    @Test
+    fun aFailingSearchStillTriesTheExactLookup() {
+        val reply = """{"instrumental":false,"syncedLyrics":"[00:01.00] exact"}"""
+        val source = LrclibSource { url -> if (url.contains("api/search")) throw IOException("503") else reply }
+        assertEquals("[00:01.00] exact", source.fetch(query))
+    }
+
+    @Test(expected = IOException::class)
+    fun anExactLookupThatFailsAfterAnEmptySearchIsAFailureNotAMiss() {
+        LrclibSource { url -> if (url.contains("api/get")) throw IOException("503") else "[]" }.fetch(query)
+    }
+
+    @Test(expected = IOException::class)
+    fun aFailedSearchWithNothingFromTheExactLookupIsAFailureNotAMiss() {
+        LrclibSource { url -> if (url.contains("api/search")) throw IOException("503") else null }.fetch(query)
+    }
+
+    @Test
+    fun theSearchUsesOnlyThePrimaryArtist() {
+        source().fetch(TrackQuery("Real Love", "Clean Bandit, Jess Glynne", null, null))
+        val search = urls.first { it.contains("api/search") }
+        assertTrue("search: $search", search.contains("artist_name=Clean+Bandit&") || search.endsWith("artist_name=Clean+Bandit"))
+        assertTrue("the exact lookup keeps the full credit", urls.last().contains("artist_name=Clean+Bandit%2C+Jess+Glynne"))
+    }
+
+    @Test
+    fun aFeaturedArtistOnThePhoneStillMatchesTheMainArtistOnLrclib() {
+        val results = "[" + entry("Real Love", "Clean Bandit", 211.0, synced = "[00:01.00] real") + "]"
+        val query = TrackQuery("Real Love", "Clean Bandit, Jess Glynne", null, 211_000L)
+        assertEquals("[00:01.00] real", source("api/search" to results).fetch(query))
+    }
+
+    @Test
+    fun aCreditWrittenWithAmpersandsAndFeatMatchesEitherWay() {
+        val results = "[" + entry("Hear Me Now", "Alok, Zeeba & Bruno Martini", 193.0, synced = "[00:01.00] now") + "]"
+        val query = TrackQuery("Hear Me Now", "Alok feat. Zeeba, Bruno Martini", null, 193_000L)
+        assertEquals("[00:01.00] now", source("api/search" to results).fetch(query))
+    }
+
+    @Test
+    fun aDifferentArtistWhoSharesNoNameStillDoesNotMatch() {
+        val results = "[" + entry("Real Love", "Mary J. Blige", 211.0) + "]"
+        assertNull(source("api/search" to results).fetch(TrackQuery("Real Love", "Clean Bandit, Jess Glynne", null, 211_000L)))
     }
 
     @Test

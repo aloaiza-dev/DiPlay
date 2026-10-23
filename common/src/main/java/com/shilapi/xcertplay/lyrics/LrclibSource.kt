@@ -22,17 +22,30 @@ fun interface LyricsSource {
 /**
  * [get] returns the body, null for "not found" (404 or 400), and throws [IOException] for any other failure.
  *
- * The exact lookup needs the spelling LRCLIB stores, and one song has many ("Song (Remastered 2008)",
- * "Song - Remastered 2008", other albums). So a miss falls back to a search, matched by title without its
- * suffix, by artist and by a duration within [DURATION_TOLERANCE_MILLIS]. At most three requests per track.
+ * LRCLIB's exact lookup answers 503 the first time it sees a track and 200 on the next call, while its
+ * search answers in about half a second. So the search comes first: by title without its suffix, by the
+ * primary artist (a full credit such as "Clean Bandit, Jess Glynne" can fail there), matched by the artist
+ * credit and by a duration within [DURATION_TOLERANCE_MILLIS]. The exact lookup is the last resort. At most
+ * three requests per track. "No lyrics" is returned only when every request that was made answered.
  */
 class LrclibSource(private val get: (url: String) -> String?) : LyricsSource {
     override fun fetch(query: TrackQuery): String? {
-        syncedLyricsOf(get(getUrl(query)))?.let { return it }
+        var failure: IOException? = null
         val titles = listOf(query.title, withoutSuffix(query.title)).distinct().filter { it.isNotBlank() }
         for (title in titles) {
-            pick(get(searchUrl(title, query.artist)), query)?.let { return it }
+            try {
+                pick(get(searchUrl(title, primaryArtist(query.artist))), query)?.let { return it }
+            } catch (error: IOException) {
+                failure = error
+                break // the other spelling would meet the same trouble: try the exact lookup instead
+            }
         }
+        try {
+            syncedLyricsOf(get(getUrl(query)))?.let { return it }
+        } catch (error: IOException) {
+            failure = failure ?: error
+        }
+        failure?.let { throw it }
         return null
     }
 
@@ -50,13 +63,13 @@ class LrclibSource(private val get: (url: String) -> String?) : LyricsSource {
     private fun pick(body: String?, query: TrackQuery): String? {
         val results = body?.let { runCatching { JSONArray(it) }.getOrElse { throw IOException("Lyrics reply is not JSON") } } ?: return null
         val wantedTitle = baseTitle(query.title)
-        val wantedArtist = plain(query.artist)
+        val wantedArtists = artistKeys(query.artist)
         var best: String? = null
         var bestGap = Long.MAX_VALUE
         for (index in 0 until results.length()) {
             val entry = results.optJSONObject(index) ?: continue
             val lyrics = synced(entry) ?: continue
-            if (plain(entry.optString("artistName")) != wantedArtist) continue
+            if (artistKeys(entry.optString("artistName")).intersect(wantedArtists).isEmpty()) continue
             if (baseTitle(entry.optString("trackName")) != wantedTitle) continue
             val gap = durationGap(entry, query) ?: continue
             if (gap < bestGap) {
@@ -91,6 +104,17 @@ class LrclibSource(private val get: (url: String) -> String?) : LyricsSource {
         const val DURATION_TOLERANCE_MILLIS = 3_000L
     }
 }
+
+// A credit is a list of artists in many spellings: "A, B", "A & B", "A feat. B", "A • B", "A; B".
+private val ARTIST_SEPARATORS = Regex("""\s*(?:,|;|&|/|\+|•|\bfeat\.?(?=\s)|\bft\.?(?=\s)|\bfeaturing\b|\bwith\b|\bx\b|\band\b)\s*""", RegexOption.IGNORE_CASE)
+
+/** The artists of a credit, each in [plain] form. Two credits name the same song when they share one. */
+internal fun artistKeys(credit: String): Set<String> =
+    credit.split(ARTIST_SEPARATORS).map(::plain).filter { it.isNotBlank() }.toSet()
+
+/** The first artist of a credit as written, for a search that a long credit can make fail. */
+internal fun primaryArtist(credit: String): String =
+    credit.split(ARTIST_SEPARATORS).firstOrNull()?.trim()?.takeIf { it.isNotEmpty() } ?: credit
 
 /** Lower case, no accents, letters and digits only. */
 private fun plain(text: String): String =
