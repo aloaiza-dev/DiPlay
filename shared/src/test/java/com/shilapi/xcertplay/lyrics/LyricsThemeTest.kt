@@ -9,11 +9,9 @@ class LyricsThemeTest {
     private val white = 0xFFFFFFFF.toInt()
     private val black = 0xFF000000.toInt()
 
-    // The map colour that is hardest for each glass to hold against, under its lightest (top) end for night.
-    private fun worstBacking(night: Boolean): Int {
-        val colors = LyricsTheme.colors(night)
-        return if (night) LyricsTheme.over(colors.glassTop, white) else LyricsTheme.over(colors.glassBottom, black)
-    }
+    // The glass is dark in both themes and the text white, so the hardest picture is a white one under its
+    // lightest (top) end: a bright map in daylight.
+    private fun worstBacking(night: Boolean): Int = LyricsTheme.over(LyricsTheme.colors(night).glassTop, white)
 
     private fun ratio(night: Boolean, pick: (LyricsColors) -> Int): Double =
         LyricsTheme.contrast(pick(LyricsTheme.colors(night)), worstBacking(night))
@@ -50,8 +48,8 @@ class LyricsThemeTest {
         for (night in listOf(true, false)) {
             val pill = LyricsTheme.colors(night)
             val rail = LyricsTheme.railColors(night)
-            assertTrue((rail.glassTop ushr 24) >= 0xF0)
-            assertTrue((rail.glassBottom ushr 24) >= 0xF0)
+            assertTrue((rail.glassTop ushr 24) >= 0xE0)
+            assertTrue((rail.glassBottom ushr 24) >= 0xE0)
             assertTrue((rail.glassTop ushr 24) > (pill.glassTop ushr 24))
             assertTrue((rail.glassBottom ushr 24) > (pill.glassBottom ushr 24))
             assertEquals(pill.current, rail.current)
@@ -68,9 +66,25 @@ class LyricsThemeTest {
     }
 
     @Test
-    fun themesDiffer() {
-        assertNotEquals(LyricsTheme.colors(true).glassBottom, LyricsTheme.colors(false).glassBottom)
-        assertNotEquals(LyricsTheme.colors(true).current, LyricsTheme.colors(false).current)
+    fun bothThemesAreDarkGlassWithWhiteText() {
+        for (night in listOf(true, false)) {
+            val colors = LyricsTheme.colors(night)
+            assertEquals(0xFFFFFFFF.toInt(), colors.current)
+            assertTrue("glass luminance", LyricsTheme.contrast(white, LyricsTheme.over(colors.glassBottom, black)) > 12.0)
+            assertTrue("a specular edge on top", (colors.rimTop ushr 24) >= 0x50)
+            assertTrue("a sheen to lift the top", (colors.sheen ushr 24) in 0x14..0x40)
+        }
+    }
+
+    @Test
+    fun theRailStaysDarkWhiteTextAndHoldsTheFloorsOverAWhitePicture() {
+        for (night in listOf(true, false)) {
+            val rail = LyricsTheme.railColors(night)
+            val backing = LyricsTheme.over(rail.glassTop, white)
+            assertTrue(LyricsTheme.contrast(rail.current, backing) >= 8.0)
+            assertTrue(LyricsTheme.contrast(rail.next, backing) >= 5.0)
+            assertTrue(LyricsTheme.contrast(rail.far, backing) >= 4.0)
+        }
     }
 
     @Test

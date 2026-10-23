@@ -77,6 +77,11 @@ class LyricsControllerTest {
 
     private fun now() = SystemClock.uptimeMillis()
 
+    // These tests are about which line shows when; the clock must not run on while a fade plays.
+    private fun noAnimations() {
+        android.provider.Settings.Global.putFloat(context.contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 0f)
+    }
+
     private fun advance(millis: Long) = shadowOf(looper).idleFor(Duration.ofMillis(millis))
 
     private fun runJobs(reverse: Boolean = false) {
@@ -423,6 +428,7 @@ class LyricsControllerTest {
 
     @Test
     fun aNegativeOffsetShowsALineLater() {
+        noAnimations()
         lrc = { "[00:01.00]one\n[00:03.00]two" }
         offsetMillis = -500L
         controller.start()
@@ -443,6 +449,7 @@ class LyricsControllerTest {
 
     @Test
     fun aLineChangesOnTimeAndNotOnTheNextTick() {
+        noAnimations()
         lrc = { "[00:01.00]a\n[00:01.10]b\n[00:09.00]c" }
         controller.start()
         publish(np("Song", elapsed = 1_000L))
@@ -466,6 +473,7 @@ class LyricsControllerTest {
 
     @Test
     fun theRailTimingControlSavesEachStepAndAppliesItAtOnce() {
+        noAnimations()
         lrc = { "[00:01.00]one\n[00:03.00]two" }
         placement = LyricsPlacement.SIDE_RAIL
         controller.start()

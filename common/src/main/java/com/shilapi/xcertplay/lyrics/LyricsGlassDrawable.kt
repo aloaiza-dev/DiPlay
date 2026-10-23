@@ -11,12 +11,13 @@ import android.graphics.Shader
 import android.graphics.drawable.Drawable
 
 /**
- * Frosted glass for a shape that floats over a moving picture: a translucent vertical gradient, lighter at
- * the top, with a hairline rim that fades down the edge. Android cannot blur what is behind a view, so the
- * look comes from the layers, and the translucency keeps the road visible through it.
+ * Liquid glass for a shape that floats over a moving picture: a translucent vertical gradient, a sheen that
+ * lifts its top and a bright specular rim that fades down the edge. Android cannot blur what is behind a
+ * view, so the look comes from the layers, and the translucency keeps the road visible through it.
  */
 internal class LyricsGlassDrawable : Drawable() {
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val sheen = Paint(Paint.ANTI_ALIAS_FLAG)
     private val rim = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val shape = RectF()
     private var colors = LyricsTheme.colors(true)
@@ -40,11 +41,13 @@ internal class LyricsGlassDrawable : Drawable() {
         if (shaderHeight != shape.height()) {
             shaderHeight = shape.height()
             fill.shader = LinearGradient(0f, shape.top, 0f, shape.bottom, colors.glassTop, colors.glassBottom, Shader.TileMode.CLAMP)
+            sheen.shader = LinearGradient(0f, shape.top, 0f, shape.top + shape.height() * SHEEN_SHARE, colors.sheen, colors.sheen and 0xFFFFFF, Shader.TileMode.CLAMP)
             rim.strokeWidth = rimWidth
             rim.shader = LinearGradient(0f, shape.top, 0f, shape.bottom, colors.rimTop, colors.rimBottom, Shader.TileMode.CLAMP)
         }
         val corner = minOf(radius, shape.height() / 2f, shape.width() / 2f)
         canvas.drawRoundRect(shape, corner, corner, fill)
+        canvas.drawRoundRect(shape, corner, corner, sheen)
         canvas.drawRoundRect(shape, corner, corner, rim)
     }
 
@@ -61,5 +64,6 @@ internal class LyricsGlassDrawable : Drawable() {
 
     private companion object {
         const val SHADOW_STRENGTH = 0.55f
+        const val SHEEN_SHARE = 0.45f
     }
 }

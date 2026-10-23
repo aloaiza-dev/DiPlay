@@ -388,9 +388,10 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
             when (motion) {
                 Motion.ROLL -> {
                     val from = rollFrom[slot + 1] ?: enteringPose(target, rollFrom)
-                    shift = (1f - progress) * (from.centerY - target.centerY)
-                    scale = lerp(from.scale, target.scale, progress)
-                    alpha = lerp(from.alpha, target.alpha, progress)
+                    val p = LyricsMotion.staggered(progress, slot)
+                    shift = (1f - p) * (from.centerY - target.centerY)
+                    scale = lerp(from.scale, target.scale, p)
+                    alpha = lerp(from.alpha, target.alpha, p)
                 }
                 Motion.DIP -> alpha = target.alpha * lerp(LyricsMotion.DIP_ALPHA, 1f, progress)
                 else -> Unit

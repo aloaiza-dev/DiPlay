@@ -4,44 +4,49 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 /**
- * ARGB colours of one theme. The glass is a vertical gradient with a hairline rim that fades down the edge.
- * Hierarchy of the text comes from opacity, not hue.
+ * ARGB colours of one theme. The glass is a vertical gradient with a bright specular rim that fades down the
+ * edge and a sheen that lifts its top. Hierarchy of the text comes from opacity, not hue.
  */
 data class LyricsColors(
     val glassTop: Int,
     val glassBottom: Int,
     val rimTop: Int,
     val rimBottom: Int,
+    val sheen: Int,
     val current: Int,
     val next: Int,
     val far: Int,
 )
 
 object LyricsTheme {
+    // Dark glass with white text in both themes, like CarPlay's own overlays: a pale glass over a bright map
+    // would turn the lyrics grey. Day is a little bluer and denser, as the picture behind it is brighter.
     private val night = LyricsColors(
-        glassTop = 0xCC1C1F26.toInt(),
-        glassBottom = 0xCC0B0D12.toInt(),
-        rimTop = 0x38FFFFFF,
-        rimBottom = 0x12FFFFFF,
+        glassTop = 0xC81A1D25.toInt(),
+        glassBottom = 0xD00E1016.toInt(),
+        rimTop = 0x66FFFFFF,
+        rimBottom = 0x1AFFFFFF,
+        sheen = 0x24FFFFFF,
         current = 0xFFFFFFFF.toInt(),
-        next = 0xB3FFFFFF.toInt(),
-        far = 0x99FFFFFF.toInt(),
+        next = 0xD1FFFFFF.toInt(),
+        far = 0xB3FFFFFF.toInt(),
     )
     private val day = LyricsColors(
-        glassTop = 0xE6FFFFFF.toInt(),
-        glassBottom = 0xD9F2F4F8.toInt(),
-        rimTop = 0x1F000000,
-        rimBottom = 0x0F000000,
-        current = 0xFF000000.toInt(),
-        next = 0xB3000000.toInt(),
-        far = 0x99000000.toInt(),
+        glassTop = 0xCC1E2430.toInt(),
+        glassBottom = 0xD6121820.toInt(),
+        rimTop = 0x70FFFFFF,
+        rimBottom = 0x20FFFFFF,
+        sheen = 0x28FFFFFF,
+        current = 0xFFFFFFFF.toInt(),
+        next = 0xD1FFFFFF.toInt(),
+        far = 0xB3FFFFFF.toInt(),
     )
 
     fun colors(night: Boolean): LyricsColors = if (night) this.night else day
 
     // The rail is big and holds many lines: it covers the picture almost fully so that nothing shows through
     // the text. A driver who finds it in the way has the switch to the pill.
-    private const val RAIL_GLASS_ALPHA = 0xF5
+    private const val RAIL_GLASS_ALPHA = 0xE6
 
     fun railColors(night: Boolean): LyricsColors = colors(night).let {
         it.copy(glassTop = withAlpha(it.glassTop), glassBottom = withAlpha(it.glassBottom))

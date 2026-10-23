@@ -52,6 +52,23 @@ class LyricsMotionTest {
     }
 
     @Test
+    fun aRailRowFurtherFromTheCentreStartsItsMoveLater() {
+        assertEquals(0f, LyricsMotion.staggered(0f, 3), 0.001f)
+        assertEquals(1f, LyricsMotion.staggered(1f, 3), 0.001f)
+        assertEquals("the current row leads", 0.3f, LyricsMotion.staggered(0.3f, 0), 0.001f)
+        assertTrue(LyricsMotion.staggered(0.3f, 3) < LyricsMotion.staggered(0.3f, 1))
+        assertEquals("past rows count by distance too", LyricsMotion.staggered(0.4f, 2), LyricsMotion.staggered(0.4f, -2), 0.001f)
+    }
+
+    @Test
+    fun theRollIsSoftEnoughToReadAsOneGentleMove() {
+        assertTrue(LyricsMotion.ROLL_MILLIS in 450L..600L)
+        assertTrue(LyricsMotion.EXIT_MILLIS < LyricsMotion.ENTER_MILLIS)
+        assertTrue("the dip is a dim, not a blink", LyricsMotion.DIP_ALPHA >= 0.5f)
+        assertTrue("the outgoing line drifts, it does not fly", LyricsMotion.outgoing(1f).translateY > -0.7f)
+    }
+
+    @Test
     fun theOutgoingLineIsGoneBeforeTheRollEnds() {
         assertEquals(0f, LyricsMotion.outgoing(0.6f).alpha, 0.001f)
     }

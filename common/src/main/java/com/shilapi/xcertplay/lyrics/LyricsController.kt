@@ -173,6 +173,7 @@ internal class LyricsController(
                         Log.i(TAG, "\"${query.title}\" / ${query.artist}: ${outcome.lyrics.lines.size} lines")
                         lyrics = outcome.lyrics
                         render()
+                        scheduleTick()
                     }
                     LyricsOutcome.None -> Log.i(TAG, "\"${query.title}\" / ${query.artist}: no synced lyrics")
                     LyricsOutcome.Failed -> {
