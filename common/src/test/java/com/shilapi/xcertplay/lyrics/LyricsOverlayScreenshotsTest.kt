@@ -119,7 +119,7 @@ class LyricsOverlayScreenshotsTest {
     private fun truncated(row: android.widget.TextView) = row.layout.getEllipsisCount(row.lineCount - 1) > 0
 
     @Test
-    fun regularScaleKeepsPillLyricsWholeAndSlimRailLyricsWithinTwoRows() {
+    fun regularScaleKeepsPillLyricsWholeAndWrapsSlimRailLyricsWithoutCutting() {
         for (night in listOf(true, false)) {
             val theme = if (night) "night" else "day"
             val (_, pillView, _) = capture("pill-wide-$theme-regular-scale", wide, night, Color.WHITE,
@@ -129,8 +129,8 @@ class LyricsOverlayScreenshotsTest {
             val (_, railView, _) = capture("rail-wide-$theme-regular-scale", wide, night, Color.WHITE,
                 rail(night, song, 3), fontScale = 1.0f)
             val centre = (railView as LyricsRailView).row(0)
-            assertEquals("a longer lyric wraps within the slim rail", 2, centre.lineCount)
-            assertTrue("the existing two-line ellipsis bounds a longer lyric", truncated(centre))
+            assertTrue("a longer lyric wraps within the slim rail", centre.lineCount in 2..3)
+            assertTrue("a typical lyric is not cut: ${centre.text}", !truncated(centre))
             val (_, shortRail, _) = capture("rail-wide-$theme-short-regular-scale", wide, night, Color.WHITE,
                 rail(night, listOf("One line at a time"), 0), fontScale = 1.0f)
             assertTrue("a short lyric still fits whole", !truncated((shortRail as LyricsRailView).row(0)))
@@ -233,7 +233,7 @@ class LyricsOverlayScreenshotsTest {
         val rail = view2 as LyricsRailView
         for (offset in -rail.slotReach..rail.slotReach) {
             val row = rail.row(offset)
-            if (row.visibility == View.VISIBLE) assertTrue("row $offset wraps to ${row.lineCount} lines", row.lineCount <= 2)
+            if (row.visibility == View.VISIBLE) assertTrue("row $offset wraps to ${row.lineCount} lines", row.lineCount <= 3)
         }
     }
 }

@@ -424,7 +424,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
         rows.forEach { removeView(it) }
         reach = slotReachFor(windowHeightDp)
         rows = List(2 * reach + 1) {
-            lyricsLine(context).apply { typeface = Typeface.DEFAULT_BOLD; maxLines = 2; breakStrategy = Layout.BREAK_STRATEGY_BALANCED }
+            lyricsLine(context).apply { typeface = Typeface.DEFAULT_BOLD; maxLines = MAX_ROWS_PER_LINE; breakStrategy = Layout.BREAK_STRATEGY_BALANCED }
         }
         // Rows go under the gear and the strip.
         rows.forEachIndexed { position, row -> addView(row, position) }
@@ -525,6 +525,8 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
         const val DEFAULT_WINDOW_WIDTH_DP = 1000f
         const val DEFAULT_WINDOW_HEIGHT_DP = 480f
         const val DIMMED_ALPHA = 0.6f
+        // The slim rail wraps a long lyric to three rows before it ends in an ellipsis.
+        const val MAX_ROWS_PER_LINE = 3
         const val ENTER_RISE_EM = 0.3f
         const val EXIT_RISE_EM = 0.15f
 
