@@ -45,6 +45,7 @@ class LyricsControllerTest {
     private val saved = mutableListOf<Int>()
     private val placements = mutableListOf<LyricsPlacement>()
     private var hintsSeen = 3
+    private var videoReady = true
     private val hintCounts = mutableListOf<Int>()
 
     private val speed = object : LyricsSpeedSource {
@@ -71,7 +72,7 @@ class LyricsControllerTest {
             sidePanelOpen = { sidePanelOpen }, nowMillis = ::now, offsetMillis = { offsetMillis },
             saveOffsetMillis = { saved += it; offsetMillis = it.toLong() },
             savePlacement = { placements += it; placement = it },
-            switchHintCount = { hintsSeen }, saveSwitchHintCount = { hintCounts += it; hintsSeen = it },
+            videoReady = { videoReady }, switchHintCount = { hintsSeen }, saveSwitchHintCount = { hintCounts += it; hintsSeen = it },
         )
     }
 
@@ -644,6 +645,34 @@ class LyricsControllerTest {
             steps += right to rail.visibility
         }
         assertTrue("on the step the car counts as moving the rail is still on its way out", steps.contains(View.VISIBLE to View.GONE))
+    }
+
+    @Test
+    fun nothingShowsBeforeCarPlaysFirstFrameAndTheLyricsAppearWithIt() {
+        videoReady = false
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertEquals(View.GONE, pill.visibility)
+        assertEquals(View.GONE, rail.visibility)
+        videoReady = true
+        controller.onVideoChanged()
+        advance(400L)
+        assertEquals(View.VISIBLE, pill.visibility)
+    }
+
+    @Test
+    fun theLyricsGoWhenTheVideoSessionEnds() {
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertEquals(View.VISIBLE, pill.visibility)
+        videoReady = false
+        controller.onVideoChanged()
+        advance(400L)
+        assertEquals(View.GONE, pill.visibility)
     }
 
     @Test

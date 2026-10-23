@@ -412,6 +412,8 @@ class CarPlayHostActivity : ComponentActivity() {
     private var lyricsController: LyricsController? = null
     private var lyricsRail: LyricsRailView? = null
     private var lyricsPill: LyricsPillView? = null
+    // The session whose first video frame has been drawn: the lyrics wait for it, so they never sit over a blank screen.
+    private var lyricsFrameSession: AirPlaySession? = null
     private var lyricsExecutor: ExecutorService? = null
     // Sinks whose sessions are being torn down; their decoders may still render to the current surface
     // until they have released their codecs, so a destroyed surface is detached from them too. A restart
@@ -1230,6 +1232,7 @@ class CarPlayHostActivity : ComponentActivity() {
             hideWhileDriving = { AirPlayPersistence.loadHideLyricsWhileDriving(this) },
             // CarPlay's own day/night state: the controller drives darkMode, appNight also follows the app setting.
             night = { darkMode },
+            videoReady = { lyricsFrameSession != null && lyricsFrameSession === activeAirPlaySession },
             sidePanelOpen = { sidePanel?.visibility == View.VISIBLE },
             nowMillis = SystemClock::elapsedRealtime,
             offsetMillis = { AirPlayPersistence.loadLyricsOffsetMillis(this).toLong() },
@@ -5427,6 +5430,7 @@ class CarPlayHostActivity : ComponentActivity() {
                     if (controllerGeneration != restartGeneration || startupRetryStopped) return@runOnUiThread
                     startupRetryBudget.disconnected()
                     activeAirPlaySession = null
+                    lyricsController?.onVideoChanged()
                     clearIphoneCornerMask()
                     CarPlayBackgroundSession.active = false
                     callPopupSessionReady = false
@@ -5590,7 +5594,16 @@ class CarPlayHostActivity : ComponentActivity() {
         // callback, so it takes the live session from the controller: day/night, the Siri key and the
         // wheel keys reach the iPhone through it. Restore iOS's captured mask when the controller still
         // owns that live session.
-        snapshot.controller.activeAirPlaySession()?.let { activeAirPlaySession = it }
+        snapshot.controller.activeAirPlaySession()?.let {
+            activeAirPlaySession = it
+            if (snapshot.controller.hasRenderedFrame(it)) lyricsFrameSession = it
+        }
+        snapshot.controller.setFirstFrameListener { session ->
+            runOnUiThread {
+                lyricsFrameSession = session
+                lyricsController?.onVideoChanged()
+            }
+        }
         if (blackCornerRadiusDp == CarPlayBlackCornerOverlay.IPHONE_MASK) {
             snapshot.controller.activeIphoneCornerMask()?.let { (session, png, width) ->
                 activeAirPlaySession = session

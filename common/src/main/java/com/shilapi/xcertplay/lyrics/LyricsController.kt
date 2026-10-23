@@ -21,6 +21,8 @@ internal class LyricsController(
     private val placement: () -> LyricsPlacement,
     private val hideWhileDriving: () -> Boolean,
     private val night: () -> Boolean,
+    /** False until CarPlay's first video frame, and again once its session ends: nothing shows over a blank screen. */
+    private val videoReady: () -> Boolean,
     private val sidePanelOpen: () -> Boolean,
     private val nowMillis: () -> Long,
     /** How much earlier the lyrics show than their timestamps say; see [LyricsTiming]. Read on every render. */
@@ -75,6 +77,12 @@ internal class LyricsController(
             gate.onSpeed(kmh)
             render()
         }
+    }
+
+    /** The host calls this when [videoReady] may have changed. */
+    fun onVideoChanged() {
+        render()
+        scheduleTick()
     }
 
     private fun switchTo(target: LyricsPlacement) {
@@ -199,7 +207,7 @@ internal class LyricsController(
         val hiddenForDriving = hideWhileDriving() && moving
         val railBlocked = mode == LyricsPlacement.SIDE_RAIL && sidePanelOpen()
         val stopped = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_HIDE_MILLIS } == true
-        if (mode == LyricsPlacement.OFF || lines == null || position == null || suppressed || hiddenForDriving || railBlocked || stopped) {
+        if (mode == LyricsPlacement.OFF || !videoReady() || lines == null || position == null || suppressed || hiddenForDriving || railBlocked || stopped) {
             // Music that stops and a car that moves fade the overlay out; every other reason clears it at once.
             if (hiddenForDriving || stopped) {
                 pill.fadeOut()
