@@ -11,7 +11,8 @@ import kotlin.math.roundToLong
 sealed interface LyricsOutcome {
     data class Found(val lyrics: SyncedLyrics) : LyricsOutcome
     object None : LyricsOutcome
-    object Failed : LyricsOutcome
+    /** [reason] is for the log: what the lookup ran into. */
+    data class Failed(val reason: String) : LyricsOutcome
 }
 
 /** Looks lyrics up on [worker] and keeps answers on disk, so a repeated song costs no request. */
@@ -47,8 +48,8 @@ class LyricsRepository(
         }
         val raw = try {
             source.fetch(query)
-        } catch (_: IOException) {
-            return LyricsOutcome.Failed
+        } catch (error: IOException) {
+            return LyricsOutcome.Failed(error.message ?: error.javaClass.simpleName)
         }
         val lyrics = raw?.let(LrcParser::parse)?.takeIf { fitsDuration(it, query) }
         // A full or read-only disk must not cost the lyrics already fetched, or crash the worker.

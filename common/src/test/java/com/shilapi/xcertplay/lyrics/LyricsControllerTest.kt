@@ -298,10 +298,10 @@ class LyricsControllerTest {
         controller.start()
         publish(np("Song", elapsed = 2_000L))
         runJobs()
-        assertEquals(listOf("Can't load"), pillText())
+        assertEquals("the first failure is quiet: a retry usually fixes it", View.GONE, pill.visibility)
         advance(3_100L)
         runJobs()
-        assertFalse("the first retry fails too", pillText().contains("one"))
+        assertEquals("the second failure says so", listOf("Can't load"), pillText())
         advance(10_100L)
         runJobs()
         assertEquals(View.VISIBLE, pill.visibility)
@@ -714,26 +714,31 @@ class LyricsControllerTest {
         publish(np("Song", elapsed = 2_000L))
         runJobs()
         advance(400L)
+        assertEquals("a first failure shows nothing", View.GONE, pill.visibility)
+        advance(3_100L)
+        runJobs()
+        advance(400L)
         assertEquals(listOf("Can't load"), pillText())
         advance(4_000L)
         assertEquals(View.GONE, pill.visibility)
-        advance(5_000L)
+        advance(10_100L)
         runJobs()
         advance(400L)
-        assertEquals("the retry fails quietly", View.GONE, pill.visibility)
+        assertEquals("the later retries fail quietly", View.GONE, pill.visibility)
     }
 
     @Test
     fun lyricsThatArriveOnARetryReplaceTheNotice() {
-        var failing = true
-        lrc = { if (failing) throw IOException("offline") else "[00:01.00]one\n[00:30.00]two" }
+        var attempts = 0
+        lrc = { if (++attempts < 3) throw IOException("offline") else "[00:01.00]one\n[00:30.00]two" }
         controller.start()
         publish(np("Song", elapsed = 2_000L))
         runJobs()
+        advance(3_100L)
+        runJobs()
         advance(400L)
         assertEquals(listOf("Can't load"), pillText())
-        failing = false
-        advance(3_500L)
+        advance(10_100L)
         runJobs()
         advance(400L)
         assertEquals(listOf("one", "two"), pillText())

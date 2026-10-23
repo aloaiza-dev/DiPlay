@@ -57,7 +57,7 @@ class LyricsRepositoryTest {
         reply = { null }
         assertEquals(LyricsOutcome.None, outcome(repository()))
         reply = { throw IOException("busy") }
-        assertEquals(LyricsOutcome.Failed, outcome(repository(), query.copy(title = "Other")))
+        assertTrue(outcome(repository(), query.copy(title = "Other")) is LyricsOutcome.Failed)
     }
 
     @Test
@@ -74,6 +74,13 @@ class LyricsRepositoryTest {
         repository().lookup(query, isStale = { true }) { _, _ -> answered = true }
         assertEquals(0, calls)
         assertEquals(false, answered)
+    }
+
+    @Test
+    fun aFailureSaysWhyForTheLog() {
+        reply = { throw IOException("Lyrics service answered 503") }
+        val failed = outcome(repository()) as LyricsOutcome.Failed
+        assertEquals("Lyrics service answered 503", failed.reason)
     }
 
     @Test

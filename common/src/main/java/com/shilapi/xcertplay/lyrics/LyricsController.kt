@@ -219,15 +219,16 @@ internal class LyricsController(
                         scheduleTick()
                     }
                     LyricsOutcome.None -> {
-                        Log.i(TAG, "\"${query.title}\" / ${query.artist}: no synced lyrics")
+                        Log.i(TAG, "\"${query.title}\" / ${query.artist}: no synced lyrics (${query.durationMillis?.div(1000)} s, album ${query.album})")
                         showNotice(noLyricsLabel())
                     }
-                    LyricsOutcome.Failed -> {
+                    is LyricsOutcome.Failed -> {
                         val delay = RETRY_DELAYS_MILLIS.getOrNull(attempt)
-                        Log.i(TAG, "\"${query.title}\" / ${query.artist}: lookup failed" +
+                        Log.i(TAG, "\"${query.title}\" / ${query.artist}: lookup failed (${outcome.reason})" +
                             if (delay != null) ", retry in ${delay / 1000} s" else ", giving up")
-                        // Once per track: the retries that follow fail quietly.
-                        if (failedNoticeFor != forTrack) {
+                        // A first failure is usually gone on the retry seconds later, so it says nothing. From the
+                        // second one it says so, once per track: the retries after that fail quietly.
+                        if (attempt >= 1 && failedNoticeFor != forTrack) {
                             failedNoticeFor = forTrack
                             showNotice(failedLabel())
                         }
