@@ -80,7 +80,8 @@ class LyricsRepository(
 
     private fun key(query: TrackQuery): String {
         val seconds = query.durationMillis?.let { (it / 1000.0).roundToLong() } ?: 0L
-        val text = "${query.title.lowercase(Locale.ROOT)}|${query.artist.lowercase(Locale.ROOT)}|$seconds"
+        // The version drops what an older, weaker lookup saved: its cached misses would hide what this one finds.
+        val text = "$CACHE_VERSION|${query.title.lowercase(Locale.ROOT)}|${query.artist.lowercase(Locale.ROOT)}|$seconds"
         return MessageDigest.getInstance("SHA-1").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
     }
 
@@ -88,5 +89,6 @@ class LyricsRepository(
         const val MISS_TTL_MILLIS = 24 * 3_600_000L
         const val DURATION_SLACK_MILLIS = 5_000L
         const val MAX_FILES = 200
+        const val CACHE_VERSION = 2
     }
 }

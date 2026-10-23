@@ -52,6 +52,17 @@ class LyricsRepositoryTest {
         assertEquals(2, calls)
     }
 
+    // A miss cached by an earlier, weaker lookup must not hide what the current one can find.
+    @Test
+    fun missesSavedByAnOlderLookupAreIgnored() {
+        val seconds = 200L
+        val legacy = java.security.MessageDigest.getInstance("SHA-1")
+            .digest("song|artist|$seconds".toByteArray()).joinToString("") { "%02x".format(it) }
+        File(folder.root, "$legacy.none").apply { writeText(""); setLastModified(now) }
+        assertNotNull("looked up again", lookup(repository()))
+        assertEquals(1, calls)
+    }
+
     @Test
     fun aMissIsReportedAsNoneAndAFailureAsFailed() {
         reply = { null }
