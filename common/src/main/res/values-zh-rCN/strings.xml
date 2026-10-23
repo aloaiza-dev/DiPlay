@@ -1007,7 +1007,5 @@
     <string name="lyrics_control_later">延后</string>
     <string name="lyrics_control_pill">切换到胶囊视图</string>
     <string name="lyrics_hint_double_tap">双击切换到侧边栏</string>
-    <string name="settings_lyrics_switch_hint">在车机屏幕上双击胶囊可打开侧边栏；在侧边栏上点按胶囊图标可返回。两者都仅在车辆静止时可用。若未开启“行驶时保留侧边栏”，行驶时侧边栏会显示为胶囊。</string>
-    <string name="settings_lyrics_keep_rail_while_driving">行驶时保留侧边栏</string>
-    <string name="settings_lyrics_keep_rail_while_driving_description">乘客可以继续阅读。行驶时侧边栏不显示按钮。关闭时，侧边栏会变为顶部胶囊。</string>
+    <string name="settings_lyrics_switch_hint">在车机屏幕上双击胶囊可打开侧边栏；在侧边栏上点按胶囊图标可返回。两者都仅在车辆静止时可用。</string>
 </resources>

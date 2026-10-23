@@ -947,7 +947,5 @@
     <string name="lyrics_control_later">Después</string>
     <string name="lyrics_control_pill">Cambiar a la cápsula</string>
     <string name="lyrics_hint_double_tap">Toca dos veces para la vista lateral</string>
-    <string name="settings_lyrics_switch_hint">Toca dos veces la cápsula en la pantalla del coche para abrir el panel lateral. En el panel, toca el icono de cápsula para volver. Ambos solo funcionan con el coche parado. Si no mantienes el panel al conducir, con el coche en movimiento se muestra como cápsula.</string>
-    <string name="settings_lyrics_keep_rail_while_driving">Mantener el panel lateral al conducir</string>
-    <string name="settings_lyrics_keep_rail_while_driving_description">Los pasajeros pueden seguir leyendo. El panel se muestra sin botones con el coche en movimiento. Desactivado: el panel pasa a la cápsula superior.</string>
+    <string name="settings_lyrics_switch_hint">Toca dos veces la cápsula en la pantalla del coche para abrir el panel lateral. En el panel, toca el icono de cápsula para volver. Ambos solo funcionan con el coche parado.</string>
 </resources>

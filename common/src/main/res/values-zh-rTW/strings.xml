@@ -1007,7 +1007,5 @@
     <string name="lyrics_control_later">延後</string>
     <string name="lyrics_control_pill">切換到膠囊檢視</string>
     <string name="lyrics_hint_double_tap">雙擊切換到側邊欄</string>
-    <string name="settings_lyrics_switch_hint">在車機螢幕上雙擊膠囊可開啟側邊欄；在側邊欄上點按膠囊圖示可返回。兩者都僅在車輛靜止時可用。若未開啟「行駛時保留側邊欄」，行駛時側邊欄會顯示為膠囊。</string>
-    <string name="settings_lyrics_keep_rail_while_driving">行駛時保留側邊欄</string>
-    <string name="settings_lyrics_keep_rail_while_driving_description">乘客可以繼續閱讀。行駛時側邊欄不顯示按鈕。關閉時，側邊欄會變為頂部膠囊。</string>
+    <string name="settings_lyrics_switch_hint">在車機螢幕上雙擊膠囊可開啟側邊欄；在側邊欄上點按膠囊圖示可返回。兩者都僅在車輛靜止時可用。</string>
 </resources>
