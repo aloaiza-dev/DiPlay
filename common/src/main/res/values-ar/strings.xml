@@ -996,5 +996,7 @@
     <string name="lyrics_control_later">متأخر</string>
     <string name="lyrics_control_pill">التبديل إلى الشريط العلوي</string>
     <string name="lyrics_hint_double_tap">انقر مرتين للعرض الجانبي</string>
+    <string name="lyrics_notice_none">♪ لا توجد كلمات</string>
+    <string name="lyrics_notice_failed">♪ تعذر تحميل الكلمات</string>
     <string name="settings_lyrics_switch_hint">انقر مرتين على الشريط العلوي في شاشة السيارة لفتح اللوحة الجانبية. وعلى اللوحة، انقر أيقونة الشريط للعودة. يعمل الاثنان فقط والسيارة متوقفة.</string>
 </resources>

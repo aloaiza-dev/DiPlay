@@ -461,6 +461,32 @@ class LyricsOverlayViewsTest {
     }
 
     @Test
+    fun aNoticeIsACompactPillNarrowerThanTheLyricsPill() {
+        val pill = LyricsPillView(context)
+        val root = laidOut(pill)
+        pill.show("This line is long enough to fill the fixed pill", "and the next one", animate = false)
+        relayout(root)
+        val full = pill.width
+        pill.show("♪ No lyrics", null, animate = false, compact = true)
+        relayout(root)
+        assertTrue("compact ${pill.width} of $full", pill.width < full * 0.6f)
+        assertEquals(View.GONE, pill.nextRow.visibility)
+        pill.show("Line", "Next", animate = false)
+        relayout(root)
+        assertEquals("back to the fixed width", full, pill.width)
+    }
+
+    @Test
+    fun aNoticeUsesTheQuieterLineSize() {
+        val pill = LyricsPillView(context)
+        laidOut(pill)
+        pill.show("Line", "Next", animate = false)
+        val lyric = pill.currentRow.textSize
+        pill.show("♪ No lyrics", null, animate = false, compact = true)
+        assertTrue("notice ${pill.currentRow.textSize} vs lyric $lyric", pill.currentRow.textSize < lyric)
+    }
+
+    @Test
     fun aSingleTapOnThePillDoesNothing() {
         val pill = interactivePill()
         tap(pill, 0L)

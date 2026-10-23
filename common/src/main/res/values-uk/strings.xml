@@ -959,5 +959,7 @@
     <string name="lyrics_control_later">Пізніше</string>
     <string name="lyrics_control_pill">Перемкнути на плашку</string>
     <string name="lyrics_hint_double_tap">Двічі торкніться для бічної панелі</string>
+    <string name="lyrics_notice_none">♪ Немає тексту</string>
+    <string name="lyrics_notice_failed">♪ Не вдалося завантажити текст</string>
     <string name="settings_lyrics_switch_hint">Двічі торкніться плашки на екрані автомобіля, щоб відкрити бічну панель. На панелі торкніться значка плашки, щоб повернутися. Обидві дії працюють лише на нерухомому автомобілі.</string>
 </resources>

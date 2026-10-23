@@ -23,6 +23,9 @@ internal class LyricsController(
     private val night: () -> Boolean,
     /** False until CarPlay's first video frame, and again once its session ends: nothing shows over a blank screen. */
     private val videoReady: () -> Boolean,
+    /** A short notice for a track with no synced lyrics, and for a lookup that failed. */
+    private val noLyricsLabel: () -> String,
+    private val failedLabel: () -> String,
     private val sidePanelOpen: () -> Boolean,
     private val nowMillis: () -> Long,
     /** How much earlier the lyrics show than their timestamps say; see [LyricsTiming]. Read on every render. */
@@ -50,6 +53,13 @@ internal class LyricsController(
     private var jumped = false
     private val titleChanges = ArrayDeque<Long>()
     private var hintedFor = -1
+    private var notice: String? = null
+    private var noticeShown = false
+    private var failedNoticeFor = -1
+    private val endNotice = Runnable {
+        notice = null
+        render()
+    }
     private val hideHint = Runnable { pill.setHint(false) }
 
     private val tick = Runnable {
@@ -79,6 +89,19 @@ internal class LyricsController(
         }
     }
 
+    private fun showNotice(text: String) {
+        notice = text
+        handler.removeCallbacks(endNotice)
+        handler.postDelayed(endNotice, NOTICE_MILLIS)
+        render()
+    }
+
+    private fun clearNotice() {
+        notice = null
+        noticeShown = false
+        handler.removeCallbacks(endNotice)
+    }
+
     /** The host calls this when [videoReady] may have changed. */
     fun onVideoChanged() {
         render()
@@ -97,6 +120,8 @@ internal class LyricsController(
         nextChangeMillis = null
         handler.removeCallbacks(tick)
         handler.removeCallbacks(hideHint)
+        clearNotice()
+        failedNoticeFor = -1
         stopNowPlaying?.invoke()
         stopNowPlaying = null
         stopSpeed?.invoke()
@@ -134,9 +159,11 @@ internal class LyricsController(
             identity = null
             lyrics = null
             generation++
+            clearNotice()
         } else if (query != identity) {
             lyrics = null
             generation++
+            clearNotice()
             lookUp(query)
         }
         render()
@@ -180,14 +207,23 @@ internal class LyricsController(
                     is LyricsOutcome.Found -> {
                         Log.i(TAG, "\"${query.title}\" / ${query.artist}: ${outcome.lyrics.lines.size} lines")
                         lyrics = outcome.lyrics
+                        clearNotice()
                         render()
                         scheduleTick()
                     }
-                    LyricsOutcome.None -> Log.i(TAG, "\"${query.title}\" / ${query.artist}: no synced lyrics")
+                    LyricsOutcome.None -> {
+                        Log.i(TAG, "\"${query.title}\" / ${query.artist}: no synced lyrics")
+                        showNotice(noLyricsLabel())
+                    }
                     LyricsOutcome.Failed -> {
                         val delay = RETRY_DELAYS_MILLIS.getOrNull(attempt)
                         Log.i(TAG, "\"${query.title}\" / ${query.artist}: lookup failed" +
                             if (delay != null) ", retry in ${delay / 1000} s" else ", giving up")
+                        // Once per track: the retries that follow fail quietly.
+                        if (failedNoticeFor != forTrack) {
+                            failedNoticeFor = forTrack
+                            showNotice(failedLabel())
+                        }
                         if (delay != null) handler.postDelayed({
                             if (started && forTrack == generation) request(query, attempt + 1)
                         }, delay)
@@ -207,9 +243,21 @@ internal class LyricsController(
         val hiddenForDriving = hideWhileDriving() && moving
         val railBlocked = mode == LyricsPlacement.SIDE_RAIL && sidePanelOpen()
         val stopped = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_HIDE_MILLIS } == true
+        if (lines == null && notice != null && mode != LyricsPlacement.OFF && videoReady() && !hiddenForDriving && !stopped) {
+            // The notice is a small pill whatever the layout: there is nothing for a rail to hold.
+            pill.setInteractive(false)
+            pill.setHint(false)
+            pill.show(notice, null, compact = true)
+            rail.hide()
+            noticeShown = true
+            nextChangeMillis = null
+            return
+        }
         if (mode == LyricsPlacement.OFF || !videoReady() || lines == null || position == null || suppressed || hiddenForDriving || railBlocked || stopped) {
             // Music that stops and a car that moves fade the overlay out; every other reason clears it at once.
-            if (hiddenForDriving || stopped) {
+            val fade = hiddenForDriving || stopped || noticeShown
+            noticeShown = false
+            if (fade) {
                 pill.fadeOut()
                 rail.fadeOut()
             } else {
@@ -277,6 +325,7 @@ internal class LyricsController(
     private companion object {
         const val NOTE = "♪"
         const val TICK_MILLIS = 250L
+        const val NOTICE_MILLIS = 3_000L
         const val HINT_LIMIT = 3
         const val HINT_MILLIS = 4_000L
         const val MIN_WAIT_MILLIS = 16L

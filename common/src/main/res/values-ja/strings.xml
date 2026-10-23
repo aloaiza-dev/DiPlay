@@ -1049,5 +1049,7 @@
     <string name="lyrics_control_later">遅く</string>
     <string name="lyrics_control_pill">上部バー表示に切り替え</string>
     <string name="lyrics_hint_double_tap">ダブルタップでサイド表示</string>
+    <string name="lyrics_notice_none">♪ 歌詞なし</string>
+    <string name="lyrics_notice_failed">♪ 歌詞を読み込めません</string>
     <string name="settings_lyrics_switch_hint">車の画面で上部バーをダブルタップするとサイドパネルが開きます。パネルではバーのアイコンをタップすると戻ります。どちらも停車中のみ使えます。</string>
 </resources>

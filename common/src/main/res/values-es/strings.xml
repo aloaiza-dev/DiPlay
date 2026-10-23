@@ -947,5 +947,7 @@
     <string name="lyrics_control_later">Después</string>
     <string name="lyrics_control_pill">Cambiar a la cápsula</string>
     <string name="lyrics_hint_double_tap">Toca dos veces para la vista lateral</string>
+    <string name="lyrics_notice_none">♪ Sin letra</string>
+    <string name="lyrics_notice_failed">♪ No se pudo cargar la letra</string>
     <string name="settings_lyrics_switch_hint">Toca dos veces la cápsula en la pantalla del coche para abrir el panel lateral. En el panel, toca el icono de cápsula para volver. Ambos solo funcionan con el coche parado.</string>
 </resources>

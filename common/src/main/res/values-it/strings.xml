@@ -1037,5 +1037,7 @@
     <string name="lyrics_control_later">Dopo</string>
     <string name="lyrics_control_pill">Passa alla pillola</string>
     <string name="lyrics_hint_double_tap">Tocca due volte per la vista laterale</string>
+    <string name="lyrics_notice_none">♪ Nessun testo</string>
+    <string name="lyrics_notice_failed">♪ Impossibile caricare il testo</string>
     <string name="settings_lyrics_switch_hint">Tocca due volte la pillola sullo schermo dell’auto per aprire la barra laterale. Sulla barra, tocca l’icona della pillola per tornare indietro. Entrambi funzionano solo ad auto ferma.</string>
 </resources>

@@ -1007,5 +1007,7 @@
     <string name="lyrics_control_later">延后</string>
     <string name="lyrics_control_pill">切换到胶囊视图</string>
     <string name="lyrics_hint_double_tap">双击切换到侧边栏</string>
+    <string name="lyrics_notice_none">♪ 暂无歌词</string>
+    <string name="lyrics_notice_failed">♪ 无法加载歌词</string>
     <string name="settings_lyrics_switch_hint">在车机屏幕上双击胶囊可打开侧边栏；在侧边栏上点按胶囊图标可返回。两者都仅在车辆静止时可用。</string>
 </resources>

@@ -72,7 +72,7 @@ class LyricsControllerTest {
             sidePanelOpen = { sidePanelOpen }, nowMillis = ::now, offsetMillis = { offsetMillis },
             saveOffsetMillis = { saved += it; offsetMillis = it.toLong() },
             savePlacement = { placements += it; placement = it },
-            videoReady = { videoReady }, switchHintCount = { hintsSeen }, saveSwitchHintCount = { hintCounts += it; hintsSeen = it },
+            videoReady = { videoReady }, noLyricsLabel = { "No lyrics" }, failedLabel = { "Can't load" }, switchHintCount = { hintsSeen }, saveSwitchHintCount = { hintCounts += it; hintsSeen = it },
         )
     }
 
@@ -173,12 +173,12 @@ class LyricsControllerTest {
     }
 
     @Test
-    fun noLyricsFoundDrawsNothing() {
+    fun noLyricsFoundDrawsOnlyTheNotice() {
         lrc = { null }
         controller.start()
         publish(np("Song", elapsed = 2_000L))
         runJobs()
-        assertEquals(View.GONE, pill.visibility)
+        assertEquals(listOf("No lyrics"), pillText())
         assertEquals(View.GONE, rail.visibility)
     }
 
@@ -292,10 +292,10 @@ class LyricsControllerTest {
         controller.start()
         publish(np("Song", elapsed = 2_000L))
         runJobs()
-        assertEquals(View.GONE, pill.visibility)
+        assertEquals(listOf("Can't load"), pillText())
         advance(3_100L)
         runJobs()
-        assertEquals("the first retry fails too", View.GONE, pill.visibility)
+        assertFalse("the first retry fails too", pillText().contains("one"))
         advance(10_100L)
         runJobs()
         assertEquals(View.VISIBLE, pill.visibility)
@@ -673,6 +673,106 @@ class LyricsControllerTest {
         controller.onVideoChanged()
         advance(400L)
         assertEquals(View.GONE, pill.visibility)
+    }
+
+    @Test
+    fun aTrackWithoutLyricsShowsASmallNoticeThatFadesAway() {
+        lrc = { null }
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertEquals(View.VISIBLE, pill.visibility)
+        assertEquals(listOf("No lyrics"), pillText())
+        assertEquals("a notice is not a layout switch", View.GONE, rail.visibility)
+        advance(4_000L)
+        assertEquals(View.GONE, pill.visibility)
+    }
+
+    @Test
+    fun theNoticeAppearsOnThePillEvenWhenTheLayoutIsTheRail() {
+        lrc = { null }
+        placement = LyricsPlacement.SIDE_RAIL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertEquals(listOf("No lyrics"), pillText())
+        assertEquals(View.GONE, rail.visibility)
+    }
+
+    @Test
+    fun aFailedLookupSaysSoOnceAndNotOnEveryRetry() {
+        lrc = { throw IOException("offline") }
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertEquals(listOf("Can't load"), pillText())
+        advance(4_000L)
+        assertEquals(View.GONE, pill.visibility)
+        advance(5_000L)
+        runJobs()
+        advance(400L)
+        assertEquals("the retry fails quietly", View.GONE, pill.visibility)
+    }
+
+    @Test
+    fun lyricsThatArriveOnARetryReplaceTheNotice() {
+        var failing = true
+        lrc = { if (failing) throw IOException("offline") else "[00:01.00]one\n[00:30.00]two" }
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertEquals(listOf("Can't load"), pillText())
+        failing = false
+        advance(3_500L)
+        runJobs()
+        advance(400L)
+        assertEquals(listOf("one", "two"), pillText())
+    }
+
+    @Test
+    fun aNewTrackClearsTheNoticeAtOnce() {
+        lrc = { null }
+        controller.start()
+        publish(np("Song A", elapsed = 2_000L, artist = "A"))
+        runJobs()
+        advance(400L)
+        assertEquals(View.VISIBLE, pill.visibility)
+        publish(np("Song B", elapsed = 0L, artist = "B"))
+        assertEquals(View.GONE, pill.visibility)
+    }
+
+    @Test
+    fun noNoticeBeforeTheFirstFrameWhileHiddenForDrivingOrWhenOff() {
+        lrc = { null }
+        videoReady = false
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertEquals(View.GONE, pill.visibility)
+        videoReady = true
+        hideWhileDriving = true
+        repeat(8) { onSpeed?.invoke(30); advance(500L) }
+        publish(np("Song 2", elapsed = 2_000L, artist = "B"))
+        runJobs()
+        advance(400L)
+        assertEquals(View.GONE, pill.visibility)
+    }
+
+    @Test
+    fun theNoticeIsNotATapTarget() {
+        lrc = { null }
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        tap(pill, 10_000L)
+        tap(pill, 10_150L)
+        assertTrue("a double tap on a notice does nothing", placements.isEmpty())
     }
 
     @Test

@@ -1232,6 +1232,8 @@ class CarPlayHostActivity : ComponentActivity() {
             hideWhileDriving = { AirPlayPersistence.loadHideLyricsWhileDriving(this) },
             // CarPlay's own day/night state: the controller drives darkMode, appNight also follows the app setting.
             night = { darkMode },
+            noLyricsLabel = { getString(R.string.lyrics_notice_none) },
+            failedLabel = { getString(R.string.lyrics_notice_failed) },
             videoReady = { lyricsFrameSession != null && lyricsFrameSession === activeAirPlaySession },
             sidePanelOpen = { sidePanel?.visibility == View.VISIBLE },
             nowMillis = SystemClock::elapsedRealtime,

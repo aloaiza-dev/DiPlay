@@ -42,6 +42,8 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     private var windowWidthDp = 0f
     private var windowHeightDp = LyricsLayout.NARROW_HEIGHT_DP
     private var dimmed = false
+    // A notice ("no lyrics") is a small pill of its own size: it shrinks to its text instead of keeping the lyrics width.
+    private var compact = false
     private var motion = Motion.NONE
     private var progress = 1f
     private var fromWidth = 0
@@ -120,8 +122,8 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         requestLayout()
     }
 
-    /** [animate] false changes the line at once, for a seek or a screenshot. */
-    fun show(currentLine: String?, nextLine: String?, animate: Boolean = true) {
+    /** [animate] false changes the line at once, for a seek or a screenshot. [compact] draws a short notice. */
+    fun show(currentLine: String?, nextLine: String?, animate: Boolean = true, compact: Boolean = false) {
         val now = currentLine?.trim().orEmpty()
         val later = nextLine?.trim().orEmpty()
         if (now.isEmpty() && later.isEmpty()) {
@@ -131,10 +133,12 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         val shown = visibility == VISIBLE && motion != Motion.EXIT
         val oldCurrent = current.text.toString()
         val oldNext = next.text.toString()
-        if (shown && now == oldCurrent && later == oldNext) return
+        val modeChanged = compact != this.compact
+        if (shown && !modeChanged && now == oldCurrent && later == oldNext) return
         val moving = animate && !lyricsReducedMotion(context)
         if (!shown) {
             settle()
+            this.compact = compact
             apply(now, later)
             visibility = VISIBLE
             if (moving) run(Motion.ENTER, LyricsMotion.ENTER_MILLIS) else applyPose()
@@ -142,12 +146,14 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         }
         if (!moving) {
             settle()
+            this.compact = compact
             apply(now, later)
             return
         }
         fromWidth = measuredWidth
         fromHeight = measuredHeight
-        if (oldCurrent.isNotEmpty() && oldNext.isNotEmpty() && now == oldNext) {
+        this.compact = compact
+        if (!modeChanged && oldCurrent.isNotEmpty() && oldNext.isNotEmpty() && now == oldNext) {
             outgoing.text = oldCurrent
             outgoing.setTextSize(TypedValue.COMPLEX_UNIT_PX, current.textSize)
             morph.text = oldNext
@@ -208,7 +214,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val spec = MeasureSpec.getSize(widthMeasureSpec)
         val limit = if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) Int.MAX_VALUE else spec
-        val fixed = windowWidthDp > 0f
+        val fixed = windowWidthDp > 0f && !compact
         val inner = (min(limit, pillWidthPx()) - 2 * padH()).toInt().coerceAtLeast(0)
         for (row in listOf(outgoing, morph, current, next)) {
             if (row.visibility != GONE) row.measure(MeasureSpec.makeMeasureSpec(inner, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
@@ -253,7 +259,13 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         row.layout(left, top, left + row.measuredWidth, top + row.measuredHeight)
     }
 
+    private fun applyCurrentLook() {
+        current.typeface = if (compact) Typeface.DEFAULT else Typeface.DEFAULT_BOLD
+        current.setTextColor(if (compact) colors.next else colors.current)
+    }
+
     private fun apply(now: String, later: String) {
+        applyCurrentLook()
         current.text = now
         current.visibility = if (now.isEmpty()) GONE else VISIBLE
         next.text = later
@@ -265,7 +277,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     // A line a little too long shrinks (down to 80%) to stay on one row. A longer one keeps its full size and
     // wraps to a second row; only text beyond two rows ends in an ellipsis.
     private fun fitCurrentLine() {
-        val base = currentPx()
+        val base = if (compact) nextPx() else currentPx()
         val available = pillWidthPx() - 2 * padH()
         val needed = Paint(current.paint).also { it.textSize = base }.measureText(current.text.toString())
         val shrinks = available > 0 && needed > available && needed <= available / LyricsLayout.PILL_MIN_TEXT_SCALE
@@ -362,7 +374,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     }
 
     private fun applyTheme() {
-        current.setTextColor(colors.current)
+        applyCurrentLook()
         outgoing.setTextColor(colors.current)
         next.setTextColor(colors.next)
         hint.setTextColor(colors.far)
