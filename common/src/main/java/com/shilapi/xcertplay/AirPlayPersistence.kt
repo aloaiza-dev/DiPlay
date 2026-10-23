@@ -89,6 +89,7 @@ object AirPlayPersistence {
     private const val KEY_LOW_LATENCY_DECODER = "low_latency_decoder"
     private const val KEY_FPS_COUNTER = "fps_counter"
     private const val KEY_LYRICS_PLACEMENT = "lyrics_placement"
+    private const val KEY_LYRICS_BLUR = "lyrics_blur"
     private const val KEY_LYRICS_RAIL_SIDE = "lyrics_rail_side"
     private const val KEY_LYRICS_SWITCH_HINTS = "lyrics_switch_hints"
     private const val KEY_HIDE_LYRICS_WHILE_DRIVING = "hide_lyrics_while_driving"
@@ -756,6 +757,17 @@ object AirPlayPersistence {
 
     fun saveLyricsSwitchHints(context: Context, count: Int) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_LYRICS_SWITCH_HINTS, count).apply()
+    }
+
+    /** On unless the head unit reports itself as low on memory; a saved choice always wins. */
+    fun loadLyricsBlur(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val lowRam = (context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager)?.isLowRamDevice == true
+        return prefs.getBoolean(KEY_LYRICS_BLUR, !lowRam)
+    }
+
+    fun saveLyricsBlur(context: Context, blur: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_LYRICS_BLUR, blur).apply()
     }
 
     fun loadLyricsRailSide(context: Context): LyricsRailSide = LyricsRailSide.fromKey(

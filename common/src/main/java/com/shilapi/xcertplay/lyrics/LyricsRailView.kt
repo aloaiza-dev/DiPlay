@@ -29,7 +29,7 @@ import com.shilapi.xcertplay.host.R
  * The card takes no touches except on its timing control: a small gear in the corner that opens a strip with
  * Later and Earlier buttons. Everywhere else a tap goes through to CarPlay.
  */
-internal class LyricsRailView(context: Context) : ViewGroup(context) {
+internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTarget {
     private enum class Motion { NONE, ENTER, ROLL, DIP, EXIT }
 
     private data class Pose(val centerY: Float, val scale: Float, val alpha: Float)
@@ -495,8 +495,22 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
 
     private fun stripHeight(): Int = maxOf(MIN_TARGET_DP * density, STRIP_EM * textPx()).toInt()
 
+    private var backdrop: android.graphics.Bitmap? = null
+
+    override fun backdropBounds(out: android.graphics.Rect): Boolean {
+        if (visibility != VISIBLE || width <= 0 || height <= 0) return false
+        out.set(left, top, right, bottom)
+        return true
+    }
+
+    override fun onBackdrop(bitmap: android.graphics.Bitmap?) {
+        backdrop = bitmap
+        (background as? LyricsGlassDrawable)?.setBackdrop(bitmap)
+    }
+
     private fun applyShape() {
         background = lyricsGlass(colors, LyricsLayout.RAIL_RADIUS_EM * textPx(), LyricsLayout.RIM_DP * density)
+        (background as? LyricsGlassDrawable)?.setBackdrop(backdrop)
         elevation = LyricsLayout.RAIL_ELEVATION_EM * textPx()
     }
 

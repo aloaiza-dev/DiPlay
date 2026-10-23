@@ -1051,5 +1051,7 @@
     <string name="lyrics_hint_double_tap">ダブルタップでサイド表示</string>
     <string name="lyrics_notice_none">♪ 歌詞なし</string>
     <string name="lyrics_notice_failed">♪ 歌詞を読み込めません</string>
+    <string name="settings_lyrics_blur">ぼかしガラス</string>
+    <string name="settings_lyrics_blur_description">歌詞の背後の CarPlay 映像をぼかし、ガラスに色をなじませます。処理能力を少し使い、ヘッドユニットが遅い場合は自動でオフになります。CarPlay に戻ると反映されます。</string>
     <string name="settings_lyrics_switch_hint">車の画面で上部バーをダブルタップするとサイドパネルが開きます。パネルではバーのアイコンをタップすると戻ります。どちらも停車中のみ使えます。</string>
 </resources>

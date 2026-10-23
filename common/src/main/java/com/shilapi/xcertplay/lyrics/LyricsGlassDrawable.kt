@@ -1,8 +1,11 @@
 package com.shilapi.xcertplay.lyrics
 
+import android.graphics.Bitmap
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.ColorFilter
 import android.graphics.LinearGradient
+import android.graphics.Matrix
 import android.graphics.Outline
 import android.graphics.Paint
 import android.graphics.PixelFormat
@@ -18,12 +21,24 @@ import android.graphics.drawable.Drawable
 internal class LyricsGlassDrawable : Drawable() {
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
     private val sheen = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val backdropPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val backdropMatrix = Matrix()
+    private var backdrop: Bitmap? = null
     private val rim = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val shape = RectF()
     private var colors = LyricsTheme.colors(true)
     private var radius = 0f
     private var rimWidth = 1f
     private var shaderHeight = -1f
+
+    /** A blurred, already shaded copy of the picture behind the glass, drawn in place of the fill; null for plain glass. */
+    fun setBackdrop(bitmap: Bitmap?) {
+        backdrop = bitmap
+        backdropPaint.shader = bitmap?.let { BitmapShader(it, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP) }
+        invalidateSelf()
+    }
+
+    internal val hasBackdrop: Boolean get() = backdrop != null
 
     fun update(colors: LyricsColors, radiusPx: Float, rimWidthPx: Float) {
         this.colors = colors
@@ -46,7 +61,15 @@ internal class LyricsGlassDrawable : Drawable() {
             rim.shader = LinearGradient(0f, shape.top, 0f, shape.bottom, colors.rimTop, colors.rimBottom, Shader.TileMode.CLAMP)
         }
         val corner = minOf(radius, shape.height() / 2f, shape.width() / 2f)
-        canvas.drawRoundRect(shape, corner, corner, fill)
+        val behind = backdrop
+        if (behind != null) {
+            backdropMatrix.setScale(shape.width() / behind.width, shape.height() / behind.height)
+            backdropMatrix.postTranslate(shape.left, shape.top)
+            backdropPaint.shader.setLocalMatrix(backdropMatrix)
+            canvas.drawRoundRect(shape, corner, corner, backdropPaint)
+        } else {
+            canvas.drawRoundRect(shape, corner, corner, fill)
+        }
         canvas.drawRoundRect(shape, corner, corner, sheen)
         canvas.drawRoundRect(shape, corner, corner, rim)
     }

@@ -73,6 +73,20 @@ class LyricsSettingsTest {
         assertEquals(LyricsRailSide.AUTO, AirPlayPersistence.loadLyricsRailSide(context))
     }
 
+    @Test fun blurIsOnByDefaultAndRoundTrips() {
+        assertEquals(true, AirPlayPersistence.loadLyricsBlur(context))
+        AirPlayPersistence.saveLyricsBlur(context, false)
+        assertEquals(false, AirPlayPersistence.loadLyricsBlur(context))
+    }
+
+    @Test fun blurIsOffByDefaultOnALowRamHeadUnitButAChoiceStillWins() {
+        val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        org.robolectric.Shadows.shadowOf(manager).setIsLowRamDevice(true)
+        assertEquals(false, AirPlayPersistence.loadLyricsBlur(context))
+        AirPlayPersistence.saveLyricsBlur(context, true)
+        assertEquals(true, AirPlayPersistence.loadLyricsBlur(context))
+    }
+
     @Test fun switchHintsStartAtZeroAndRoundTrip() {
         assertEquals(0, AirPlayPersistence.loadLyricsSwitchHints(context))
         AirPlayPersistence.saveLyricsSwitchHints(context, 2)

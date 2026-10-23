@@ -1009,5 +1009,7 @@
     <string name="lyrics_hint_double_tap">双击切换到侧边栏</string>
     <string name="lyrics_notice_none">♪ 暂无歌词</string>
     <string name="lyrics_notice_failed">♪ 无法加载歌词</string>
+    <string name="settings_lyrics_blur">模糊玻璃</string>
+    <string name="settings_lyrics_blur_description">将歌词后方的 CarPlay 画面模糊，让玻璃呈现其色彩。会占用少量处理器资源，车机过慢时会自动关闭。返回 CarPlay 后生效。</string>
     <string name="settings_lyrics_switch_hint">在车机屏幕上双击胶囊可打开侧边栏；在侧边栏上点按胶囊图标可返回。两者都仅在车辆静止时可用。</string>
 </resources>

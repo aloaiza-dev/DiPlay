@@ -95,8 +95,10 @@ import com.shilapi.xcertplay.airplay.CarPlayMediaEngine
 import com.shilapi.xcertplay.airplay.SafeAreaRect
 import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.location.AndroidCarPlayLocationProvider
+import com.shilapi.xcertplay.lyrics.FrameSource
 import com.shilapi.xcertplay.lyrics.LocationLyricsSpeedSource
 import com.shilapi.xcertplay.lyrics.LrclibSource
+import com.shilapi.xcertplay.lyrics.LyricsBackdropSampler
 import com.shilapi.xcertplay.lyrics.LyricsController
 import com.shilapi.xcertplay.lyrics.LyricsLayout
 import com.shilapi.xcertplay.lyrics.LyricsNowPlayingFeed
@@ -1205,9 +1207,20 @@ class CarPlayHostActivity : ComponentActivity() {
     }
 
     // Above the picture and the gesture layer, under the menus. Neither view takes touches.
-    private fun addLyricsOverlay(root: FrameLayout) {
+    private fun addLyricsOverlay(root: FrameLayout, video: TextureView) {
         val pill = LyricsPillView(this)
         val rail = LyricsRailView(this)
+        // A blurred copy of the picture behind the glass. It stays off on a low-memory head unit, and turns
+        // itself off if copying the picture proves slow (see LyricsBackdropSampler).
+        val backdrop = if (AirPlayPersistence.loadLyricsBlur(this)) {
+            LyricsBackdropSampler(
+                FrameSource { bitmap -> video.isAvailable && video.getBitmap(bitmap) != null },
+                { video.width }, { video.height }, mainHandler,
+            ).also {
+                it.addTarget(pill)
+                it.addTarget(rail)
+            }
+        } else null
         root.addView(pill, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
             topMargin = dp(LyricsLayout.PILL_TOP_MARGIN_DP)
         })
@@ -1234,6 +1247,7 @@ class CarPlayHostActivity : ComponentActivity() {
             night = { darkMode },
             noLyricsLabel = { getString(R.string.lyrics_notice_none) },
             failedLabel = { getString(R.string.lyrics_notice_failed) },
+            backdrop = backdrop,
             videoReady = { lyricsFrameSession != null && lyricsFrameSession === activeAirPlaySession },
             sidePanelOpen = { sidePanel?.visibility == View.VISIBLE },
             nowMillis = SystemClock::elapsedRealtime,
@@ -2222,7 +2236,7 @@ class CarPlayHostActivity : ComponentActivity() {
                 setMargins(0, dp(12), dp(12), 0)
             })
         }
-        addLyricsOverlay(root)
+        addLyricsOverlay(root, video)
         settingsMenu = buildSettingsMenu().apply { visibility = View.GONE }
         root.addView(settingsMenu, FrameLayout.LayoutParams(-1, -1))
         safeAreaEditor = buildSafeAreaEditor().apply { visibility = View.GONE }

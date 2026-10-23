@@ -27,7 +27,7 @@ import kotlin.math.min
  * the current slot as the new current line fades in over it (see [LyricsMotion]). The glass follows the
  * size of the text, so its width and height ease from one line to the next.
  */
-internal class LyricsPillView(context: Context) : ViewGroup(context) {
+internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTarget {
     private enum class Motion { NONE, ENTER, ROLL, DIP, EXIT, RESIZE }
 
     private val density = context.resources.displayMetrics.density
@@ -391,8 +391,22 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         applyShape()
     }
 
+    private var backdrop: android.graphics.Bitmap? = null
+
+    override fun backdropBounds(out: android.graphics.Rect): Boolean {
+        if (visibility != VISIBLE || width <= 0 || height <= 0) return false
+        out.set(left, top, right, bottom)
+        return true
+    }
+
+    override fun onBackdrop(bitmap: android.graphics.Bitmap?) {
+        backdrop = bitmap
+        (background as? LyricsGlassDrawable)?.setBackdrop(bitmap)
+    }
+
     private fun applyShape() {
         background = lyricsGlass(colors, LyricsLayout.PILL_RADIUS_EM * currentPx(), rimPx())
+        (background as? LyricsGlassDrawable)?.setBackdrop(backdrop)
         elevation = LyricsLayout.PILL_ELEVATION_EM * currentPx()
     }
 

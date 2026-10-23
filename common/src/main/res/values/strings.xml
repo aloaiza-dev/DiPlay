@@ -1052,5 +1052,7 @@
     <string name="lyrics_hint_double_tap">Double-tap for the side view</string>
     <string name="lyrics_notice_none">♪ No lyrics</string>
     <string name="lyrics_notice_failed">♪ Can’t load lyrics</string>
+    <string name="settings_lyrics_blur">Blurred glass</string>
+    <string name="settings_lyrics_blur_description">Blurs the CarPlay picture behind the lyrics, so the glass takes its colours. Uses a little processor time and turns itself off if the head unit is too slow. Applies when you return to CarPlay.</string>
     <string name="settings_lyrics_switch_hint">Double-tap the pill on the car’s screen to open the side rail. On the rail, tap the pill icon to go back. Both only work while the car is still.</string>
 </resources>

@@ -23,6 +23,8 @@ internal class LyricsController(
     private val night: () -> Boolean,
     /** False until CarPlay's first video frame, and again once its session ends: nothing shows over a blank screen. */
     private val videoReady: () -> Boolean,
+    /** Keeps a blurred copy of the picture behind the glass while a view shows; null for plain glass. */
+    private val backdrop: LyricsBackdropControl? = null,
     /** A short notice for a track with no synced lyrics, and for a lookup that failed. */
     private val noLyricsLabel: () -> String,
     private val failedLabel: () -> String,
@@ -138,9 +140,11 @@ internal class LyricsController(
         rail.setSwitchAction(null)
         pill.hide()
         rail.hide()
+        backdrop?.sleep()
     }
 
     fun onNightChanged(night: Boolean) {
+        backdrop?.setNight(night)
         pill.setNight(night)
         rail.setNight(night)
     }
@@ -233,7 +237,13 @@ internal class LyricsController(
         }
     }
 
+    // The blurred backdrop is only copied while a view is on screen.
     private fun render() {
+        renderViews()
+        if (started && (pill.visibility == View.VISIBLE || rail.visibility == View.VISIBLE)) backdrop?.wake() else backdrop?.sleep()
+    }
+
+    private fun renderViews() {
         if (!started) return
         val mode = placement()
         val lines = lyrics

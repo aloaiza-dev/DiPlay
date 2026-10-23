@@ -45,6 +45,12 @@ class LyricsControllerTest {
     private val saved = mutableListOf<Int>()
     private val placements = mutableListOf<LyricsPlacement>()
     private var hintsSeen = 3
+    private val backdropCalls = mutableListOf<String>()
+    private val backdrop = object : LyricsBackdropControl {
+        override fun setNight(night: Boolean) { backdropCalls += "night:$night" }
+        override fun wake() { backdropCalls += "wake" }
+        override fun sleep() { backdropCalls += "sleep" }
+    }
     private var videoReady = true
     private val hintCounts = mutableListOf<Int>()
 
@@ -72,7 +78,7 @@ class LyricsControllerTest {
             sidePanelOpen = { sidePanelOpen }, nowMillis = ::now, offsetMillis = { offsetMillis },
             saveOffsetMillis = { saved += it; offsetMillis = it.toLong() },
             savePlacement = { placements += it; placement = it },
-            videoReady = { videoReady }, noLyricsLabel = { "No lyrics" }, failedLabel = { "Can't load" }, switchHintCount = { hintsSeen }, saveSwitchHintCount = { hintCounts += it; hintsSeen = it },
+            videoReady = { videoReady }, backdrop = backdrop, noLyricsLabel = { "No lyrics" }, failedLabel = { "Can't load" }, switchHintCount = { hintsSeen }, saveSwitchHintCount = { hintCounts += it; hintsSeen = it },
         )
     }
 
@@ -773,6 +779,36 @@ class LyricsControllerTest {
         tap(pill, 10_000L)
         tap(pill, 10_150L)
         assertTrue("a double tap on a notice does nothing", placements.isEmpty())
+    }
+
+    @Test
+    fun theBackdropCopiesRunOnlyWhileSomethingShows() {
+        controller.start()
+        assertTrue("sleeping at the start", "wake" !in backdropCalls)
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertEquals("wake", backdropCalls.last())
+        publish(np("Other", elapsed = 0L, artist = "B"))
+        assertEquals("a cleared view stops the copies", "sleep", backdropCalls.last())
+    }
+
+    @Test
+    fun theBackdropFollowsTheTheme() {
+        night = true
+        controller.start()
+        controller.onNightChanged(false)
+        assertTrue(backdropCalls.contains("night:true"))
+        assertEquals("night:false", backdropCalls.last { it.startsWith("night") })
+    }
+
+    @Test
+    fun stoppingTheControllerSleepsTheBackdrop() {
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        controller.stop()
+        assertEquals("sleep", backdropCalls.last())
     }
 
     @Test
