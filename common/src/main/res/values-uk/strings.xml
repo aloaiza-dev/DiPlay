@@ -962,6 +962,6 @@
     <string name="lyrics_notice_none">♪ Немає тексту</string>
     <string name="lyrics_notice_failed">♪ Не вдалося завантажити текст</string>
     <string name="settings_lyrics_blur">Розмите скло</string>
-    <string name="settings_lyrics_blur_description">Розмиває зображення CarPlay за текстом, і скло набуває його кольорів. Трохи навантажує процесор і вимикається сама, якщо головний пристрій надто повільний. Застосовується під час повернення в CarPlay.</string>
+    <string name="settings_lyrics_blur_description">Розмиває зображення CarPlay за текстом, і скло набуває його кольорів. Трохи навантажує процесор і вимикається сама, якщо головний пристрій надто повільний.</string>
     <string name="settings_lyrics_switch_hint">Двічі торкніться плашки на екрані автомобіля, щоб відкрити бічну панель. На панелі торкніться значка плашки, щоб повернутися. Обидві дії працюють лише на нерухомому автомобілі.</string>
 </resources>

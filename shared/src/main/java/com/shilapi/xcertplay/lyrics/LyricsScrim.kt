@@ -7,9 +7,11 @@ import kotlin.math.sqrt
  * Darkens a blurred picture just enough for the lyric text to stay readable. Each pixel gets the weakest tint
  * that still holds the text contrast floors over it, so a dark or mid picture keeps its colour and shows
  * through the glass, and only a bright one is pulled down. The strength comes from a table indexed by the
- * pixel's luminance, built once, so shading a pixel is a lookup and a blend.
+ * pixel's luminance, built once, so shading a pixel is a lookup and a blend. The floors are held over the
+ * shaded picture with the sheen on top, which is drawn over it and lightens it most on the top edge.
  */
-class LyricsScrim(colors: LyricsColors) {
+class LyricsScrim(colors: LyricsColors, minimumTint: Float = DEFAULT_MIN_TINT) {
+    private val minAlpha256 = (minimumTint * 256).toInt().coerceIn(0, MAX_ALPHA_256)
     private val tint = colors.glassBottom and 0xFFFFFF
     private val alpha256 = IntArray(BUCKETS)
 
@@ -18,7 +20,7 @@ class LyricsScrim(colors: LyricsColors) {
             val luminance = ((bucket + 1).toDouble() / BUCKETS).pow(2)
             val grey = (255 * deLinear(luminance)).toInt().coerceIn(0, 255)
             val backdrop = (0xFF shl 24) or (grey shl 16) or (grey shl 8) or grey
-            alpha256[bucket] = strength(colors, backdrop)
+            alpha256[bucket] = strength(colors, backdrop, minAlpha256)
         }
     }
 
@@ -39,14 +41,14 @@ class LyricsScrim(colors: LyricsColors) {
 
     // The smallest tint (as 0..256) with every text role above its floor plus a margin, found by bisection:
     // more tint is always darker, so contrast only rises with it.
-    private fun strength(colors: LyricsColors, backdrop: Int): Int {
+    private fun strength(colors: LyricsColors, backdrop: Int, minAlpha: Int): Int {
         fun holds(a256: Int): Boolean {
-            val shaded = LyricsTheme.over((a256 shl 24) or tint, backdrop)
+            val shaded = LyricsTheme.over(colors.sheen, LyricsTheme.over((a256 shl 24) or tint, backdrop))
             return LyricsTheme.contrast(colors.current, shaded) >= CURRENT_CONTRAST + MARGIN &&
                 LyricsTheme.contrast(colors.next, shaded) >= NEXT_CONTRAST + MARGIN &&
                 LyricsTheme.contrast(colors.far, shaded) >= FAR_CONTRAST + MARGIN
         }
-        var low = MIN_ALPHA_256
+        var low = minAlpha
         var high = MAX_ALPHA_256
         if (holds(low)) return low
         while (high - low > 1) {
@@ -64,8 +66,9 @@ class LyricsScrim(colors: LyricsColors) {
         const val FAR_CONTRAST = 4.0
         private const val MARGIN = 0.4
         private const val BUCKETS = 64
-        // Never clearer than 30%: below that the text would lose its glass behind it; never above 95%.
-        private const val MIN_ALPHA_256 = 77
+        /** Never clearer than 30%: below that the text would lose its glass behind it. The rail holds more. */
+        const val DEFAULT_MIN_TINT = 0.30f
+        const val RAIL_MIN_TINT = 0.60f
         private const val MAX_ALPHA_256 = 243
 
         private val LINEAR = FloatArray(256) { i ->

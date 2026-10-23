@@ -999,6 +999,6 @@
     <string name="lyrics_notice_none">♪ لا توجد كلمات</string>
     <string name="lyrics_notice_failed">♪ تعذر تحميل الكلمات</string>
     <string name="settings_lyrics_blur">زجاج ضبابي</string>
-    <string name="settings_lyrics_blur_description">يطمس صورة CarPlay خلف الكلمات ليأخذ الزجاج ألوانها. يستهلك قليلًا من المعالج ويتوقف تلقائيًا إذا كانت وحدة القيادة بطيئة. يُطبَّق عند العودة إلى CarPlay.</string>
+    <string name="settings_lyrics_blur_description">يطمس صورة CarPlay خلف الكلمات ليأخذ الزجاج ألوانها. يستهلك قليلًا من المعالج ويتوقف تلقائيًا إذا كانت وحدة القيادة بطيئة.</string>
     <string name="settings_lyrics_switch_hint">انقر مرتين على الشريط العلوي في شاشة السيارة لفتح اللوحة الجانبية. وعلى اللوحة، انقر أيقونة الشريط للعودة. يعمل الاثنان فقط والسيارة متوقفة.</string>
 </resources>

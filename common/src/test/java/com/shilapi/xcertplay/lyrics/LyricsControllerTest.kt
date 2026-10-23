@@ -770,6 +770,22 @@ class LyricsControllerTest {
     }
 
     @Test
+    fun theNoticeTimerStartsWhenItFirstShowsNotWhenTheLookupAnswers() {
+        lrc = { null }
+        videoReady = false
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(5_000L) // longer than the notice lasts, with nothing on screen
+        videoReady = true
+        controller.onVideoChanged()
+        advance(400L)
+        assertEquals(listOf("No lyrics"), pillText())
+        advance(4_000L)
+        assertEquals(View.GONE, pill.visibility)
+    }
+
+    @Test
     fun theNoticeIsNotATapTarget() {
         lrc = { null }
         controller.start()

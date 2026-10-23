@@ -9,8 +9,9 @@ class LyricsScrimTest {
     private val colors = LyricsTheme.colors(true)
     private val scrim = LyricsScrim(colors)
 
+    // The sheen is drawn over the shaded picture, at its strongest on the top edge where the text sits.
     private fun assertFloors(pixel: Int) {
-        val shaded = scrim.shade(pixel)
+        val shaded = LyricsTheme.over(colors.sheen, scrim.shade(pixel))
         assertEquals("opaque", 0xFF, shaded ushr 24)
         assertTrue("current over %08x".format(pixel), LyricsTheme.contrast(colors.current, shaded) >= LyricsScrim.CURRENT_CONTRAST)
         assertTrue("next over %08x".format(pixel), LyricsTheme.contrast(colors.next, shaded) >= LyricsScrim.NEXT_CONTRAST)
@@ -35,7 +36,7 @@ class LyricsScrimTest {
             val theme = LyricsTheme.colors(night)
             val s = LyricsScrim(theme)
             for (pixel in listOf(0xFFFFFFFF.toInt(), 0xFFFFFF00.toInt(), 0xFF00FF00.toInt(), 0xFF00B7FF.toInt(), 0xFFFF2D55.toInt())) {
-                assertTrue(LyricsTheme.contrast(theme.current, s.shade(pixel)) >= LyricsScrim.CURRENT_CONTRAST)
+                assertTrue(LyricsTheme.contrast(theme.current, LyricsTheme.over(theme.sheen, s.shade(pixel))) >= LyricsScrim.CURRENT_CONTRAST)
             }
         }
     }
@@ -53,6 +54,17 @@ class LyricsScrimTest {
     fun aBrightPictureIsDarkenedMoreThanADarkOne() {
         fun lift(pixel: Int) = ((scrim.shade(pixel) ushr 8) and 0xFF) - ((pixel ushr 8) and 0xFF)
         assertTrue(lift(0xFFFFFFFF.toInt()) < lift(0xFF404040.toInt()))
+    }
+
+    @Test
+    fun aStrongerMinimumTintMakesAMoreOpaqueGlassThatStillHoldsTheFloors() {
+        val rail = LyricsScrim(colors, LyricsScrim.RAIL_MIN_TINT)
+        val navy = 0xFF1B2A55.toInt()
+        val gap = { s: LyricsScrim -> kotlin.math.abs(((s.shade(navy) ushr 8) and 0xFF) - ((navy ushr 8) and 0xFF)) }
+        assertTrue("rail ${gap(rail)} vs pill ${gap(scrim)}", gap(rail) >= gap(scrim) * 3 / 2)
+        for (pixel in listOf(0xFFFFFFFF.toInt(), 0xFFFFFF00.toInt(), 0xFF808080.toInt())) {
+            assertTrue(LyricsTheme.contrast(colors.current, LyricsTheme.over(colors.sheen, rail.shade(pixel))) >= LyricsScrim.CURRENT_CONTRAST)
+        }
     }
 
     @Test

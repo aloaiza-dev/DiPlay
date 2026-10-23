@@ -1040,6 +1040,6 @@
     <string name="lyrics_notice_none">♪ Nessun testo</string>
     <string name="lyrics_notice_failed">♪ Impossibile caricare il testo</string>
     <string name="settings_lyrics_blur">Vetro sfocato</string>
-    <string name="settings_lyrics_blur_description">Sfoca l’immagine di CarPlay dietro i testi, così il vetro ne prende i colori. Usa un po’ di processore e si disattiva da solo se l’autoradio è lenta. Si applica quando torni su CarPlay.</string>
+    <string name="settings_lyrics_blur_description">Sfoca l’immagine di CarPlay dietro i testi, così il vetro ne prende i colori. Usa un po’ di processore e si disattiva da solo se l’autoradio è lenta.</string>
     <string name="settings_lyrics_switch_hint">Tocca due volte la pillola sullo schermo dell’auto per aprire la barra laterale. Sulla barra, tocca l’icona della pillola per tornare indietro. Entrambi funzionano solo ad auto ferma.</string>
 </resources>

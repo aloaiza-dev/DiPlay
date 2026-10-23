@@ -16,6 +16,9 @@ internal interface BackdropTarget {
 
     /** A bitmap to draw behind the glass, or null to fall back to plain glass. */
     fun onBackdrop(bitmap: Bitmap?)
+
+    /** A big card of text asks for a denser tint than a small pill. */
+    val opaque: Boolean get() = false
 }
 
 internal interface LyricsBackdropControl {
@@ -39,11 +42,15 @@ internal class LyricsBackdropSampler(
     private val sourceHeight: () -> Int,
     private val handler: Handler,
     private val nowNanos: () -> Long = System::nanoTime,
+    /** Asked on every [wake], so the setting takes effect at once. */
+    private val enabled: () -> Boolean = { true },
 ) : LyricsBackdropControl {
     private val targets = mutableListOf<BackdropTarget>()
     private val outputs = HashMap<BackdropTarget, Bitmap>()
-    private val scrims = arrayOfNulls<LyricsScrim>(2)
-    private var scrim: LyricsScrim? = null
+    private val scrims = arrayOfNulls<LyricsScrim>(4)
+    private var night = true
+    private val lastBounds = HashMap<BackdropTarget, Rect?>()
+    private var captureFailures = 0
     private var frame: Bitmap? = null
     private var pixels = IntArray(0)
     private var work = IntArray(0)
@@ -69,15 +76,59 @@ internal class LyricsBackdropSampler(
     }
 
     override fun setNight(night: Boolean) {
-        val index = if (night) 0 else 1
-        scrim = scrims[index] ?: LyricsScrim(LyricsTheme.colors(night)).also { scrims[index] = it }
+        this.night = night
+    }
+
+    private fun scrimFor(target: BackdropTarget): LyricsScrim {
+        val index = (if (night) 0 else 1) + (if (target.opaque) 2 else 0)
+        return scrims[index] ?: LyricsScrim(
+            LyricsTheme.colors(night),
+            if (target.opaque) LyricsScrim.RAIL_MIN_TINT else LyricsScrim.DEFAULT_MIN_TINT,
+        ).also { scrims[index] = it }
     }
 
     override fun wake() {
-        if (disabled || active) return
+        if (disabled) return
+        if (!enabled()) {
+            if (active || outputs.isNotEmpty()) stopAndClear()
+            return
+        }
+        if (active) {
+            if (targetsChanged()) {
+                // A view that came back must not show the bitmap of its last appearance, and a new one should
+                // not wait out the slow rate of a still picture.
+                staticRuns = 0
+                handler.removeCallbacks(tick)
+                handler.post(tick)
+            }
+            return
+        }
         active = true
         handler.removeCallbacks(tick)
         handler.post(tick)
+    }
+
+    // True when a target appeared, went away or moved since the last copy. A hidden one drops its bitmap.
+    private fun targetsChanged(): Boolean {
+        var changed = false
+        val now = Rect()
+        for (target in targets) {
+            val visible = target.backdropBounds(now)
+            val before = lastBounds[target]
+            val same = if (visible) before == now else before == null
+            if (same) continue
+            changed = true
+            if (!visible && outputs.remove(target) != null) target.onBackdrop(null)
+        }
+        return changed
+    }
+
+    private fun stopAndClear() {
+        active = false
+        handler.removeCallbacks(tick)
+        val shown = outputs.keys.toList()
+        outputs.clear()
+        shown.forEach { it.onBackdrop(null) }
     }
 
     override fun sleep() {
@@ -88,7 +139,6 @@ internal class LyricsBackdropSampler(
     private fun intervalMillis() = (baseMillis * (1 + staticRuns)).coerceAtMost(MAX_INTERVAL_MILLIS)
 
     private fun sample() {
-        val shade = scrim ?: return
         val width = sourceWidth()
         val height = sourceHeight()
         if (width <= 0 || height <= 0) return
@@ -102,13 +152,24 @@ internal class LyricsBackdropSampler(
             frame = copy
             pixels = IntArray(fw * fh)
         }
-        if (!source.capture(copy)) return
+        if (!source.capture(copy)) {
+            // The picture cannot be copied (no surface yet, or a zero size): plain glass, and back off.
+            if (++captureFailures == CAPTURE_FAILURES_LIMIT) clearOutputs()
+            baseMillis = (baseMillis * 2).coerceAtMost(MAX_INTERVAL_MILLIS)
+            return
+        }
+        captureFailures = 0
         copy.getPixels(pixels, 0, fw, 0, 0, fw, fh)
         val signature = signatureOf(pixels)
         val changed = signature != lastSignature
         lastSignature = signature
         for (target in targets) {
-            if (target.backdropBounds(bounds)) render(target, shade, k, fw, fh)
+            if (target.backdropBounds(bounds)) {
+                lastBounds[target] = Rect(bounds)
+                render(target, scrimFor(target), k, fw, fh)
+            } else {
+                lastBounds[target] = null
+            }
         }
         adapt(nowNanos() - started, changed)
     }
@@ -193,6 +254,12 @@ internal class LyricsBackdropSampler(
         staticRuns = if (changed) 0 else (staticRuns + 1).coerceAtMost(MAX_STATIC_RUNS)
     }
 
+    private fun clearOutputs() {
+        val shown = outputs.keys.toList()
+        outputs.clear()
+        shown.forEach { it.onBackdrop(null) }
+    }
+
     private fun disable() {
         disabled = true
         active = false
@@ -212,7 +279,8 @@ internal class LyricsBackdropSampler(
         private const val MAX_STATIC_RUNS = 5
         private const val BLUR_RADIUS = 3
         private const val BLUR_PASSES = 2
-        private const val SIGNATURE_STRIDE = 61
+        private const val SIGNATURE_STRIDE = 17
+        private const val CAPTURE_FAILURES_LIMIT = 3
         // Starting values: none is measured on a car yet.
         private const val FAST_NANOS = 6_000_000L
         private const val SLOW_NANOS = 12_000_000L

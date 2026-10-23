@@ -33,9 +33,11 @@ internal class LyricsGlassDrawable : Drawable() {
 
     /** A blurred, already shaded copy of the picture behind the glass, drawn in place of the fill; null for plain glass. */
     fun setBackdrop(bitmap: Bitmap?) {
-        backdrop = bitmap
-        backdropPaint.shader = bitmap?.let { BitmapShader(it, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP) }
-        invalidateSelf()
+        if (bitmap !== backdrop) {
+            backdrop = bitmap
+            backdropPaint.shader = bitmap?.let { BitmapShader(it, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP) }
+        }
+        invalidateSelf() // the same bitmap is refilled in place
     }
 
     internal val hasBackdrop: Boolean get() = backdrop != null
@@ -70,7 +72,8 @@ internal class LyricsGlassDrawable : Drawable() {
         } else {
             canvas.drawRoundRect(shape, corner, corner, fill)
         }
-        canvas.drawRoundRect(shape, corner, corner, sheen)
+        // The sheen is part of the scrim's contrast guarantee, which only exists with a backdrop.
+        if (behind != null) canvas.drawRoundRect(shape, corner, corner, sheen)
         canvas.drawRoundRect(shape, corner, corner, rim)
     }
 

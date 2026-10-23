@@ -416,6 +416,12 @@ class CarPlayHostActivity : ComponentActivity() {
     private var lyricsPill: LyricsPillView? = null
     // The session whose first video frame has been drawn: the lyrics wait for it, so they never sit over a blank screen.
     private var lyricsFrameSession: AirPlaySession? = null
+    private val lyricsFirstFrameListener: (AirPlaySession) -> Unit = { session ->
+        runOnUiThread {
+            lyricsFrameSession = session
+            lyricsController?.onVideoChanged()
+        }
+    }
     private var lyricsExecutor: ExecutorService? = null
     // Sinks whose sessions are being torn down; their decoders may still render to the current surface
     // until they have released their codecs, so a destroyed surface is detached from them too. A restart
@@ -1212,15 +1218,14 @@ class CarPlayHostActivity : ComponentActivity() {
         val rail = LyricsRailView(this)
         // A blurred copy of the picture behind the glass. It stays off on a low-memory head unit, and turns
         // itself off if copying the picture proves slow (see LyricsBackdropSampler).
-        val backdrop = if (AirPlayPersistence.loadLyricsBlur(this)) {
-            LyricsBackdropSampler(
-                FrameSource { bitmap -> video.isAvailable && video.getBitmap(bitmap) != null },
-                { video.width }, { video.height }, mainHandler,
-            ).also {
-                it.addTarget(pill)
-                it.addTarget(rail)
-            }
-        } else null
+        val backdrop = LyricsBackdropSampler(
+            FrameSource { bitmap -> video.isAvailable && video.getBitmap(bitmap) != null },
+            { video.width }, { video.height }, mainHandler,
+            enabled = { AirPlayPersistence.loadLyricsBlur(this) },
+        ).also {
+            it.addTarget(pill)
+            it.addTarget(rail)
+        }
         root.addView(pill, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
             topMargin = dp(LyricsLayout.PILL_TOP_MARGIN_DP)
         })
@@ -2010,6 +2015,7 @@ class CarPlayHostActivity : ComponentActivity() {
         lyricsExecutor?.shutdown()
         runCatching { unregisterReceiver(bluetoothOnReceiver) }
         mainHandler.removeCallbacks(hideTemporarySystemBars)
+        controller?.clearFirstFrameListener(lyricsFirstFrameListener)
         dropHeldTouch()
         discardLastPicture()
         if (pictureCopyThreadStarted) pictureCopyThread.quitSafely()
@@ -5610,15 +5616,11 @@ class CarPlayHostActivity : ComponentActivity() {
         // callback, so it takes the live session from the controller: day/night, the Siri key and the
         // wheel keys reach the iPhone through it. Restore iOS's captured mask when the controller still
         // owns that live session.
+        // The listener goes first: a frame that lands between the two calls below must not be lost.
+        snapshot.controller.setFirstFrameListener(lyricsFirstFrameListener)
         snapshot.controller.activeAirPlaySession()?.let {
             activeAirPlaySession = it
             if (snapshot.controller.hasRenderedFrame(it)) lyricsFrameSession = it
-        }
-        snapshot.controller.setFirstFrameListener { session ->
-            runOnUiThread {
-                lyricsFrameSession = session
-                lyricsController?.onVideoChanged()
-            }
         }
         if (blackCornerRadiusDp == CarPlayBlackCornerOverlay.IPHONE_MASK) {
             snapshot.controller.activeIphoneCornerMask()?.let { (session, png, width) ->

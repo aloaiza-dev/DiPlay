@@ -950,6 +950,6 @@
     <string name="lyrics_notice_none">♪ Нет текста</string>
     <string name="lyrics_notice_failed">♪ Не удалось загрузить текст</string>
     <string name="settings_lyrics_blur">Размытое стекло</string>
-    <string name="settings_lyrics_blur_description">Размывает картинку CarPlay за текстом, и стекло принимает её цвета. Немного нагружает процессор и сама отключается, если головное устройство слишком медленное. Применяется при возврате в CarPlay.</string>
+    <string name="settings_lyrics_blur_description">Размывает картинку CarPlay за текстом, и стекло принимает её цвета. Немного нагружает процессор и сама отключается, если головное устройство слишком медленное.</string>
     <string name="settings_lyrics_switch_hint">Дважды коснитесь плашки на экране автомобиля, чтобы открыть боковую панель. На панели коснитесь значка плашки, чтобы вернуться. Оба жеста работают только на стоящем автомобиле.</string>
 </resources>

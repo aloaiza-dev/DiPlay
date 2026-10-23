@@ -26,6 +26,7 @@ class LyricsBackdropSamplerTest {
     private val looper get() = Looper.getMainLooper()
 
     private val source = FrameSource { bitmap ->
+        if (!capturesOk) return@FrameSource false
         captures++
         lastFrameWidth = bitmap.width
         paint(bitmap)
@@ -46,8 +47,11 @@ class LyricsBackdropSamplerTest {
         }
     }
 
+    private var enabled = true
+    private var capturesOk = true
+
     private fun sampler(target: BackdropTarget, width: Int = 2400, height: Int = 1200) =
-        LyricsBackdropSampler(source, { width }, { height }, Handler(looper), { clockNanos }).also {
+        LyricsBackdropSampler(source, { width }, { height }, Handler(looper), { clockNanos }, { enabled }).also {
             it.addTarget(target)
             it.setNight(true)
         }
@@ -159,6 +163,60 @@ class LyricsBackdropSamplerTest {
         run(5_000L)
         assertEquals("it never comes back in this session", before, captures)
         assertTrue(s.disabled)
+    }
+
+    @Test
+    fun aTargetThatComesBackIsSampledAtOnceEvenOnAStillPicture() {
+        val target = FakeTarget(Rect(0, 0, 600, 200))
+        val s = sampler(target)
+        s.wake()
+        run(4_000L) // a still picture: the rate has backed off
+        val clearedBefore = target.cleared
+        target.bounds = null
+        s.wake() // the lyrics call this on every render
+        assertEquals("the stale bitmap is dropped, not stretched onto the next view", clearedBefore + 1, target.cleared)
+        val before = target.updates
+        target.bounds = Rect(0, 0, 300, 200)
+        s.wake()
+        run(60L)
+        assertTrue("sampled again at once", target.updates > before)
+        assertTrue(checkNotNull(target.bitmap).width < 600 / 6 + 2)
+    }
+
+    @Test
+    fun copiesThatKeepFailingFallBackToPlainGlassAndBackOff() {
+        val target = FakeTarget()
+        val s = sampler(target)
+        s.wake()
+        run(100L)
+        assertNotNull(target.bitmap)
+        capturesOk = false
+        run(6_000L)
+        assertNull("plain glass while the picture cannot be copied", target.bitmap)
+        assertEquals("it asked once and stayed quiet", 1, target.cleared)
+        assertTrue(!s.disabled)
+        capturesOk = true
+        run(3_000L)
+        assertNotNull("it recovers when copies work again", target.bitmap)
+    }
+
+    @Test
+    fun turningTheSettingOffClearsTheGlassAndStopsCopying() {
+        val target = FakeTarget()
+        val s = sampler(target)
+        s.wake()
+        run(200L)
+        assertNotNull(target.bitmap)
+        enabled = false
+        s.wake()
+        assertNull(target.bitmap)
+        val before = captures
+        run(2_000L)
+        assertEquals(before, captures)
+        enabled = true
+        s.wake()
+        run(200L)
+        assertNotNull("and back on when it is switched on again", target.bitmap)
     }
 
     @Test

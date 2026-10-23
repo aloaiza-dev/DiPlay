@@ -1010,6 +1010,6 @@
     <string name="lyrics_notice_none">♪ 暫無歌詞</string>
     <string name="lyrics_notice_failed">♪ 無法載入歌詞</string>
     <string name="settings_lyrics_blur">模糊玻璃</string>
-    <string name="settings_lyrics_blur_description">將歌詞後方的 CarPlay 畫面模糊，讓玻璃呈現其色彩。會佔用少量處理器資源，車機過慢時會自動關閉。返回 CarPlay 後生效。</string>
+    <string name="settings_lyrics_blur_description">將歌詞後方的 CarPlay 畫面模糊，讓玻璃呈現其色彩。會佔用少量處理器資源，車機過慢時會自動關閉。</string>
     <string name="settings_lyrics_switch_hint">在車機螢幕上雙擊膠囊可開啟側邊欄；在側邊欄上點按膠囊圖示可返回。兩者都僅在車輛靜止時可用。</string>
 </resources>

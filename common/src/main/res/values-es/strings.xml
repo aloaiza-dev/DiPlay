@@ -950,6 +950,6 @@
     <string name="lyrics_notice_none">♪ Sin letra</string>
     <string name="lyrics_notice_failed">♪ No se pudo cargar la letra</string>
     <string name="settings_lyrics_blur">Cristal difuminado</string>
-    <string name="settings_lyrics_blur_description">Difumina la imagen de CarPlay detrás de la letra para que el cristal tome sus colores. Usa algo de procesador y se desactiva solo si la unidad principal es lenta. Se aplica al volver a CarPlay.</string>
+    <string name="settings_lyrics_blur_description">Difumina la imagen de CarPlay detrás de la letra para que el cristal tome sus colores. Usa algo de procesador y se desactiva solo si la unidad principal es lenta.</string>
     <string name="settings_lyrics_switch_hint">Toca dos veces la cápsula en la pantalla del coche para abrir el panel lateral. En el panel, toca el icono de cápsula para volver. Ambos solo funcionan con el coche parado.</string>
 </resources>

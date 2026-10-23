@@ -497,6 +497,8 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
 
     private var backdrop: android.graphics.Bitmap? = null
 
+    override val opaque: Boolean get() = true
+
     override fun backdropBounds(out: android.graphics.Rect): Boolean {
         if (visibility != VISIBLE || width <= 0 || height <= 0) return false
         out.set(left, top, right, bottom)

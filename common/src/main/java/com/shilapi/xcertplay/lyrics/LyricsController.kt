@@ -57,9 +57,11 @@ internal class LyricsController(
     private var hintedFor = -1
     private var notice: String? = null
     private var noticeShown = false
+    private var noticeTimerSet = false
     private var failedNoticeFor = -1
     private val endNotice = Runnable {
         notice = null
+        noticeTimerSet = false
         render()
     }
     private val hideHint = Runnable { pill.setHint(false) }
@@ -93,14 +95,15 @@ internal class LyricsController(
 
     private fun showNotice(text: String) {
         notice = text
+        noticeTimerSet = false
         handler.removeCallbacks(endNotice)
-        handler.postDelayed(endNotice, NOTICE_MILLIS)
         render()
     }
 
     private fun clearNotice() {
         notice = null
         noticeShown = false
+        noticeTimerSet = false
         handler.removeCallbacks(endNotice)
     }
 
@@ -260,6 +263,11 @@ internal class LyricsController(
             pill.show(notice, null, compact = true)
             rail.hide()
             noticeShown = true
+            // The clock starts when the notice is first on screen, not when the lookup answered.
+            if (!noticeTimerSet) {
+                noticeTimerSet = true
+                handler.postDelayed(endNotice, NOTICE_MILLIS)
+            }
             nextChangeMillis = null
             return
         }

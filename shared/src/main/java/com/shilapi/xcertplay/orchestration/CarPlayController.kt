@@ -346,6 +346,11 @@ class CarPlayController(
         firstFrameListener = listener
     }
 
+    /** Drops [listener] if it is still the one set: a host that is going away must not stay referenced. */
+    fun clearFirstFrameListener(listener: (AirPlaySession) -> Unit) {
+        if (firstFrameListener === listener) firstFrameListener = null
+    }
+
     /** True once [session] has drawn its first video frame: a new host adopting it will not hear that callback. */
     fun hasRenderedFrame(session: AirPlaySession): Boolean = framedSession === session
 
