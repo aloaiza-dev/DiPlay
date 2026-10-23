@@ -426,7 +426,9 @@ class CarPlayHostActivity : ComponentActivity() {
     }
     private val lyricsFirstFrameListener: (AirPlaySession) -> Unit = { session ->
         runOnUiThread {
-            if (lyricsGate.frameDrawn(session)) lyricsController?.onVideoChanged()
+            val opened = lyricsGate.frameDrawn(session)
+            appendLog("Lyrics: first-frame event, gate opened=$opened ready=${lyricsGate.ready()}")
+            if (opened) lyricsController?.onVideoChanged()
         }
     }
     private var lyricsExecutor: ExecutorService? = null

@@ -10,6 +10,8 @@ class LyricsVideoGate(private val nowMillis: () -> Long, private val waitMillis:
     private var session: Any? = null
     private var since = 0L
     private var frameSeen = false
+    // The last session that drew a frame, kept because its frame event can be handled before its start.
+    private var lastFramed: Any? = null
 
     /** True when the gate opened without any frame signal. For the log. */
     var openedByTimeout = false
@@ -20,18 +22,20 @@ class LyricsVideoGate(private val nowMillis: () -> Long, private val waitMillis:
         if (this.session === session) return
         this.session = session
         since = nowMillis()
-        frameSeen = false
+        frameSeen = lastFramed === session
         openedByTimeout = false
     }
 
     fun sessionEnded() {
         session = null
         frameSeen = false
+        lastFramed = null
         openedByTimeout = false
     }
 
     /** [from] null means the video surface drew one. True only the first time a frame opens the gate. */
     fun frameDrawn(from: Any?): Boolean {
+        if (from != null) lastFramed = from
         val current = session ?: return false
         if (frameSeen || (from != null && from !== current)) return false
         frameSeen = true

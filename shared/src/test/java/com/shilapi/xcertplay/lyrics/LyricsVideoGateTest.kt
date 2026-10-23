@@ -26,6 +26,21 @@ class LyricsVideoGateTest {
         assertFalse("later frames are not", gate.frameDrawn(session))
     }
 
+    // The car log showed the frame event arriving before the session start had been handled on the main thread.
+    @Test
+    fun aFrameThatArrivesBeforeItsSessionStartIsRemembered() {
+        assertFalse(gate.frameDrawn(session))
+        gate.sessionStarted(session)
+        assertTrue("the frame already came", gate.ready())
+    }
+
+    @Test
+    fun aFrameOfAnotherSessionBeforeTheStartDoesNotOpenIt() {
+        gate.frameDrawn(Any())
+        gate.sessionStarted(session)
+        assertFalse(gate.ready())
+    }
+
     @Test
     fun aFrameFromTheVideoSurfaceCountsWithoutNamingASession() {
         gate.sessionStarted(session)
