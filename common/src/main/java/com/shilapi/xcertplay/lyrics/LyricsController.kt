@@ -297,14 +297,15 @@ internal class LyricsController(
             rail.fadeOut()
             pill.setInteractive(true)
             showPill(lines, index, position, animate)
-            if (mode == LyricsPlacement.TOP_PILL && !moving) teachDoubleTap() else pill.setHint(false)
+            teachDoubleTap()
         } else {
             pill.fadeOut()
+            pill.setInteractive(false)
             rail.show(lines.lines.map { it.text.ifBlank { NOTE } }, index)
         }
     }
 
-    // The first few tracks a parked driver sees on the pill carry a short hint for the double tap.
+    // The first few tracks a driver sees on the pill carry a short hint for the double tap.
     private fun teachDoubleTap() {
         if (hintedFor == generation || pill.visibility != View.VISIBLE) return
         val seen = switchHintCount()

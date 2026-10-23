@@ -517,6 +517,18 @@ class LyricsOverlayViewsTest {
     }
 
     @Test
+    fun aSwipeThatEndsWhereItStartedIsNotATap() {
+        val pill = interactivePill()
+        for (downAt in listOf(0L, 150L)) {
+            val down = MotionEvent.obtain(downAt, downAt, MotionEvent.ACTION_DOWN, 5f, 5f, 0)
+            val move = MotionEvent.obtain(downAt, downAt + 20, MotionEvent.ACTION_MOVE, 300f, 5f, 0)
+            val up = MotionEvent.obtain(downAt, downAt + 40, MotionEvent.ACTION_UP, 5f, 5f, 0)
+            listOf(down, move, up).forEach { pill.onHostTouch(it); it.recycle() }
+        }
+        assertEquals(0, switches)
+    }
+
+    @Test
     fun aPillThatIsNotInteractiveIgnoresDoubleTaps() {
         val pill = interactivePill()
         pill.setInteractive(false)

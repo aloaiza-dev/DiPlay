@@ -84,10 +84,15 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
             MotionEvent.ACTION_DOWN -> {
                 val reach = TAP_REACH_DP * density
                 watching = interactive && switchAction != null && visibility == VISIBLE &&
-                    event.x >= left - reach && event.x <= right + reach && event.y >= top - reach && event.y <= bottom + reach
+                    event.x >= left - reach && event.x <= right + reach &&
+                        event.y >= top + translationY - reach && event.y <= bottom + translationY + reach
                 downAt = event.eventTime
                 downX = event.x
                 downY = event.y
+            }
+            MotionEvent.ACTION_MOVE -> if (watching && hypot(event.x - downX, event.y - downY) > 2 * configuration.scaledTouchSlop) {
+                watching = false
+                forgetTap()
             }
             MotionEvent.ACTION_UP -> if (watching) endTouch(event)
             MotionEvent.ACTION_POINTER_DOWN, MotionEvent.ACTION_CANCEL -> {
@@ -480,6 +485,6 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
         const val TAP_MAX_MILLIS = 400L
         const val DOUBLE_TAP_MILLIS = 600L
         // A finger that lands a little off the glass still counts: the pill is small and a car shakes.
-        const val TAP_REACH_DP = 24f
+        const val TAP_REACH_DP = 12f
     }
 }
