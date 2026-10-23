@@ -154,7 +154,7 @@ class LyricsOverlayScreenshotsTest {
 
     @Test
     fun aLongCurrentLineWrapsToASecondRowInsteadOfBeingCut() {
-        val long = "Today I drove through the suburbs and pictured home"
+        val long = "Today I drove through the suburbs and pictured I was driving home"
         val (root, pillView, _) = capture("pill-wrap", wide, true, Color.DKGRAY, pill(true, long, song[3]), fontScale = 1.0f)
         val pill = pillView as LyricsPillView
         assertInside(root, pillView)
@@ -176,6 +176,25 @@ class LyricsOverlayScreenshotsTest {
         assertTrue("a longer line widens it: $short -> $middle", middle > short)
         assertTrue("a very long line is widest: $middle -> $long", long > middle)
         assertTrue("and stops at the maximum: $long", long <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
+    }
+
+    @Test
+    fun aLineWrapsOnlyAfterItHasShrunkToTheMinimumScale() {
+        val words = "Yeah today I drove through the suburbs and pictured I was driving home to you again".split(" ")
+        var wrappedAt = -1
+        var lastOneRowSize = 0f
+        for (count in 3..words.size) {
+            val line = words.take(count).joinToString(" ")
+            val pill = capture("pill-flow", wide, true, Color.DKGRAY, pill(true, line, "next"), fontScale = 1.0f).second as LyricsPillView
+            val base = android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP, LyricsLayout.PILL_CURRENT_SP, pill.resources.displayMetrics)
+            if (pill.currentRow.lineCount == 2) {
+                wrappedAt = count
+                assertEquals("the last one-row line was shrunk to about the minimum", base * LyricsLayout.PILL_MIN_TEXT_SCALE, lastOneRowSize, base * 0.05f)
+                break
+            }
+            lastOneRowSize = pill.currentRow.textSize
+        }
+        assertTrue("a long enough line wraps", wrappedAt > 0)
     }
 
     @Test
