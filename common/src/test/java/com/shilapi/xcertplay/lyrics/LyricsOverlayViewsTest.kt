@@ -226,7 +226,7 @@ class LyricsOverlayViewsTest {
     }
 
     @Test
-    fun pillKeepsOneWidthWhateverTheLine() {
+    fun aShortLineNeverNarrowsThePillBelowTheMinimumWidth() {
         val root = FrameLayout(context)
         val pill = LyricsPillView(context).apply { setWindowSizeDp(1000f, 480f) }
         root.addView(pill, FrameLayout.LayoutParams(-2, -2))
@@ -236,14 +236,11 @@ class LyricsOverlayViewsTest {
         }
         pill.show("hi", "yo", animate = false)
         layoutRoot()
-        val short = pill.width
-        pill.show("This line is much longer than the first one", "and so is the next line after it", animate = false)
-        layoutRoot()
-        assertEquals("a longer line must not widen the pill", short, pill.width)
+        val minimum = (LyricsLayout.PILL_MIN_WIDTH_FRACTION * 1000f * context.resources.displayMetrics.density).toInt()
+        assertEquals(minimum, pill.width)
         pill.show("tiny", "tiny", animate = false)
         layoutRoot()
-        assertEquals("a shorter line must not narrow it", short, pill.width)
-        assertEquals((LyricsLayout.PILL_WIDTH_FRACTION * 1000f * context.resources.displayMetrics.density).toInt(), short)
+        assertEquals(minimum, pill.width)
     }
 
     @Test
@@ -256,19 +253,6 @@ class LyricsOverlayViewsTest {
         val narrowRail = LyricsRailView(context).apply { setWindowSizeDp(1000f, 700f) }
         val wideRail = LyricsRailView(context).apply { setWindowSizeDp(2666f, 700f) }
         assertEquals(2f, wideRail.row(0).textSize / narrowRail.row(0).textSize, 0.05f)
-    }
-
-    @Test
-    fun aVeryLongLineStaysWithinTheFixedPillWidth() {
-        val pill = LyricsPillView(context).apply {
-            setWindowSizeDp(1000f, 480f)
-            show("x".repeat(200), "y".repeat(200))
-        }
-        pill.measure(
-            View.MeasureSpec.makeMeasureSpec(2000, View.MeasureSpec.AT_MOST),
-            View.MeasureSpec.makeMeasureSpec(2000, View.MeasureSpec.AT_MOST),
-        )
-        assertEquals((LyricsLayout.PILL_WIDTH_FRACTION * 1000f * context.resources.displayMetrics.density).toInt(), pill.measuredWidth)
     }
 
     private val ten = (0..9).map { "l$it" }
@@ -502,6 +486,37 @@ class LyricsOverlayViewsTest {
     }
 
     @Test
+    fun aSlowDoubleTapStillSwitches() {
+        val pill = interactivePill()
+        tap(pill, 0L)
+        tap(pill, 520L)
+        assertEquals(1, switches)
+    }
+
+    @Test
+    fun aDoubleTapThatLandsJustBesideTheGlassStillSwitches() {
+        val pill = interactivePill()
+        val x = pill.left - 10f
+        tap(pill, 0L, x = x, y = 5f)
+        tap(pill, 150L, x = x + 8f, y = 8f)
+        assertEquals(1, switches)
+    }
+
+    @Test
+    fun aDragBetweenTwoTapsBreaksTheDoubleTap() {
+        val pill = interactivePill()
+        tap(pill, 0L)
+        val down = MotionEvent.obtain(100L, 100L, MotionEvent.ACTION_DOWN, 5f, 5f, 0)
+        pill.onHostTouch(down)
+        val up = MotionEvent.obtain(100L, 200L, MotionEvent.ACTION_UP, 400f, 5f, 0)
+        pill.onHostTouch(up)
+        down.recycle()
+        up.recycle()
+        tap(pill, 250L)
+        assertEquals(0, switches)
+    }
+
+    @Test
     fun aPillThatIsNotInteractiveIgnoresDoubleTaps() {
         val pill = interactivePill()
         pill.setInteractive(false)
@@ -646,18 +661,6 @@ class LyricsOverlayViewsTest {
     }
 
     @Test
-    fun whileTheCarMovesTheGearAndStripAreGone() {
-        val (rail, _) = controlledRail()
-        rail.gearButton.performClick()
-        rail.setControlsAvailable(false)
-        assertEquals(View.GONE, rail.gearButton.visibility)
-        assertEquals(View.GONE, rail.timingStrip.visibility)
-        rail.setControlsAvailable(true)
-        assertEquals(View.VISIBLE, rail.gearButton.visibility)
-        assertEquals("the strip stays closed", View.GONE, rail.timingStrip.visibility)
-    }
-
-    @Test
     fun hidingTheRailClosesTheStrip() {
         val (rail, _) = controlledRail()
         rail.gearButton.performClick()
@@ -705,15 +708,6 @@ class LyricsOverlayViewsTest {
     fun withoutASwitchActionThereIsNoPillButton() {
         val (rail, _) = controlledRail()
         assertEquals(View.GONE, rail.pillButton.visibility)
-    }
-
-    @Test
-    fun whileTheCarMovesThePillButtonGoesAwayToo() {
-        val rail = railWithSwitch()
-        rail.setControlsAvailable(false)
-        assertEquals(View.GONE, rail.pillButton.visibility)
-        rail.setControlsAvailable(true)
-        assertEquals(View.VISIBLE, rail.pillButton.visibility)
     }
 
     @Test

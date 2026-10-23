@@ -48,12 +48,11 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
     private var rollFrom: Map<Int, Pose> = emptyMap()
     private var animator: ValueAnimator? = null
 
-    // The timing control. It is hidden until [setTimingControl] and while [setControlsAvailable] is false.
+    // The timing control. It is hidden until [setTimingControl].
     private val handler = Handler(Looper.getMainLooper())
     private var timingMillis = LyricsTiming.DEFAULT_MILLIS
     private var onTimingChange: ((Int) -> Unit)? = null
     private var controlConfigured = false
-    private var controlsAvailable = true
     private val collapse = Runnable { closeStrip() }
 
     internal val gearButton = ImageView(context).apply {
@@ -66,7 +65,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
         visibility = GONE
         setOnClickListener { if (timingStrip.visibility == VISIBLE) closeStrip() else openStrip() }
     }
-    // Goes back to the pill view. Shown while there is an action and the car is still.
+    // Goes back to the pill view. Shown while there is an action.
     private var switchAction: (() -> Unit)? = null
     internal val pillButton = ImageView(context).apply {
         setImageResource(R.drawable.ic_lyrics_pill)
@@ -125,15 +124,9 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
         refreshControls()
     }
 
-    /** False while the car moves: the gear, the pill icon and the strip go away. */
-    fun setControlsAvailable(available: Boolean) {
-        controlsAvailable = available
-        refreshControls()
-    }
-
     private fun refreshControls() {
-        pillButton.visibility = if (switchAction != null && controlsAvailable) VISIBLE else GONE
-        gearButton.visibility = if (controlConfigured && controlsAvailable) VISIBLE else GONE
+        pillButton.visibility = if (switchAction != null) VISIBLE else GONE
+        gearButton.visibility = if (controlConfigured) VISIBLE else GONE
         if (gearButton.visibility == GONE) closeStrip()
         refreshStrip()
     }

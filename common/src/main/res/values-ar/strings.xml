@@ -979,7 +979,7 @@
     <string name="settings_lyrics_off">إيقاف</string>
     <string name="settings_lyrics_top_pill">شريط علوي</string>
     <string name="settings_lyrics_side_rail">لوحة جانبية</string>
-    <string name="settings_lyrics_description">يعرض كلمات الأغنية المتزامنة فوق CarPlay. للعثور عليها يرسل DiPlay عنوان الأغنية والفنان والألبوم والمدة إلى خدمة الكلمات LRCLIB، وترى الخدمة أيضًا عنوان IP لوحدة القيادة. تحتاج وحدة القيادة إلى الإنترنت. ويقرأ DiPlay أيضًا سرعة السيارة من موقع GPS لإزالة عناصر اللمس أثناء حركة السيارة. يُطبَّق عند العودة إلى CarPlay.</string>
+    <string name="settings_lyrics_description">يعرض كلمات الأغنية المتزامنة فوق CarPlay. للعثور عليها يرسل DiPlay عنوان الأغنية والفنان والألبوم والمدة إلى خدمة الكلمات LRCLIB، وترى الخدمة أيضًا عنوان IP لوحدة القيادة. تحتاج وحدة القيادة إلى الإنترنت. ويقرأ DiPlay أيضًا سرعة السيارة من موقع GPS لإخفاء الكلمات أثناء حركة السيارة إذا فعّلت هذا الخيار. يُطبَّق عند العودة إلى CarPlay.</string>
     <string name="settings_lyrics_hide_while_driving">إخفاء الكلمات أثناء القيادة</string>
     <string name="settings_lyrics_hide_while_driving_description">يخفي الكلمات عندما تتحرك السيارة. يحتاج إلى السرعة من موقع GPS. إذا تعذّرت قراءة السرعة على DiPlay، تبقى الكلمات ظاهرة.</string>
     <string name="settings_lyrics_speed_unavailable">لا يستطيع DiPlay قراءة السرعة. اسمح لـ DiPlay بالوصول إلى الموقع الدقيق من أذونات التطبيقات في وحدة القيادة.</string>

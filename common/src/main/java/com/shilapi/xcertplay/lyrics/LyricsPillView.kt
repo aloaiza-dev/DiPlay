@@ -8,13 +8,14 @@ import android.graphics.Paint
 import android.graphics.Typeface
 import android.text.Layout
 import android.util.TypedValue
-import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.view.ViewGroup
 import android.view.animation.PathInterpolator
 import android.widget.TextView
 import com.shilapi.xcertplay.host.R
+import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 
@@ -25,7 +26,7 @@ import kotlin.math.min
  * Four text roles share one layout. The two real rows hold the lines now shown. During a roll, two ghost
  * rows carry the lines that were shown: the old current line leaves upward and the old next line rises into
  * the current slot as the new current line fades in over it (see [LyricsMotion]). The glass follows the
- * size of the text, so its width and height ease from one line to the next.
+ * size of the text, between a minimum and a maximum width, and eases from one size to the next.
  */
 internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTarget {
     private enum class Motion { NONE, ENTER, ROLL, DIP, EXIT, RESIZE }
@@ -51,19 +52,19 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
     private var rowDistance = 0f
     private var animator: ValueAnimator? = null
 
-    // A double tap on the pill switches to the side rail, only while the car is still. Consuming the first tap
-    // would hide single taps from CarPlay, so the host watches the touches instead and the pill consumes none.
+    // A double tap on the pill switches to the side rail. Consuming the first tap would hide single taps from
+    // CarPlay, so the host watches the touches instead and the pill consumes none. The system's double-tap
+    // detector is not used: its 300 ms window and its exact hit test miss many taps on a head unit's touch panel.
     private var switchAction: (() -> Unit)? = null
     private var interactive = false
     private var watching = false
-    private val doubleTap = GestureDetector(context, object : GestureDetector.SimpleOnGestureListener() {
-        override fun onDown(e: MotionEvent) = true
-
-        override fun onDoubleTap(e: MotionEvent): Boolean {
-            switchAction?.invoke()
-            return true
-        }
-    })
+    private val configuration = ViewConfiguration.get(context)
+    private var downAt = 0L
+    private var downX = 0f
+    private var downY = 0f
+    private var lastTapAt = NO_TAP
+    private var lastTapX = 0f
+    private var lastTapY = 0f
 
     fun setSwitchAction(action: (() -> Unit)?) {
         switchAction = action
@@ -71,15 +72,52 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
 
     fun setInteractive(interactive: Boolean) {
         this.interactive = interactive
+        if (!interactive) forgetTap()
     }
 
-    /** [event] is in the coordinates of the pill's parent. A touch that starts on the glass is watched to its end. */
+    /**
+     * [event] is in the coordinates of the pill's parent. A touch that starts on or just beside the glass is
+     * watched to its end. A tap is short and stays put; two taps close in time and place switch the view.
+     */
     fun onHostTouch(event: MotionEvent) {
-        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-            watching = interactive && switchAction != null && visibility == VISIBLE &&
-                event.x >= left && event.x <= right && event.y >= top && event.y <= bottom
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                val reach = TAP_REACH_DP * density
+                watching = interactive && switchAction != null && visibility == VISIBLE &&
+                    event.x >= left - reach && event.x <= right + reach && event.y >= top - reach && event.y <= bottom + reach
+                downAt = event.eventTime
+                downX = event.x
+                downY = event.y
+            }
+            MotionEvent.ACTION_UP -> if (watching) endTouch(event)
+            MotionEvent.ACTION_POINTER_DOWN, MotionEvent.ACTION_CANCEL -> {
+                watching = false
+                forgetTap()
+            }
         }
-        if (watching) doubleTap.onTouchEvent(event)
+    }
+
+    private fun endTouch(up: MotionEvent) {
+        watching = false
+        val stayedPut = hypot(up.x - downX, up.y - downY) <= 2 * configuration.scaledTouchSlop
+        if (!stayedPut || up.eventTime - downAt > TAP_MAX_MILLIS) {
+            forgetTap()
+            return
+        }
+        val again = lastTapAt != NO_TAP && downAt - lastTapAt <= DOUBLE_TAP_MILLIS &&
+            hypot(downX - lastTapX, downY - lastTapY) <= configuration.scaledDoubleTapSlop
+        if (again) {
+            forgetTap()
+            switchAction?.invoke()
+        } else {
+            lastTapAt = up.eventTime
+            lastTapX = downX
+            lastTapY = downY
+        }
+    }
+
+    private fun forgetTap() {
+        lastTapAt = NO_TAP
     }
 
     internal val currentRow: TextView get() = current
@@ -214,8 +252,8 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val spec = MeasureSpec.getSize(widthMeasureSpec)
         val limit = if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) Int.MAX_VALUE else spec
-        val fixed = windowWidthDp > 0f && !compact
-        val inner = (min(limit, pillWidthPx()) - 2 * padH()).toInt().coerceAtLeast(0)
+        val bounded = windowWidthDp > 0f && !compact
+        val inner = (min(limit, pillMaxPx()) - 2 * padH()).toInt().coerceAtLeast(0)
         for (row in listOf(outgoing, morph, current, next)) {
             if (row.visibility != GONE) row.measure(MeasureSpec.makeMeasureSpec(inner, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
         }
@@ -223,7 +261,9 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
         val rows = listOf(current, next, hint).filter { it.visibility != GONE }
         val contentWidth = rows.maxOfOrNull { it.measuredWidth } ?: 0
         val contentHeight = rows.sumOf { it.measuredHeight } + (rows.size - 1).coerceAtLeast(0) * gap().toInt()
-        val naturalWidth = if (fixed) min(limit, pillWidthPx()) else contentWidth + (2 * padH()).toInt()
+        val naturalWidth = (contentWidth + (2 * padH()).toInt()).let {
+            if (bounded) it.coerceIn(min(limit, pillMinPx()), min(limit, pillMaxPx())) else it
+        }
         val naturalHeight = contentHeight + (2 * padV()).toInt()
         val easing = (motion == Motion.ROLL || motion == Motion.DIP || motion == Motion.RESIZE) && fromWidth > 0
         setMeasuredDimension(
@@ -278,7 +318,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
     // wraps to a second row; only text beyond two rows ends in an ellipsis.
     private fun fitCurrentLine() {
         val base = if (compact) nextPx() else currentPx()
-        val available = pillWidthPx() - 2 * padH()
+        val available = pillMaxPx() - 2 * padH()
         val needed = Paint(current.paint).also { it.textSize = base }.measureText(current.text.toString())
         val shrinks = available > 0 && needed > available && needed <= available / LyricsLayout.PILL_MIN_TEXT_SCALE
         current.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (shrinks) base * available / needed else base)
@@ -424,8 +464,10 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
     private fun padV() = LyricsLayout.PILL_PADDING_V_EM * currentPx()
     private fun gap() = LyricsLayout.PILL_ROW_GAP_EM * currentPx()
 
-    private fun pillWidthPx(): Int =
-        if (windowWidthDp > 0f) (windowWidthDp * LyricsLayout.PILL_WIDTH_FRACTION * density).toInt() else Int.MAX_VALUE
+    private fun pillMaxPx(): Int =
+        if (windowWidthDp > 0f) (windowWidthDp * LyricsLayout.PILL_MAX_WIDTH_FRACTION * density).toInt() else Int.MAX_VALUE
+
+    private fun pillMinPx(): Int = (windowWidthDp * LyricsLayout.PILL_MIN_WIDTH_FRACTION * density).toInt()
 
     private fun lerp(from: Int, to: Int, t: Float) = (from + (to - from) * t).toInt()
 
@@ -434,5 +476,10 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
         const val HINT_SCALE = 0.8f
         const val ENTER_RISE_EM = 0.3f
         const val EXIT_RISE_EM = 0.15f
+        const val NO_TAP = -1L
+        const val TAP_MAX_MILLIS = 400L
+        const val DOUBLE_TAP_MILLIS = 600L
+        // A finger that lands a little off the glass still counts: the pill is small and a car shakes.
+        const val TAP_REACH_DP = 24f
     }
 }

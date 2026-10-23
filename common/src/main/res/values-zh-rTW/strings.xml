@@ -990,7 +990,7 @@
     <string name="settings_lyrics_off">關閉</string>
     <string name="settings_lyrics_top_pill">頂部膠囊</string>
     <string name="settings_lyrics_side_rail">側邊欄</string>
-    <string name="settings_lyrics_description">在 CarPlay 上顯示同步歌詞。為尋找歌詞，DiPlay 會把歌曲標題、藝人、專輯和長度傳送給歌詞服務 LRCLIB，該服務也會看到車機的 IP 位址。車機需要連線網際網路。DiPlay 還會透過 GPS 定位讀取車速，以便在車輛行駛時移除觸控按鈕。返回 CarPlay 後生效。</string>
+    <string name="settings_lyrics_description">在 CarPlay 上顯示同步歌詞。為尋找歌詞，DiPlay 會把歌曲標題、藝人、專輯和長度傳送給歌詞服務 LRCLIB，該服務也會看到車機的 IP 位址。車機需要連線網際網路。DiPlay 還會透過 GPS 定位讀取車速，以便在你開啟該選項後，於車輛行駛時隱藏歌詞。返回 CarPlay 後生效。</string>
     <string name="settings_lyrics_hide_while_driving">行駛時隱藏歌詞</string>
     <string name="settings_lyrics_hide_while_driving_description">車輛行駛時隱藏歌詞。需要透過 GPS 定位取得車速。若 DiPlay 無法讀取車速，歌詞會持續顯示。</string>
     <string name="settings_lyrics_speed_unavailable">DiPlay 無法讀取車速。請在車機的應用程式權限中允許 DiPlay 使用精確位置。</string>

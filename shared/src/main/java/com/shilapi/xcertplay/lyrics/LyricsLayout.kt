@@ -3,8 +3,9 @@ package com.shilapi.xcertplay.lyrics
 /** Sizes of the lyrics overlay. Starting values: none is measured on a car yet. */
 object LyricsLayout {
     const val PILL_TOP_MARGIN_DP = 12
-    // The pill keeps this width whatever the line: a width that follows the text keeps moving and distracts.
-    const val PILL_WIDTH_FRACTION = 0.55f
+    // The pill follows its text between these two widths. The floor keeps short lines from making it jump about.
+    const val PILL_MIN_WIDTH_FRACTION = 0.28f
+    const val PILL_MAX_WIDTH_FRACTION = 0.5f
     const val PILL_MIN_TEXT_SCALE = 0.8f
     const val RAIL_WIDTH_FRACTION = 0.36f
     const val RAIL_MIN_DP = 240f

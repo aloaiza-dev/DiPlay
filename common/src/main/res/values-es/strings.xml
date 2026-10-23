@@ -930,7 +930,7 @@
     <string name="settings_lyrics_off">Desactivado</string>
     <string name="settings_lyrics_top_pill">Cápsula superior</string>
     <string name="settings_lyrics_side_rail">Panel lateral</string>
-    <string name="settings_lyrics_description">Muestra la letra sincronizada sobre CarPlay. Para encontrarla, DiPlay envía el título, el artista, el álbum y la duración de la canción al servicio de letras LRCLIB, que también ve la dirección IP de la unidad principal. La unidad necesita internet. DiPlay también lee la velocidad del coche desde la ubicación GPS para quitar los controles táctiles con el coche en movimiento. Se aplica al volver a CarPlay.</string>
+    <string name="settings_lyrics_description">Muestra la letra sincronizada sobre CarPlay. Para encontrarla, DiPlay envía el título, el artista, el álbum y la duración de la canción al servicio de letras LRCLIB, que también ve la dirección IP de la unidad principal. La unidad necesita internet. DiPlay también lee la velocidad del coche desde la ubicación GPS para ocultar la letra con el coche en movimiento, si activas esa opción. Se aplica al volver a CarPlay.</string>
     <string name="settings_lyrics_hide_while_driving">Ocultar letras al conducir</string>
     <string name="settings_lyrics_hide_while_driving_description">Oculta la letra cuando el coche se mueve. Necesita la velocidad obtenida por ubicación GPS. Si DiPlay no puede leer la velocidad, la letra sigue visible.</string>
     <string name="settings_lyrics_speed_unavailable">DiPlay no puede leer la velocidad. Permite la ubicación precisa para DiPlay en los permisos de aplicaciones de la unidad principal.</string>

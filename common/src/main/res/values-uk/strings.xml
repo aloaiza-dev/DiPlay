@@ -942,7 +942,7 @@
     <string name="settings_lyrics_off">Вимк.</string>
     <string name="settings_lyrics_top_pill">Плашка вгорі</string>
     <string name="settings_lyrics_side_rail">Бічна панель</string>
-    <string name="settings_lyrics_description">Показує синхронізований текст пісні поверх CarPlay. Щоб знайти його, DiPlay надсилає назву, виконавця, альбом і тривалість пісні до сервісу текстів LRCLIB, який також бачить IP-адресу головного пристрою. Головному пристрою потрібен інтернет. Також DiPlay читає швидкість автомобіля з GPS, щоб прибирати елементи дотику під час руху. Застосовується під час повернення в CarPlay.</string>
+    <string name="settings_lyrics_description">Показує синхронізований текст пісні поверх CarPlay. Щоб знайти його, DiPlay надсилає назву, виконавця, альбом і тривалість пісні до сервісу текстів LRCLIB, який також бачить IP-адресу головного пристрою. Головному пристрою потрібен інтернет. Також DiPlay читає швидкість автомобіля з GPS, щоб ховати текст під час руху, якщо ви вмикаєте цю опцію. Застосовується під час повернення в CarPlay.</string>
     <string name="settings_lyrics_hide_while_driving">Ховати текст під час руху</string>
     <string name="settings_lyrics_hide_while_driving_description">Ховає текст, коли автомобіль їде. Швидкість береться з GPS-геолокації. Якщо DiPlay не може прочитати швидкість, текст залишається на екрані.</string>
     <string name="settings_lyrics_speed_unavailable">DiPlay не може прочитати швидкість. Дозвольте DiPlay точну геолокацію в дозволах застосунків головного пристрою.</string>

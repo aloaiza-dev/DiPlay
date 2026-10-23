@@ -1020,7 +1020,7 @@
     <string name="settings_lyrics_off">Disattivato</string>
     <string name="settings_lyrics_top_pill">Pillola in alto</string>
     <string name="settings_lyrics_side_rail">Barra laterale</string>
-    <string name="settings_lyrics_description">Mostra i testi sincronizzati sopra CarPlay. Per trovarli, DiPlay invia titolo, artista, album e durata del brano al servizio di testi LRCLIB, che vede anche l’indirizzo IP dell’autoradio. L’autoradio ha bisogno di internet. DiPlay legge inoltre la velocità dell’auto dalla posizione GPS per togliere i controlli touch quando l’auto è in movimento. Si applica quando torni su CarPlay.</string>
+    <string name="settings_lyrics_description">Mostra i testi sincronizzati sopra CarPlay. Per trovarli, DiPlay invia titolo, artista, album e durata del brano al servizio di testi LRCLIB, che vede anche l’indirizzo IP dell’autoradio. L’autoradio ha bisogno di internet. DiPlay legge inoltre la velocità dell’auto dalla posizione GPS per nascondere i testi quando l’auto è in movimento, se attivi questa opzione. Si applica quando torni su CarPlay.</string>
     <string name="settings_lyrics_hide_while_driving">Nascondi i testi alla guida</string>
     <string name="settings_lyrics_hide_while_driving_description">Nasconde i testi quando l’auto è in movimento. Richiede la velocità dalla posizione GPS. Se DiPlay non riesce a leggere la velocità, i testi restano visibili.</string>
     <string name="settings_lyrics_speed_unavailable">DiPlay non riesce a leggere la velocità. Consenti la posizione precisa per DiPlay nelle autorizzazioni app della head unit.</string>

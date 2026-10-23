@@ -1032,7 +1032,7 @@
     <string name="settings_lyrics_off">オフ</string>
     <string name="settings_lyrics_top_pill">上部バー</string>
     <string name="settings_lyrics_side_rail">サイドパネル</string>
-    <string name="settings_lyrics_description">CarPlay の上に同期歌詞を表示します。歌詞を探すため、DiPlay は曲名・アーティスト・アルバム・長さを歌詞サービス LRCLIB に送信します。サービスはヘッドユニットの IP アドレスも受け取ります。ヘッドユニットにはインターネット接続が必要です。また、走行中にタッチ操作を無効にするため、DiPlay は GPS の位置情報から車速を読み取ります。CarPlay に戻ると反映されます。</string>
+    <string name="settings_lyrics_description">CarPlay の上に同期歌詞を表示します。歌詞を探すため、DiPlay は曲名・アーティスト・アルバム・長さを歌詞サービス LRCLIB に送信します。サービスはヘッドユニットの IP アドレスも受け取ります。ヘッドユニットにはインターネット接続が必要です。また、設定を有効にした場合に走行中は歌詞を非表示にするため、DiPlay は GPS の位置情報から車速を読み取ります。CarPlay に戻ると反映されます。</string>
     <string name="settings_lyrics_hide_while_driving">走行中は歌詞を非表示</string>
     <string name="settings_lyrics_hide_while_driving_description">車が動いている間は歌詞を隠します。GPSの位置情報から速度を取得します。DiPlayが速度を読み取れない場合、歌詞は表示されたままです。</string>
     <string name="settings_lyrics_speed_unavailable">DiPlayが速度を読み取れません。車載機のアプリ権限でDiPlayに正確な位置情報を許可してください。</string>

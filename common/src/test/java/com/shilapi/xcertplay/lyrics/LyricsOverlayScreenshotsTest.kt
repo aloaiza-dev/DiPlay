@@ -92,7 +92,7 @@ class LyricsOverlayScreenshotsTest {
             val (root, view, bitmap) = capture("pill-${window.name}-$theme-$tone", window, night, backdrop,
                 pill(night, song[2], song[3]))
             assertInside(root, view)
-            assertTrue("pill wider than 55%: ${view.width}", view.width <= root.width * LyricsLayout.PILL_WIDTH_FRACTION + 1)
+            assertTrue("pill wider than its maximum: ${view.width}", view.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
             // Left of the text, halfway down: the glass gradient is about halfway between its two ends.
             val drawn = bitmap.getPixel(view.left + 10, view.top + view.height / 2)
             val glass = LyricsTheme.colors(night)
@@ -138,7 +138,7 @@ class LyricsOverlayScreenshotsTest {
         val xpeng = Window("xpeng", 2666, 1225)
         val (root, pillView, _) = capture("pill-xpeng-night", xpeng, true, Color.DKGRAY, pill(true, song[2], song[3]), fontScale = 1.0f)
         assertInside(root, pillView)
-        assertTrue("pill wider than 55%: ${pillView.width}", pillView.width <= root.width * LyricsLayout.PILL_WIDTH_FRACTION + 1)
+        assertTrue("pill wider than its maximum: ${pillView.width}", pillView.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
         val current = (pillView as LyricsPillView).currentRow
         assertTrue("pill line cut: ${current.text}", !truncated(current))
         val (railRoot, railView, _) = capture("rail-xpeng-night", xpeng, true, Color.DKGRAY, rail(true, song, 3), fontScale = 1.0f)
@@ -150,14 +150,28 @@ class LyricsOverlayScreenshotsTest {
 
     @Test
     fun aLongCurrentLineWrapsToASecondRowInsteadOfBeingCut() {
-        val long = "Yeah, today I drove through the suburbs and pictured I was driving home to you"
+        val long = "Today I drove through the suburbs and pictured home"
         val (root, pillView, _) = capture("pill-wrap", wide, true, Color.DKGRAY, pill(true, long, song[3]), fontScale = 1.0f)
         val pill = pillView as LyricsPillView
         assertInside(root, pillView)
         assertEquals("two rows", 2, pill.currentRow.lineCount)
         assertTrue("nothing cut: ${pill.currentRow.text}", !truncated(pill.currentRow))
-        assertTrue("still within the width cap", pillView.width <= root.width * LyricsLayout.PILL_WIDTH_FRACTION + 1)
+        assertTrue("still within the width cap", pillView.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
         assertEquals("the preview stays one row", 1, pill.nextRow.lineCount)
+    }
+
+    // Text is only measured for real here; the plain view tests have no glyph widths.
+    @Test
+    fun theGlassFollowsTheTextBetweenTheMinimumAndTheMaximumWidth() {
+        fun width(line: String): Int = capture("pill-width", wide, true, Color.DKGRAY, pill(true, line, line), fontScale = 1.0f).second.width
+        val short = width("Hi")
+        val middle = width("Yeah, today I drove through")
+        val long = width("Yeah, today I drove through the suburbs and pictured I was driving home to you")
+        val root = capture("pill-width", wide, true, Color.DKGRAY, pill(true, "Hi", "Hi"), fontScale = 1.0f).first
+        assertEquals("a short line sits on the minimum", root.width * LyricsLayout.PILL_MIN_WIDTH_FRACTION, short.toFloat(), 1f)
+        assertTrue("a longer line widens it: $short -> $middle", middle > short)
+        assertTrue("a very long line is widest: $middle -> $long", long > middle)
+        assertTrue("and stops at the maximum: $long", long <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
     }
 
     @Test
@@ -197,7 +211,7 @@ class LyricsOverlayScreenshotsTest {
         )) {
             val (root, view, _) = capture("pill-wide-night-$name", wide, true, Color.WHITE, pill(true, now, next))
             assertInside(root, view)
-            assertTrue("$name pill too wide: ${view.width}", view.width <= root.width * LyricsLayout.PILL_WIDTH_FRACTION + 1)
+            assertTrue("$name pill too wide: ${view.width}", view.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
             val pill = view as LyricsPillView
             assertTrue("$name current line wraps to ${pill.currentRow.lineCount} lines", pill.currentRow.lineCount <= 2)
             assertTrue("$name next line wraps to ${pill.nextRow.lineCount} lines", pill.nextRow.lineCount <= 1)

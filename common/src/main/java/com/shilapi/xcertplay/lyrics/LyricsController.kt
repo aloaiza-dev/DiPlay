@@ -85,8 +85,7 @@ internal class LyricsController(
         // Either view switches to the other: the pill by a double tap, the rail by its pill icon.
         rail.setSwitchAction { switchTo(LyricsPlacement.TOP_PILL) }
         pill.setSwitchAction { switchTo(LyricsPlacement.SIDE_RAIL) }
-        // The speed hides the lyrics while driving when asked, and in every case takes the touch controls
-        // away (the pill's double tap, the rail's icons): a moving car must not get a tap target.
+        // The speed hides the lyrics while driving, when asked. The pill's double tap and the rail's icons stay.
         stopSpeed = speed.observe { kmh ->
             gate.onSpeed(kmh)
             render()
@@ -296,12 +295,11 @@ internal class LyricsController(
         // The view that is not wanted fades out while the wanted one comes in: a switch reads as one move.
         if (mode == LyricsPlacement.TOP_PILL) {
             rail.fadeOut()
-            pill.setInteractive(!moving)
+            pill.setInteractive(true)
             showPill(lines, index, position, animate)
             if (mode == LyricsPlacement.TOP_PILL && !moving) teachDoubleTap() else pill.setHint(false)
         } else {
             pill.fadeOut()
-            rail.setControlsAvailable(!moving)
             rail.show(lines.lines.map { it.text.ifBlank { NOTE } }, index)
         }
     }

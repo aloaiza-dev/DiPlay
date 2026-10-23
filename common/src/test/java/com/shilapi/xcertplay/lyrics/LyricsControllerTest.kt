@@ -508,7 +508,7 @@ class LyricsControllerTest {
     }
 
     @Test
-    fun theRailStaysWhileTheCarMovesButItsControlsGo() {
+    fun theRailAndItsControlsStayWhileTheCarMoves() {
         placement = LyricsPlacement.SIDE_RAIL
         hideWhileDriving = false
         controller.start()
@@ -519,14 +519,12 @@ class LyricsControllerTest {
         advance(400L)
         assertEquals("the lyrics stay for the passenger", View.VISIBLE, rail.visibility)
         assertEquals(View.GONE, pill.visibility)
-        assertEquals(View.GONE, rail.gearButton.visibility)
+        assertEquals("the controls stay for the driver", View.VISIBLE, rail.gearButton.visibility)
         assertEquals("nothing was saved", LyricsPlacement.SIDE_RAIL, placement)
-        repeat(10) { onSpeed?.invoke(0); advance(500L) }
-        assertEquals(View.VISIBLE, rail.gearButton.visibility)
     }
 
     @Test
-    fun thePillWatchesTheSpeedSoItsDoubleTapCanBeTakenAwayWhileDriving() {
+    fun theDoubleTapOnThePillWorksWhileTheCarMoves() {
         placement = LyricsPlacement.TOP_PILL
         hideWhileDriving = false
         controller.start()
@@ -537,12 +535,7 @@ class LyricsControllerTest {
         repeat(8) { onSpeed?.invoke(30); advance(500L) }
         tap(pill, 10_000L)
         tap(pill, 10_150L)
-        assertTrue("moving: the double tap does nothing", placements.isEmpty())
-        assertEquals("the lyrics stay", View.VISIBLE, pill.visibility)
-        repeat(10) { onSpeed?.invoke(0); advance(500L) }
-        tap(pill, 20_000L)
-        tap(pill, 20_150L)
-        assertEquals("still: the double tap switches", listOf(LyricsPlacement.SIDE_RAIL), placements)
+        assertEquals("moving: the double tap still switches", listOf(LyricsPlacement.SIDE_RAIL), placements)
     }
 
     // The host feeds the pill every touch; it consumes none.
