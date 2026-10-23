@@ -44,11 +44,19 @@ object LyricsTheme {
 
     fun colors(night: Boolean): LyricsColors = if (night) this.night else day
 
-    // The rail is big and holds many lines: it covers the picture almost fully so that nothing shows through
-    // the text. A driver who finds it in the way has the switch to the pill.
+    // The small pill borrows the picture's colour; a quiet rim and sheen keep it frosted rather than glossy.
+    // Keep the dense fallback fill for devices where frame copying is unavailable.
+    fun pillColors(night: Boolean): LyricsColors = colors(night).copy(
+        rimTop = 0x40FFFFFF,
+        rimBottom = 0x10FFFFFF,
+        sheen = 0x14FFFFFF,
+    )
+
+    // Match the pill's quiet rim and sheen, with a denser fallback for the rail's many text rows.
+    // Sampled glass uses its own stronger minimum tint and keeps all three text contrast floors.
     private const val RAIL_GLASS_ALPHA = 0xE6
 
-    fun railColors(night: Boolean): LyricsColors = colors(night).let {
+    fun railColors(night: Boolean): LyricsColors = pillColors(night).let {
         it.copy(glassTop = withAlpha(it.glassTop), glassBottom = withAlpha(it.glassBottom))
     }
 

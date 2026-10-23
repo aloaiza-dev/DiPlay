@@ -119,7 +119,7 @@ class LyricsOverlayScreenshotsTest {
     private fun truncated(row: android.widget.TextView) = row.layout.getEllipsisCount(row.lineCount - 1) > 0
 
     @Test
-    fun aTypicalLineIsNotCutAtTheRegularFontScale() {
+    fun regularScaleKeepsPillLyricsWholeAndSlimRailLyricsWithinTwoRows() {
         for (night in listOf(true, false)) {
             val theme = if (night) "night" else "day"
             val (_, pillView, _) = capture("pill-wide-$theme-regular-scale", wide, night, Color.WHITE,
@@ -129,7 +129,11 @@ class LyricsOverlayScreenshotsTest {
             val (_, railView, _) = capture("rail-wide-$theme-regular-scale", wide, night, Color.WHITE,
                 rail(night, song, 3), fontScale = 1.0f)
             val centre = (railView as LyricsRailView).row(0)
-            assertTrue("rail current line cut: ${centre.text}", !truncated(centre))
+            assertEquals("a longer lyric wraps within the slim rail", 2, centre.lineCount)
+            assertTrue("the existing two-line ellipsis bounds a longer lyric", truncated(centre))
+            val (_, shortRail, _) = capture("rail-wide-$theme-short-regular-scale", wide, night, Color.WHITE,
+                rail(night, listOf("One line at a time"), 0), fontScale = 1.0f)
+            assertTrue("a short lyric still fits whole", !truncated((shortRail as LyricsRailView).row(0)))
         }
     }
 

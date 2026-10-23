@@ -7,23 +7,23 @@ import org.junit.Test
 class LyricsLayoutTest {
     @Test
     fun railWidthClampsToMinimum() {
-        assertEquals(240f, LyricsLayout.railWidthDp(600f), 0.01f)
+        assertEquals(204f, LyricsLayout.railWidthDp(600f), 0.01f)
     }
 
     @Test
     fun railWidthScalesInTheMiddle() {
-        assertEquals(360f, LyricsLayout.railWidthDp(1000f), 0.01f)
+        assertEquals(306f, LyricsLayout.railWidthDp(1000f), 0.01f)
     }
 
     @Test
     fun railWidthClampsToMaximum() {
-        assertEquals(960f, LyricsLayout.railWidthDp(5000f), 0.01f)
+        assertEquals(816f, LyricsLayout.railWidthDp(5000f), 0.01f)
     }
 
     @Test
-    fun railOnAnXpengSizedWindowIsAboutAThirdOfTheScreen() {
-        // 2666 dp wide at 0.9 density is 2400 px. The rail limits double with the type: 960 dp is 864 px, 36%.
-        assertEquals(960f, LyricsLayout.railWidthDp(2666f), 0.5f)
+    fun railOnAnXpengSizedWindowIsAboutThirtyOnePercentOfTheScreen() {
+        // 2666 dp wide at 0.9 density is 2400 px. The rail limits double with the type: 816 dp is about 734 px, 30.6%.
+        assertEquals(816f, LyricsLayout.railWidthDp(2666f), 0.5f)
     }
 
     @Test
@@ -47,9 +47,9 @@ class LyricsLayoutTest {
     }
 
     @Test
-    fun railNeverExceedsFortyFivePercentOfTheWindow() {
-        assertTrue(LyricsLayout.railWidthDp(400f) <= 180f)
-        assertTrue(LyricsLayout.railWidthDp(300f) <= 135f)
+    fun railNeverExceedsThirtyEightPointTwoFivePercentOfTheWindow() {
+        assertTrue(LyricsLayout.railWidthDp(400f) <= 153f)
+        assertTrue(LyricsLayout.railWidthDp(300f) <= 114.75f)
     }
 
     @Test

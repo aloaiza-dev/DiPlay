@@ -64,7 +64,7 @@ class LyricsBackdropSamplerTest {
         sampler(target).wake()
         run(50L)
         val bitmap = checkNotNull(target.bitmap)
-        val expected = LyricsScrim(LyricsTheme.colors(true)).shade(0xFF3050A0.toInt())
+        val expected = LyricsScrim.pill(true).shade(0xFF3050A0.toInt())
         for (x in listOf(0, bitmap.width / 2, bitmap.width - 1)) for (y in listOf(0, bitmap.height - 1)) {
             val pixel = bitmap.getPixel(x, y)
             for (shift in listOf(16, 8, 0)) assertEquals("pixel $x,$y channel $shift", ((expected ushr shift) and 0xFF).toDouble(), ((pixel ushr shift) and 0xFF).toDouble(), 3.0)

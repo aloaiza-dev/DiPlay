@@ -10,7 +10,13 @@ import kotlin.math.sqrt
  * pixel's luminance, built once, so shading a pixel is a lookup and a blend. The floors are held over the
  * shaded picture with the sheen on top, which is drawn over it and lightens it most on the top edge.
  */
-class LyricsScrim(colors: LyricsColors, minimumTint: Float = DEFAULT_MIN_TINT) {
+class LyricsScrim(
+    colors: LyricsColors,
+    minimumTint: Float = DEFAULT_MIN_TINT,
+    private val currentContrast: Double = CURRENT_CONTRAST,
+    private val nextContrast: Double = NEXT_CONTRAST,
+    private val farContrast: Double = FAR_CONTRAST,
+) {
     private val minAlpha256 = (minimumTint * 256).toInt().coerceIn(0, MAX_ALPHA_256)
     private val tint = colors.glassBottom and 0xFFFFFF
     private val alpha256 = IntArray(BUCKETS)
@@ -44,9 +50,9 @@ class LyricsScrim(colors: LyricsColors, minimumTint: Float = DEFAULT_MIN_TINT) {
     private fun strength(colors: LyricsColors, backdrop: Int, minAlpha: Int): Int {
         fun holds(a256: Int): Boolean {
             val shaded = LyricsTheme.over(colors.sheen, LyricsTheme.over((a256 shl 24) or tint, backdrop))
-            return LyricsTheme.contrast(colors.current, shaded) >= CURRENT_CONTRAST + MARGIN &&
-                LyricsTheme.contrast(colors.next, shaded) >= NEXT_CONTRAST + MARGIN &&
-                LyricsTheme.contrast(colors.far, shaded) >= FAR_CONTRAST + MARGIN
+            return LyricsTheme.contrast(colors.current, shaded) >= currentContrast + MARGIN &&
+                LyricsTheme.contrast(colors.next, shaded) >= nextContrast + MARGIN &&
+                LyricsTheme.contrast(colors.far, shaded) >= farContrast + MARGIN
         }
         var low = minAlpha
         var high = MAX_ALPHA_256
@@ -61,6 +67,12 @@ class LyricsScrim(colors: LyricsColors, minimumTint: Float = DEFAULT_MIN_TINT) {
     private fun deLinear(y: Double): Double = if (y <= 0.0031308) y * 12.92 else 1.055 * y.pow(1 / 2.4) - 0.055
 
     companion object {
+        // Two-line pill: retain colour while holding normal-text contrast for both visible roles.
+        fun pill(night: Boolean) = LyricsScrim(
+            LyricsTheme.pillColors(night), minimumTint = 0.12f,
+            currentContrast = 4.5, nextContrast = 4.5, farContrast = 0.0,
+        )
+
         const val CURRENT_CONTRAST = 8.0
         const val NEXT_CONTRAST = 5.0
         const val FAR_CONTRAST = 4.0
@@ -68,7 +80,7 @@ class LyricsScrim(colors: LyricsColors, minimumTint: Float = DEFAULT_MIN_TINT) {
         private const val BUCKETS = 64
         /** Never clearer than 30%: below that the text would lose its glass behind it. The rail holds more. */
         const val DEFAULT_MIN_TINT = 0.30f
-        const val RAIL_MIN_TINT = 0.60f
+        const val RAIL_MIN_TINT = 0.48f
         private const val MAX_ALPHA_256 = 243
 
         private val LINEAR = FloatArray(256) { i ->

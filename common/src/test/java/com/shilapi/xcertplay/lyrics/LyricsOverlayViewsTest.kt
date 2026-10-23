@@ -333,7 +333,7 @@ class LyricsOverlayViewsTest {
     fun theRailCardFollowsTheLayoutRule() {
         val rail = LyricsRailView(context).apply { setWindowSizeDp(1000f, 480f) }
         val density = context.resources.displayMetrics.density
-        assertEquals((360 * density).toInt(), rail.preferredWidthPx())
+        assertEquals((306 * density).toInt(), rail.preferredWidthPx())
         assertEquals(((480f - 2 * 0.012f * 480f) * density).toInt(), rail.preferredHeightPx())
         assertEquals((0.012f * 480f * density).toInt(), rail.edgeMarginPx())
     }

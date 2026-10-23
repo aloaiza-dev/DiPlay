@@ -39,7 +39,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
     private val next = lyricsLine(context).apply { maxLines = 1 }
     // A one-time teaching line under the lyrics, see [setHint].
     private val hint = lyricsLine(context).apply { maxLines = 1; visibility = GONE; setText(R.string.lyrics_hint_double_tap) }
-    private var colors = LyricsTheme.colors(true)
+    private var colors = LyricsTheme.pillColors(true)
     private var windowWidthDp = 0f
     private var windowHeightDp = LyricsLayout.NARROW_HEIGHT_DP
     private var dimmed = false
@@ -148,7 +148,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
     }
 
     fun setNight(night: Boolean) {
-        colors = LyricsTheme.colors(night)
+        colors = LyricsTheme.pillColors(night)
         applyTheme()
     }
 

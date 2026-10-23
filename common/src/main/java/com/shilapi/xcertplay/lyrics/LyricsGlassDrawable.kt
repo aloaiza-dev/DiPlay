@@ -15,8 +15,8 @@ import android.graphics.drawable.Drawable
 
 /**
  * Liquid glass for a shape that floats over a moving picture: a translucent vertical gradient, a sheen that
- * lifts its top and a bright specular rim that fades down the edge. Android cannot blur what is behind a
- * view, so the look comes from the layers, and the translucency keeps the road visible through it.
+ * lifts its top and a specular rim that fades down the edge. When available, a sampled, blurred copy of
+ * the picture replaces the fill; otherwise the translucent gradient provides a readable fallback.
  */
 internal class LyricsGlassDrawable : Drawable() {
     private val fill = Paint(Paint.ANTI_ALIAS_FLAG)

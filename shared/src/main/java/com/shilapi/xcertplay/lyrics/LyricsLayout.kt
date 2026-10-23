@@ -7,10 +7,11 @@ object LyricsLayout {
     const val PILL_MIN_WIDTH_FRACTION = 0.28f
     const val PILL_MAX_WIDTH_FRACTION = 0.5f
     const val PILL_MIN_TEXT_SCALE = 0.8f
-    const val RAIL_WIDTH_FRACTION = 0.36f
-    const val RAIL_MIN_DP = 240f
-    const val RAIL_MAX_DP = 480f
-    const val RAIL_MAX_FRACTION = 0.45f
+    // A slimmer rail exposes more of CarPlay; type size and vertical layout stay independent.
+    const val RAIL_WIDTH_FRACTION = 0.306f
+    const val RAIL_MIN_DP = 204f
+    const val RAIL_MAX_DP = 408f
+    const val RAIL_MAX_FRACTION = 0.3825f
     const val NARROW_HEIGHT_DP = 360f
     const val NARROW_TYPE_SCALE = 0.8f
     const val TALL_HEIGHT_DP = 600f

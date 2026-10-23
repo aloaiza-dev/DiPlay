@@ -81,10 +81,11 @@ internal class LyricsBackdropSampler(
 
     private fun scrimFor(target: BackdropTarget): LyricsScrim {
         val index = (if (night) 0 else 1) + (if (target.opaque) 2 else 0)
-        return scrims[index] ?: LyricsScrim(
-            LyricsTheme.colors(night),
-            if (target.opaque) LyricsScrim.RAIL_MIN_TINT else LyricsScrim.DEFAULT_MIN_TINT,
-        ).also { scrims[index] = it }
+        return scrims[index] ?: (if (target.opaque) {
+            LyricsScrim(LyricsTheme.railColors(night), LyricsScrim.RAIL_MIN_TINT)
+        } else {
+            LyricsScrim.pill(night)
+        }).also { scrims[index] = it }
     }
 
     override fun wake() {

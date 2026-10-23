@@ -19,6 +19,49 @@ class LyricsScrimTest {
     }
 
     @Test
+    fun frostedPillKeepsBothLinesReadableWithoutLosingBackgroundColour() {
+        for (night in listOf(true, false)) {
+            val theme = LyricsTheme.pillColors(night)
+            val pill = LyricsScrim.pill(night)
+            val random = Random(19)
+            val pixels = listOf(0xFFFFFFFF.toInt(), 0xFF000000.toInt()) +
+                List(4000) { 0xFF000000.toInt() or random.nextInt(0x1000000) }
+            for (pixel in pixels) {
+                val backing = LyricsTheme.over(theme.sheen, pill.shade(pixel))
+                for (text in listOf(theme.current, theme.next)) {
+                    assertTrue("pill contrast over %08x".format(pixel), LyricsTheme.contrast(text, backing) >= 4.5)
+                }
+            }
+            val blue = 0xFF174B9A.toInt()
+            assertTrue("frosted glass retains more blue than the old glass",
+                (pill.shade(blue) and 0xFF) > (LyricsScrim(LyricsTheme.colors(night)).shade(blue) and 0xFF))
+        }
+    }
+
+    @Test
+    fun frostedRailKeepsEveryTextRoleReadableAndStaysDenserThanThePill() {
+        for (night in listOf(true, false)) {
+            val theme = LyricsTheme.railColors(night)
+            val rail = LyricsScrim(theme, LyricsScrim.RAIL_MIN_TINT)
+            val random = Random(23)
+            val pixels = listOf(0xFFFFFFFF.toInt(), 0xFF000000.toInt()) +
+                List(4000) { 0xFF000000.toInt() or random.nextInt(0x1000000) }
+            for (pixel in pixels) {
+                val backing = LyricsTheme.over(theme.sheen, rail.shade(pixel))
+                for ((text, floor) in listOf(theme.current to LyricsScrim.CURRENT_CONTRAST,
+                    theme.next to LyricsScrim.NEXT_CONTRAST, theme.far to LyricsScrim.FAR_CONTRAST)) {
+                    assertTrue("rail contrast over %08x".format(pixel), LyricsTheme.contrast(text, backing) >= floor)
+                }
+            }
+            val blue = 0xFF174B9A.toInt()
+            val actual = rail.shade(blue) and 0xFF
+            assertTrue("rail retains more colour than before",
+                actual > (LyricsScrim(LyricsTheme.colors(night), 0.60f).shade(blue) and 0xFF))
+            assertTrue("rail stays denser than pill", actual < (LyricsScrim.pill(night).shade(blue) and 0xFF))
+        }
+    }
+
+    @Test
     fun whiteTextKeepsItsContrastOverEveryPrimaryAndGrey() {
         val values = listOf(0, 64, 128, 192, 255)
         for (r in values) for (g in values) for (b in values) assertFloors((0xFF shl 24) or (r shl 16) or (g shl 8) or b)
