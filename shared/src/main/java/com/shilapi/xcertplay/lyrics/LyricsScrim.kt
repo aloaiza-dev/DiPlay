@@ -10,13 +10,7 @@ import kotlin.math.sqrt
  * pixel's luminance, built once, so shading a pixel is a lookup and a blend. The floors are held over the
  * shaded picture with the sheen on top, which is drawn over it and lightens it most on the top edge.
  */
-class LyricsScrim(
-    colors: LyricsColors,
-    minimumTint: Float = DEFAULT_MIN_TINT,
-    private val currentContrast: Double = CURRENT_CONTRAST,
-    private val nextContrast: Double = NEXT_CONTRAST,
-    private val farContrast: Double = FAR_CONTRAST,
-) {
+class LyricsScrim(colors: LyricsColors, minimumTint: Float = DEFAULT_MIN_TINT) {
     private val minAlpha256 = (minimumTint * 256).toInt().coerceIn(0, MAX_ALPHA_256)
     private val tint = colors.glassBottom and 0xFFFFFF
     private val alpha256 = IntArray(BUCKETS)
@@ -50,9 +44,9 @@ class LyricsScrim(
     private fun strength(colors: LyricsColors, backdrop: Int, minAlpha: Int): Int {
         fun holds(a256: Int): Boolean {
             val shaded = LyricsTheme.over(colors.sheen, LyricsTheme.over((a256 shl 24) or tint, backdrop))
-            return LyricsTheme.contrast(colors.current, shaded) >= currentContrast + MARGIN &&
-                LyricsTheme.contrast(colors.next, shaded) >= nextContrast + MARGIN &&
-                LyricsTheme.contrast(colors.far, shaded) >= farContrast + MARGIN
+            return LyricsTheme.contrast(colors.current, shaded) >= CURRENT_CONTRAST + MARGIN &&
+                LyricsTheme.contrast(colors.next, shaded) >= NEXT_CONTRAST + MARGIN &&
+                LyricsTheme.contrast(colors.far, shaded) >= FAR_CONTRAST + MARGIN
         }
         var low = minAlpha
         var high = MAX_ALPHA_256
@@ -67,11 +61,11 @@ class LyricsScrim(
     private fun deLinear(y: Double): Double = if (y <= 0.0031308) y * 12.92 else 1.055 * y.pow(1 / 2.4) - 0.055
 
     companion object {
-        // Two-line pill: retain colour while holding normal-text contrast for both visible roles.
-        fun pill(night: Boolean) = LyricsScrim(
-            LyricsTheme.pillColors(night), minimumTint = 0.12f,
-            currentContrast = 4.5, nextContrast = 4.5, farContrast = 0.0,
-        )
+        // The pill may be clearer than the default over a dark picture so that it keeps the picture's colour.
+        // The contrast floors stay the same, the hint row included.
+        fun pill(night: Boolean) = LyricsScrim(LyricsTheme.pillColors(night), PILL_MIN_TINT)
+
+        private const val PILL_MIN_TINT = 0.12f
 
         const val CURRENT_CONTRAST = 8.0
         const val NEXT_CONTRAST = 5.0

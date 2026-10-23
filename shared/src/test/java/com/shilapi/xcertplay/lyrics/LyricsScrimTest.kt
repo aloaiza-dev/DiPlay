@@ -19,7 +19,7 @@ class LyricsScrimTest {
     }
 
     @Test
-    fun frostedPillKeepsBothLinesReadableWithoutLosingBackgroundColour() {
+    fun frostedPillKeepsEveryTextRoleReadableWithoutLosingBackgroundColour() {
         for (night in listOf(true, false)) {
             val theme = LyricsTheme.pillColors(night)
             val pill = LyricsScrim.pill(night)
@@ -28,8 +28,9 @@ class LyricsScrimTest {
                 List(4000) { 0xFF000000.toInt() or random.nextInt(0x1000000) }
             for (pixel in pixels) {
                 val backing = LyricsTheme.over(theme.sheen, pill.shade(pixel))
-                for (text in listOf(theme.current, theme.next)) {
-                    assertTrue("pill contrast over %08x".format(pixel), LyricsTheme.contrast(text, backing) >= 4.5)
+                for ((text, floor) in listOf(theme.current to LyricsScrim.CURRENT_CONTRAST,
+                    theme.next to LyricsScrim.NEXT_CONTRAST, theme.far to LyricsScrim.FAR_CONTRAST)) {
+                    assertTrue("pill contrast over %08x".format(pixel), LyricsTheme.contrast(text, backing) >= floor)
                 }
             }
             val blue = 0xFF174B9A.toInt()
