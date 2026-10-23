@@ -92,7 +92,7 @@ class LyricsOverlayScreenshotsTest {
             val (root, view, bitmap) = capture("pill-${window.name}-$theme-$tone", window, night, backdrop,
                 pill(night, song[2], song[3]))
             assertInside(root, view)
-            assertTrue("pill wider than 55%: ${view.width}", view.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
+            assertTrue("pill wider than 55%: ${view.width}", view.width <= root.width * LyricsLayout.PILL_WIDTH_FRACTION + 1)
             // Left of the text, halfway down: the glass gradient is about halfway between its two ends.
             val drawn = bitmap.getPixel(view.left + 10, view.top + view.height / 2)
             val glass = LyricsTheme.colors(night)
@@ -138,7 +138,7 @@ class LyricsOverlayScreenshotsTest {
         val xpeng = Window("xpeng", 2666, 1225)
         val (root, pillView, _) = capture("pill-xpeng-night", xpeng, true, Color.DKGRAY, pill(true, song[2], song[3]), fontScale = 1.0f)
         assertInside(root, pillView)
-        assertTrue("pill wider than 55%: ${pillView.width}", pillView.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
+        assertTrue("pill wider than 55%: ${pillView.width}", pillView.width <= root.width * LyricsLayout.PILL_WIDTH_FRACTION + 1)
         val current = (pillView as LyricsPillView).currentRow
         assertTrue("pill line cut: ${current.text}", !truncated(current))
         val (railRoot, railView, _) = capture("rail-xpeng-night", xpeng, true, Color.DKGRAY, rail(true, song, 3), fontScale = 1.0f)
@@ -156,7 +156,7 @@ class LyricsOverlayScreenshotsTest {
         assertInside(root, pillView)
         assertEquals("two rows", 2, pill.currentRow.lineCount)
         assertTrue("nothing cut: ${pill.currentRow.text}", !truncated(pill.currentRow))
-        assertTrue("still within the width cap", pillView.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
+        assertTrue("still within the width cap", pillView.width <= root.width * LyricsLayout.PILL_WIDTH_FRACTION + 1)
         assertEquals("the preview stays one row", 1, pill.nextRow.lineCount)
     }
 
@@ -197,7 +197,7 @@ class LyricsOverlayScreenshotsTest {
         )) {
             val (root, view, _) = capture("pill-wide-night-$name", wide, true, Color.WHITE, pill(true, now, next))
             assertInside(root, view)
-            assertTrue("$name pill too wide: ${view.width}", view.width <= root.width * LyricsLayout.PILL_MAX_WIDTH_FRACTION + 1)
+            assertTrue("$name pill too wide: ${view.width}", view.width <= root.width * LyricsLayout.PILL_WIDTH_FRACTION + 1)
             val pill = view as LyricsPillView
             assertTrue("$name current line wraps to ${pill.currentRow.lineCount} lines", pill.currentRow.lineCount <= 2)
             assertTrue("$name next line wraps to ${pill.nextRow.lineCount} lines", pill.nextRow.lineCount <= 1)

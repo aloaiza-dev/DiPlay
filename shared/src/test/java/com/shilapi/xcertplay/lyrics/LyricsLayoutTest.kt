@@ -27,8 +27,8 @@ class LyricsLayoutTest {
     }
 
     @Test
-    fun railIsAFloatingCardAboutSixTenthsOfTheWindowHeight() {
-        assertEquals(0.62f * 700f, LyricsLayout.railHeightDp(700f), 0.01f)
+    fun railIsAFloatingCardAsTallAsTheWindowLessItsEdgeMargins() {
+        assertEquals(700f - 2 * 0.012f * 700f, LyricsLayout.railHeightDp(700f), 0.01f)
         assertEquals(0.012f * 700f, LyricsLayout.railEdgeMarginDp(700f), 0.01f)
     }
 
@@ -58,6 +58,7 @@ class LyricsLayoutTest {
         assertEquals(3, LyricsLayout.railVisibleLines(300f))
         assertEquals(1f, LyricsLayout.typeScale(480f), 0.001f)
         assertEquals(5, LyricsLayout.railVisibleLines(480f))
+        assertEquals("a full-height rail on a tall window shows more lines", 7, LyricsLayout.railVisibleLines(1333f))
     }
 
     @Test

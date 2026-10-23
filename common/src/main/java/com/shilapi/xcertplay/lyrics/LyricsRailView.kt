@@ -35,7 +35,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
     private data class Pose(val centerY: Float, val scale: Float, val alpha: Float)
 
     private val density = context.resources.displayMetrics.density
-    private var colors = LyricsTheme.colors(true)
+    private var colors = LyricsTheme.railColors(true)
     private var windowWidthDp = DEFAULT_WINDOW_WIDTH_DP
     private var windowHeightDp = DEFAULT_WINDOW_HEIGHT_DP
     private var dimmed = false
@@ -198,7 +198,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context) {
     internal val slotReach: Int get() = reach
 
     fun setNight(night: Boolean) {
-        colors = LyricsTheme.colors(night)
+        colors = LyricsTheme.railColors(night)
         applyTheme()
     }
 

@@ -39,6 +39,16 @@ object LyricsTheme {
 
     fun colors(night: Boolean): LyricsColors = if (night) this.night else day
 
+    // The rail is big and holds many lines: it covers the picture almost fully so that nothing shows through
+    // the text. A driver who finds it in the way has the switch to the pill.
+    private const val RAIL_GLASS_ALPHA = 0xF5
+
+    fun railColors(night: Boolean): LyricsColors = colors(night).let {
+        it.copy(glassTop = withAlpha(it.glassTop), glassBottom = withAlpha(it.glassBottom))
+    }
+
+    private fun withAlpha(color: Int) = (RAIL_GLASS_ALPHA shl 24) or (color and 0xFFFFFF)
+
     /** [top] drawn over the opaque colour [bottom]. */
     fun over(top: Int, bottom: Int): Int {
         val alpha = (top ushr 24) / 255.0

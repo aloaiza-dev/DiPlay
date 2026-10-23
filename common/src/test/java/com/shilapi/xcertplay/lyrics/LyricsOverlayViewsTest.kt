@@ -216,16 +216,17 @@ class LyricsOverlayViewsTest {
     @Test
     fun theGlassPaddingFollowsTheTextSizeOnAnyScreen() {
         for (widthDp in listOf(1000f, 2666f)) {
-            val pill = LyricsPillView(context).apply { setWindowSizeDp(widthDp, 700f); show("hello", null, animate = false) }
+            val pill = LyricsPillView(context).apply { setWindowSizeDp(widthDp, 700f); show("hello ".repeat(2000), null, animate = false) }
             pill.measure(View.MeasureSpec.makeMeasureSpec(5000, View.MeasureSpec.AT_MOST), View.MeasureSpec.makeMeasureSpec(5000, View.MeasureSpec.AT_MOST))
             val size = pill.currentRow.textSize
+            // A line that fills the fixed width shows the padding on each side.
             val padding = (pill.measuredWidth - pill.currentRow.measuredWidth) / 2f
             assertEquals("width $widthDp", LyricsLayout.PILL_PADDING_H_EM * size, padding, 2f)
         }
     }
 
     @Test
-    fun pillGrowsToFitALongerLineAfterTheTextChanges() {
+    fun pillKeepsOneWidthWhateverTheLine() {
         val root = FrameLayout(context)
         val pill = LyricsPillView(context).apply { setWindowSizeDp(1000f, 480f) }
         root.addView(pill, FrameLayout.LayoutParams(-2, -2))
@@ -238,11 +239,11 @@ class LyricsOverlayViewsTest {
         val short = pill.width
         pill.show("This line is much longer than the first one", "and so is the next line after it", animate = false)
         layoutRoot()
-        val grown = pill.width
-        assertTrue("pill stayed $short wide, then $grown", grown > short + 20)
+        assertEquals("a longer line must not widen the pill", short, pill.width)
         pill.show("tiny", "tiny", animate = false)
         layoutRoot()
-        assertTrue("pill did not shrink back: ${pill.width} after $grown", pill.width < grown)
+        assertEquals("a shorter line must not narrow it", short, pill.width)
+        assertEquals((LyricsLayout.PILL_WIDTH_FRACTION * 1000f * context.resources.displayMetrics.density).toInt(), short)
     }
 
     @Test
@@ -258,7 +259,7 @@ class LyricsOverlayViewsTest {
     }
 
     @Test
-    fun pillWidthIsCappedAtFiftyFivePercentOfTheWindow() {
+    fun aVeryLongLineStaysWithinTheFixedPillWidth() {
         val pill = LyricsPillView(context).apply {
             setWindowSizeDp(1000f, 480f)
             show("x".repeat(200), "y".repeat(200))
@@ -267,7 +268,7 @@ class LyricsOverlayViewsTest {
             View.MeasureSpec.makeMeasureSpec(2000, View.MeasureSpec.AT_MOST),
             View.MeasureSpec.makeMeasureSpec(2000, View.MeasureSpec.AT_MOST),
         )
-        assertTrue("width ${pill.measuredWidth}", pill.measuredWidth <= (550 * context.resources.displayMetrics.density).toInt())
+        assertEquals((LyricsLayout.PILL_WIDTH_FRACTION * 1000f * context.resources.displayMetrics.density).toInt(), pill.measuredWidth)
     }
 
     private val ten = (0..9).map { "l$it" }
@@ -349,7 +350,7 @@ class LyricsOverlayViewsTest {
         val rail = LyricsRailView(context).apply { setWindowSizeDp(1000f, 480f) }
         val density = context.resources.displayMetrics.density
         assertEquals((360 * density).toInt(), rail.preferredWidthPx())
-        assertEquals((0.62f * 480f * density).toInt(), rail.preferredHeightPx())
+        assertEquals(((480f - 2 * 0.012f * 480f) * density).toInt(), rail.preferredHeightPx())
         assertEquals((0.012f * 480f * density).toInt(), rail.edgeMarginPx())
     }
 

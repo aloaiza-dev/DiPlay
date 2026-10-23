@@ -46,6 +46,20 @@ class LyricsThemeTest {
     }
 
     @Test
+    fun theRailGlassIsMoreOpaqueThanThePillsAndKeepsItsContrast() {
+        for (night in listOf(true, false)) {
+            val pill = LyricsTheme.colors(night)
+            val rail = LyricsTheme.railColors(night)
+            assertTrue((rail.glassTop ushr 24) >= 0xF0)
+            assertTrue((rail.glassBottom ushr 24) >= 0xF0)
+            assertTrue((rail.glassTop ushr 24) > (pill.glassTop ushr 24))
+            assertTrue((rail.glassBottom ushr 24) > (pill.glassBottom ushr 24))
+            assertEquals(pill.current, rail.current)
+            assertEquals(pill.far, rail.far)
+        }
+    }
+
+    @Test
     fun rimFadesFromTopToBottom() {
         for (night in listOf(true, false)) {
             val colors = LyricsTheme.colors(night)

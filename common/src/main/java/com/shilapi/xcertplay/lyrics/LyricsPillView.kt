@@ -208,7 +208,8 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val spec = MeasureSpec.getSize(widthMeasureSpec)
         val limit = if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.UNSPECIFIED) Int.MAX_VALUE else spec
-        val inner = (min(limit, maxWidthPx()) - 2 * padH()).toInt().coerceAtLeast(0)
+        val fixed = windowWidthDp > 0f
+        val inner = (min(limit, pillWidthPx()) - 2 * padH()).toInt().coerceAtLeast(0)
         for (row in listOf(outgoing, morph, current, next)) {
             if (row.visibility != GONE) row.measure(MeasureSpec.makeMeasureSpec(inner, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
         }
@@ -216,7 +217,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
         val rows = listOf(current, next, hint).filter { it.visibility != GONE }
         val contentWidth = rows.maxOfOrNull { it.measuredWidth } ?: 0
         val contentHeight = rows.sumOf { it.measuredHeight } + (rows.size - 1).coerceAtLeast(0) * gap().toInt()
-        val naturalWidth = contentWidth + (2 * padH()).toInt()
+        val naturalWidth = if (fixed) min(limit, pillWidthPx()) else contentWidth + (2 * padH()).toInt()
         val naturalHeight = contentHeight + (2 * padV()).toInt()
         val easing = (motion == Motion.ROLL || motion == Motion.DIP || motion == Motion.RESIZE) && fromWidth > 0
         setMeasuredDimension(
@@ -265,7 +266,7 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     // wraps to a second row; only text beyond two rows ends in an ellipsis.
     private fun fitCurrentLine() {
         val base = currentPx()
-        val available = maxWidthPx() - 2 * padH()
+        val available = pillWidthPx() - 2 * padH()
         val needed = Paint(current.paint).also { it.textSize = base }.measureText(current.text.toString())
         val shrinks = available > 0 && needed > available && needed <= available / LyricsLayout.PILL_MIN_TEXT_SCALE
         current.setTextSize(TypedValue.COMPLEX_UNIT_PX, if (shrinks) base * available / needed else base)
@@ -397,8 +398,8 @@ internal class LyricsPillView(context: Context) : ViewGroup(context) {
     private fun padV() = LyricsLayout.PILL_PADDING_V_EM * currentPx()
     private fun gap() = LyricsLayout.PILL_ROW_GAP_EM * currentPx()
 
-    private fun maxWidthPx(): Int =
-        if (windowWidthDp > 0f) (windowWidthDp * LyricsLayout.PILL_MAX_WIDTH_FRACTION * density).toInt() else Int.MAX_VALUE
+    private fun pillWidthPx(): Int =
+        if (windowWidthDp > 0f) (windowWidthDp * LyricsLayout.PILL_WIDTH_FRACTION * density).toInt() else Int.MAX_VALUE
 
     private fun lerp(from: Int, to: Int, t: Float) = (from + (to - from) * t).toInt()
 
