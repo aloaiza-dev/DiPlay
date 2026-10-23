@@ -49,7 +49,8 @@ class LyricsRepository(
         }
         val raw = try {
             source.fetch(query)
-        } catch (error: IOException) {
+        } catch (error: Exception) {
+            // Not only IOException: a surprise in a reply must cost one lookup, never the whole app.
             return LyricsOutcome.Failed(error.message ?: error.javaClass.simpleName)
         }
         val lyrics = raw?.let(LrcParser::parse)?.takeIf { fitsDuration(it, query) }

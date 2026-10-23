@@ -88,6 +88,13 @@ class LyricsRepositoryTest {
     }
 
     @Test
+    fun anUnexpectedErrorInTheSourceIsAFailureAndNeverCrashesTheWorker() {
+        reply = { throw IllegalArgumentException("Cannot round NaN value.") }
+        val failed = outcome(repository()) as LyricsOutcome.Failed
+        assertEquals("Cannot round NaN value.", failed.reason)
+    }
+
+    @Test
     fun aFailureSaysWhyForTheLog() {
         reply = { throw IOException("Lyrics service answered 503") }
         val failed = outcome(repository()) as LyricsOutcome.Failed

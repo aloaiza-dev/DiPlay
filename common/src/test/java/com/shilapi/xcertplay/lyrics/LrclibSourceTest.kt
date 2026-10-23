@@ -107,6 +107,12 @@ class LrclibSourceTest {
     }
 
     @Test
+    fun anEntryWithANullOrMissingDurationIsTreatedAsAnUnknownDuration() {
+        val nullDuration = """{"trackName":"Matador","artistName":"Los Fabulosos Cadillacs","duration":null,"instrumental":false,"syncedLyrics":"[00:01.00] a"}"""
+        assertEquals("[00:01.00] a", source("api/search" to "[$nullDuration]").fetch(query))
+    }
+
+    @Test
     fun matchingIgnoresCaseAndAccents() {
         val results = "[" + entry("MATADOR", "LOS FABULOSOS CADILLACS", 276.0, synced = "[00:01.00] ok") + "]"
         assertEquals("[00:01.00] ok", source("api/search" to results).fetch(TrackQuery("Matádor", "Los Fabulosos Cadillacs", null, 276_000L)))

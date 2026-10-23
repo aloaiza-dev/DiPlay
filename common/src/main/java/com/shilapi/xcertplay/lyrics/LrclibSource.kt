@@ -83,8 +83,9 @@ class LrclibSource(private val get: (url: String) -> String?) : LyricsSource {
     /** Distance in milliseconds, 0 when the query has no duration, or null when the entry is too far away. */
     private fun durationGap(entry: JSONObject, query: TrackQuery): Long? {
         val wanted = query.durationMillis ?: return 0L
-        if (!entry.has("duration")) return 0L
-        val gap = abs((entry.optDouble("duration") * 1000).roundToLong() - wanted)
+        // LRCLIB sends "duration": null for some entries, and optDouble turns that into NaN.
+        val seconds = entry.optDouble("duration").takeIf { it.isFinite() } ?: return 0L
+        val gap = abs((seconds * 1000).roundToLong() - wanted)
         return gap.takeIf { it <= DURATION_TOLERANCE_MILLIS }
     }
 
