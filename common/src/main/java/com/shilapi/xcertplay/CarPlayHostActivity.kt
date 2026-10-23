@@ -105,6 +105,7 @@ import com.shilapi.xcertplay.lyrics.LyricsNowPlayingFeed
 import com.shilapi.xcertplay.lyrics.LyricsPillView
 import com.shilapi.xcertplay.lyrics.LyricsRailView
 import com.shilapi.xcertplay.lyrics.LyricsRepository
+import com.shilapi.xcertplay.lyrics.LyricsVideoGate
 import com.shilapi.xcertplay.lyrics.lrclibHttpGet
 import com.shilapi.xcertplay.media.AndroidMediaSink
 import com.shilapi.xcertplay.media.CarPlayTouchMapper
@@ -414,12 +415,18 @@ class CarPlayHostActivity : ComponentActivity() {
     private var lyricsController: LyricsController? = null
     private var lyricsRail: LyricsRailView? = null
     private var lyricsPill: LyricsPillView? = null
-    // The session whose first video frame has been drawn: the lyrics wait for it, so they never sit over a blank screen.
-    private var lyricsFrameSession: AirPlaySession? = null
+    // The lyrics wait for CarPlay's first frame so they never sit over a blank screen, but never for good.
+    private val lyricsGate = LyricsVideoGate(SystemClock::elapsedRealtime)
+    private var lyricsGateTimeoutLogged = false
+    private fun lyricsVideoReady(): Boolean = lyricsGate.ready().also {
+        if (it && lyricsGate.openedByTimeout && !lyricsGateTimeoutLogged) {
+            lyricsGateTimeoutLogged = true
+            appendLog("Lyrics: no first-frame signal arrived, showing them after the wait")
+        }
+    }
     private val lyricsFirstFrameListener: (AirPlaySession) -> Unit = { session ->
         runOnUiThread {
-            lyricsFrameSession = session
-            lyricsController?.onVideoChanged()
+            if (lyricsGate.frameDrawn(session)) lyricsController?.onVideoChanged()
         }
     }
     private var lyricsExecutor: ExecutorService? = null
@@ -810,7 +817,10 @@ class CarPlayHostActivity : ComponentActivity() {
             return true
         }
 
-        override fun onSurfaceTextureUpdated(texture: SurfaceTexture) = Unit
+        // The picture itself arriving is the surest sign of a first frame, whatever the AirPlay events did.
+        override fun onSurfaceTextureUpdated(texture: SurfaceTexture) {
+            if (lyricsGate.frameDrawn(null)) lyricsController?.onVideoChanged()
+        }
     }
 
     private val fallbackSurfaceCallback = object : SurfaceHolder.Callback {
@@ -1253,7 +1263,7 @@ class CarPlayHostActivity : ComponentActivity() {
             noLyricsLabel = { getString(R.string.lyrics_notice_none) },
             failedLabel = { getString(R.string.lyrics_notice_failed) },
             backdrop = backdrop,
-            videoReady = { lyricsFrameSession != null && lyricsFrameSession === activeAirPlaySession },
+            videoReady = ::lyricsVideoReady,
             sidePanelOpen = { sidePanel?.visibility == View.VISIBLE },
             nowMillis = SystemClock::elapsedRealtime,
             offsetMillis = { AirPlayPersistence.loadLyricsOffsetMillis(this).toLong() },
@@ -5405,6 +5415,7 @@ class CarPlayHostActivity : ComponentActivity() {
                         return@runOnUiThread
                     }
                     activeAirPlaySession = session
+                    lyricsGate.sessionStarted(session)
                     val pending = pendingIphoneCornerMask
                     if (pending?.first === session) {
                         installIphoneCornerMask(session, pending.second.first, pending.second.second)
@@ -5452,6 +5463,8 @@ class CarPlayHostActivity : ComponentActivity() {
                     if (controllerGeneration != restartGeneration || startupRetryStopped) return@runOnUiThread
                     startupRetryBudget.disconnected()
                     activeAirPlaySession = null
+                    lyricsGate.sessionEnded()
+                    lyricsGateTimeoutLogged = false
                     lyricsController?.onVideoChanged()
                     clearIphoneCornerMask()
                     CarPlayBackgroundSession.active = false
@@ -5620,7 +5633,8 @@ class CarPlayHostActivity : ComponentActivity() {
         snapshot.controller.setFirstFrameListener(lyricsFirstFrameListener)
         snapshot.controller.activeAirPlaySession()?.let {
             activeAirPlaySession = it
-            if (snapshot.controller.hasRenderedFrame(it)) lyricsFrameSession = it
+            lyricsGate.sessionStarted(it)
+            if (snapshot.controller.hasRenderedFrame(it)) lyricsGate.frameDrawn(it)
         }
         if (blackCornerRadiusDp == CarPlayBlackCornerOverlay.IPHONE_MASK) {
             snapshot.controller.activeIphoneCornerMask()?.let { (session, png, width) ->
