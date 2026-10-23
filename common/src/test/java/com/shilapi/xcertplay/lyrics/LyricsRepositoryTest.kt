@@ -131,6 +131,31 @@ class LyricsRepositoryTest {
         assertEquals(2, calls)
     }
 
+    // A head unit's storage is small: files of an older cache version are removed, and the total size is capped.
+    @Test
+    fun filesOfAnOlderCacheVersionAreRemovedOnTheNextWrite() {
+        val old = File(folder.root, "0123456789abcdef.lrc").apply { writeText("[00:01.00]old") }
+        assertNotNull(lookup(repository()))
+        assertTrue("the old file is gone", !old.exists())
+    }
+
+    @Test
+    fun theCacheStaysUnderItsByteCapAndKeepsTheNewestFiles() {
+        val line = "[00:01.00]" + "x".repeat(990) + "\n[00:03.00]b"
+        reply = { line }
+        val repository = LyricsRepository(source, folder.root, { it.run() }, { now }, maxBytes = 5_000L)
+        for (index in 0 until 10) {
+            now += 1_000L
+            lookup(repository, query.copy(title = "Song $index"))
+        }
+        val size = folder.root.listFiles()!!.sumOf { it.length() }
+        assertTrue("size $size", size <= 5_000L)
+        val before = calls
+        now += 1_000L
+        lookup(repository, query.copy(title = "Song 9"))
+        assertEquals("the newest is still cached", before, calls)
+    }
+
     @Test
     fun cacheDirStaysUnderBound() {
         val repository = repository()

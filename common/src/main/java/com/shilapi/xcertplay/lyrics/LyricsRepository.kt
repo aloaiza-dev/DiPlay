@@ -21,6 +21,7 @@ class LyricsRepository(
     private val cacheDir: File,
     private val worker: Executor,
     private val nowMillis: () -> Long,
+    private val maxBytes: Long = MAX_BYTES,
 ) {
     /**
      * [onResult] runs on [worker]. A lookup whose turn comes when [isStale] is true is dropped without a request
@@ -32,8 +33,8 @@ class LyricsRepository(
 
     private fun resolve(query: TrackQuery): LyricsOutcome {
         val key = key(query)
-        val hit = File(cacheDir, "$key.lrc")
-        val miss = File(cacheDir, "$key.none")
+        val hit = File(cacheDir, "$FILE_PREFIX$key.lrc")
+        val miss = File(cacheDir, "$FILE_PREFIX$key.none")
         if (hit.isFile) {
             val cached = runCatching { LrcParser.parse(hit.readText()) }.getOrNull()
             if (cached != null) {
@@ -72,16 +73,24 @@ class LyricsRepository(
         file.setLastModified(nowMillis())
     }
 
+    // Files of an older cache version go first. Then the oldest go until both the count and the size fit.
     private fun prune() {
         val files = cacheDir.listFiles() ?: return
-        if (files.size <= MAX_FILES) return
-        files.sortedBy { it.lastModified() }.take(files.size - MAX_FILES).forEach { it.delete() }
+        files.filter { !it.name.startsWith(FILE_PREFIX) }.forEach { it.delete() }
+        val current = files.filter { it.name.startsWith(FILE_PREFIX) }.sortedBy { it.lastModified() }
+        var count = current.size
+        var bytes = current.sumOf { it.length() }
+        for (file in current) {
+            if (count <= MAX_FILES && bytes <= maxBytes) break
+            bytes -= file.length()
+            count--
+            file.delete()
+        }
     }
 
     private fun key(query: TrackQuery): String {
         val seconds = query.durationMillis?.let { (it / 1000.0).roundToLong() } ?: 0L
-        // The version drops what an older, weaker lookup saved: its cached misses would hide what this one finds.
-        val text = "$CACHE_VERSION|${query.title.lowercase(Locale.ROOT)}|${query.artist.lowercase(Locale.ROOT)}|$seconds"
+        val text = "${query.title.lowercase(Locale.ROOT)}|${query.artist.lowercase(Locale.ROOT)}|$seconds"
         return MessageDigest.getInstance("SHA-1").digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
     }
 
@@ -89,6 +98,11 @@ class LyricsRepository(
         const val MISS_TTL_MILLIS = 24 * 3_600_000L
         const val DURATION_SLACK_MILLIS = 5_000L
         const val MAX_FILES = 200
-        const val CACHE_VERSION = 2
+        // A song is about 2 KB, so 200 files are well under this; it guards against an odd, huge reply.
+        const val MAX_BYTES = 1_000_000L
+
+        // The prefix is the cache version. A lookup that was weaker saved misses that would hide what this one
+        // finds, and files without the prefix are removed.
+        const val FILE_PREFIX = "v2-"
     }
 }
