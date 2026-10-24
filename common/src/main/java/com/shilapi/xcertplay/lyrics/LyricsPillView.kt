@@ -15,13 +15,15 @@ import android.view.ViewGroup
 import android.view.animation.PathInterpolator
 import android.widget.TextView
 import com.shilapi.xcertplay.host.R
+import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 
 /**
  * The current and the next lyric line on frosted glass. It takes no touches, so every tap reaches CarPlay.
- * The host feeds it the touches through [onHostTouch], which spots the double tap (see [setSwitchAction]).
+ * The host feeds it the touches through [onHostTouch], which spots the double tap (see [setSwitchAction]) and
+ * the swipe up that hides the lyrics of the song (see [setHideAction]).
  *
  * Four text roles share one layout. The two real rows hold the lines now shown. During a roll, two ghost
  * rows carry the lines that were shown: the old current line leaves upward and the old next line rises into
@@ -70,6 +72,14 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
         switchAction = action
     }
 
+    private var hideAction: (() -> Unit)? = null
+    private var swipeTaken = false
+
+    /** The action of a swipe up on the pill: hide the lyrics of this song. */
+    fun setHideAction(action: (() -> Unit)?) {
+        hideAction = action
+    }
+
     fun setInteractive(interactive: Boolean) {
         this.interactive = interactive
         if (!interactive) forgetTap()
@@ -78,21 +88,33 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
     /**
      * [event] is in the coordinates of the pill's parent. A touch that starts on or just beside the glass is
      * watched to its end. A tap is short and stays put; two taps close in time and place switch the view.
+     * A swipe up hides the lyrics. The result is true from the moment a swipe is taken to the end of that touch:
+     * the host must not pass such a touch on to CarPlay.
      */
-    fun onHostTouch(event: MotionEvent) {
+    fun onHostTouch(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                swipeTaken = false
                 val reach = TAP_REACH_DP * density
-                watching = interactive && switchAction != null && visibility == VISIBLE &&
+                watching = interactive && (switchAction != null || hideAction != null) && visibility == VISIBLE &&
                     event.x >= left - reach && event.x <= right + reach &&
                         event.y >= top + translationY - reach && event.y <= bottom + translationY + reach
                 downAt = event.eventTime
                 downX = event.x
                 downY = event.y
             }
-            MotionEvent.ACTION_MOVE -> if (watching && hypot(event.x - downX, event.y - downY) > 2 * configuration.scaledTouchSlop) {
-                watching = false
-                forgetTap()
+            MotionEvent.ACTION_MOVE -> if (watching) {
+                val up = downY - event.y
+                val across = abs(event.x - downX)
+                if (hideAction != null && up >= SWIPE_UP_DP * density && up >= SWIPE_DIRECTION_RATIO * across) {
+                    watching = false
+                    swipeTaken = true
+                    forgetTap()
+                    hideAction?.invoke()
+                } else if (hypot(event.x - downX, event.y - downY) > 2 * configuration.scaledTouchSlop) {
+                    watching = false
+                    forgetTap()
+                }
             }
             MotionEvent.ACTION_UP -> if (watching) endTouch(event)
             MotionEvent.ACTION_POINTER_DOWN, MotionEvent.ACTION_CANCEL -> {
@@ -100,6 +122,9 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
                 forgetTap()
             }
         }
+        val taken = swipeTaken
+        if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) swipeTaken = false
+        return taken
     }
 
     private fun endTouch(up: MotionEvent) {
@@ -486,5 +511,8 @@ internal class LyricsPillView(context: Context) : ViewGroup(context), BackdropTa
         const val DOUBLE_TAP_MILLIS = 600L
         // A finger that lands a little off the glass still counts: the pill is small and a car shakes.
         const val TAP_REACH_DP = 12f
+        // An upward swipe that starts on the pill, long enough and straight enough not to be a sloppy tap.
+        const val SWIPE_UP_DP = 40f
+        const val SWIPE_DIRECTION_RATIO = 1.5f
     }
 }

@@ -946,6 +946,7 @@
     <string name="lyrics_control_earlier">Раньше</string>
     <string name="lyrics_control_later">Позже</string>
     <string name="lyrics_control_pill">Переключить на плашку</string>
+    <string name="lyrics_control_hide">Скрыть текст этой песни</string>
     <string name="lyrics_hint_double_tap">Дважды коснитесь для боковой панели</string>
     <string name="lyrics_notice_none">♪ Нет текста</string>
     <string name="lyrics_notice_failed">♪ Не удалось загрузить текст</string>

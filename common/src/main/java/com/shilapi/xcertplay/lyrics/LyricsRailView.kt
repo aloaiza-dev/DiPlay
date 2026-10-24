@@ -77,6 +77,18 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
         visibility = GONE
         setOnClickListener { switchAction?.invoke() }
     }
+    // Hides the lyrics of this song. Shown while there is an action.
+    private var hideAction: (() -> Unit)? = null
+    internal val hideButton = ImageView(context).apply {
+        setImageResource(R.drawable.ic_lyrics_hide)
+        scaleType = ImageView.ScaleType.FIT_CENTER
+        isClickable = true
+        isFocusable = false
+        contentDescription = context.getString(R.string.lyrics_control_hide)
+        importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
+        visibility = GONE
+        setOnClickListener { hideAction?.invoke() }
+    }
     internal val laterButton = controlButton(R.string.lyrics_control_later, earlier = false)
     internal val earlierButton = controlButton(R.string.lyrics_control_earlier, earlier = true)
     internal val timingValue = lyricsLine(context).apply { maxLines = 1; gravity = Gravity.CENTER }
@@ -99,6 +111,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
         timingStrip.addView(earlierButton, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
         addView(gearButton)
         addView(pillButton)
+        addView(hideButton)
         addView(timingStrip)
         rebuildRows()
         applyTheme()
@@ -124,7 +137,14 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
         refreshControls()
     }
 
+    /** The action of the eye icon in the top middle: hide the lyrics of this song. */
+    fun setHideAction(action: (() -> Unit)?) {
+        hideAction = action
+        refreshControls()
+    }
+
     private fun refreshControls() {
+        hideButton.visibility = if (hideAction != null) VISIBLE else GONE
         pillButton.visibility = if (switchAction != null) VISIBLE else GONE
         gearButton.visibility = if (controlConfigured) VISIBLE else GONE
         if (gearButton.visibility == GONE) closeStrip()
@@ -270,7 +290,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
         for (row in rows) {
             if (row.visibility != GONE) row.measure(MeasureSpec.makeMeasureSpec(inner, MeasureSpec.AT_MOST), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED))
         }
-        for (button in listOf(gearButton, pillButton)) {
+        for (button in listOf(gearButton, pillButton, hideButton)) {
             button.measure(MeasureSpec.makeMeasureSpec(gearSize(), MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(gearSize(), MeasureSpec.EXACTLY))
         }
         timingStrip.measure(MeasureSpec.makeMeasureSpec(inner, MeasureSpec.EXACTLY), MeasureSpec.makeMeasureSpec(stripHeight(), MeasureSpec.EXACTLY))
@@ -293,6 +313,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
         val gear = gearSize()
         gearButton.layout(width - edge - gear, edge, width - edge, edge + gear)
         pillButton.layout(edge, edge, edge + gear, edge + gear)
+        hideButton.layout((width - gear) / 2, edge, (width + gear) / 2, edge + gear)
         val stripBottom = (b - t) - (STRIP_BOTTOM_EM * textPx()).toInt()
         timingStrip.layout(padH().toInt(), stripBottom - stripHeight(), width - padH().toInt(), stripBottom)
         applyPose()
@@ -463,7 +484,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
             }
         }
         timingValue.setTextColor(colors.next)
-        for (button in listOf(gearButton, pillButton)) {
+        for (button in listOf(gearButton, pillButton, hideButton)) {
             button.background = StateListDrawable().apply {
                 addState(intArrayOf(android.R.attr.state_pressed), GradientDrawable().apply {
                     setColor(ink or PRESSED_FILL)
@@ -472,6 +493,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
             }
         }
         pillButton.setColorFilter(colors.next)
+        hideButton.setColorFilter(colors.next)
         gearButton.setColorFilter(if (timingStrip.visibility == VISIBLE) colors.current else colors.next)
     }
 
@@ -481,6 +503,7 @@ internal class LyricsRailView(context: Context) : ViewGroup(context), BackdropTa
         val pad = (GEAR_PADDING_FRACTION * gearSize()).toInt()
         gearButton.setPadding(pad, pad, pad, pad)
         pillButton.setPadding(pad, pad, pad, pad)
+        hideButton.setPadding(pad, pad, pad, pad)
         applyControlTheme()
     }
 

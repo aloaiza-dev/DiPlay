@@ -1036,6 +1036,7 @@
     <string name="lyrics_control_earlier">Prima</string>
     <string name="lyrics_control_later">Dopo</string>
     <string name="lyrics_control_pill">Passa alla pillola</string>
+    <string name="lyrics_control_hide">Nascondi i testi di questo brano</string>
     <string name="lyrics_hint_double_tap">Tocca due volte per la vista laterale</string>
     <string name="lyrics_notice_none">♪ Nessun testo</string>
     <string name="lyrics_notice_failed">♪ Impossibile caricare il testo</string>

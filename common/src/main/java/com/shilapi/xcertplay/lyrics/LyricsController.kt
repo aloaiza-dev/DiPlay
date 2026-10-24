@@ -47,6 +47,7 @@ internal class LyricsController(
     private var started = false
     private var nextChangeMillis: Long? = null
     private var identity: TrackQuery? = null
+    private var hiddenByDriver = false
     @Volatile private var generation = 0
     private var lyrics: SyncedLyrics? = null
     private var playing = false
@@ -85,6 +86,9 @@ internal class LyricsController(
         // Either view switches to the other: the pill by a double tap, the rail by its pill icon.
         rail.setSwitchAction { switchTo(LyricsPlacement.TOP_PILL) }
         pill.setSwitchAction { switchTo(LyricsPlacement.SIDE_RAIL) }
+        // The driver hides the lyrics of the song on screen, by the pill's swipe up or the rail's eye icon.
+        rail.setHideAction(::hideThisSong)
+        pill.setHideAction(::hideThisSong)
         // The speed hides the lyrics while driving, when asked. The pill's double tap and the rail's icons stay.
         stopSpeed = speed.observe { kmh ->
             gate.onSpeed(kmh)
@@ -110,6 +114,12 @@ internal class LyricsController(
     fun onVideoChanged() {
         render()
         scheduleTick()
+    }
+
+    // Held in memory only: the next song brings the lyrics back, and nothing stays hidden for good.
+    private fun hideThisSong() {
+        hiddenByDriver = true
+        render()
     }
 
     private fun switchTo(target: LyricsPlacement) {
@@ -140,6 +150,9 @@ internal class LyricsController(
         gate = DrivingGate(nowMillis)
         pill.setSwitchAction(null)
         rail.setSwitchAction(null)
+        pill.setHideAction(null)
+        rail.setHideAction(null)
+        hiddenByDriver = false
         pill.hide()
         rail.hide()
         backdrop?.sleep()
@@ -164,10 +177,12 @@ internal class LyricsController(
         if (query == null) {
             identity = null
             lyrics = null
+            hiddenByDriver = false
             generation++
             clearNotice()
         } else if (query != identity) {
             lyrics = null
+            hiddenByDriver = false
             generation++
             clearNotice()
             lookUp(query)
@@ -254,9 +269,10 @@ internal class LyricsController(
         val position = clock.positionMillis()?.let { (it + offsetMillis()).coerceAtLeast(0L) }
         val moving = gate.moving
         val hiddenForDriving = hideWhileDriving() && moving
+        val hiddenForSong = hiddenByDriver
         val railBlocked = mode == LyricsPlacement.SIDE_RAIL && sidePanelOpen()
         val stopped = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_HIDE_MILLIS } == true
-        if (lines == null && notice != null && mode != LyricsPlacement.OFF && videoReady() && !hiddenForDriving && !stopped) {
+        if (lines == null && notice != null && mode != LyricsPlacement.OFF && videoReady() && !hiddenForDriving && !hiddenForSong && !stopped) {
             // The notice is a small pill whatever the layout: there is nothing for a rail to hold.
             pill.setInteractive(false)
             pill.setHint(false)
@@ -271,9 +287,9 @@ internal class LyricsController(
             nextChangeMillis = null
             return
         }
-        if (mode == LyricsPlacement.OFF || !videoReady() || lines == null || position == null || suppressed || hiddenForDriving || railBlocked || stopped) {
+        if (mode == LyricsPlacement.OFF || !videoReady() || lines == null || position == null || suppressed || hiddenForDriving || hiddenForSong || railBlocked || stopped) {
             // Music that stops and a car that moves fade the overlay out; every other reason clears it at once.
-            val fade = hiddenForDriving || stopped || noticeShown
+            val fade = hiddenForDriving || hiddenForSong || stopped || noticeShown
             noticeShown = false
             if (fade) {
                 pill.fadeOut()

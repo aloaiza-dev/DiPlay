@@ -1006,6 +1006,7 @@
     <string name="lyrics_control_earlier">提前</string>
     <string name="lyrics_control_later">延后</string>
     <string name="lyrics_control_pill">切换到胶囊视图</string>
+    <string name="lyrics_control_hide">隐藏这首歌的歌词</string>
     <string name="lyrics_hint_double_tap">双击切换到侧边栏</string>
     <string name="lyrics_notice_none">♪ 暂无歌词</string>
     <string name="lyrics_notice_failed">♪ 无法加载歌词</string>

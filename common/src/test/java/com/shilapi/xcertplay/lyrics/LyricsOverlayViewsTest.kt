@@ -528,6 +528,64 @@ class LyricsOverlayViewsTest {
         assertEquals(0, switches)
     }
 
+    private fun swipe(pill: LyricsPillView, upBy: Float, across: Float = 0f): List<Boolean> {
+        val steps = listOf(
+            MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 50f, 300f, 0),
+            MotionEvent.obtain(0L, 40L, MotionEvent.ACTION_MOVE, 50f + across / 2, 300f - upBy / 2, 0),
+            MotionEvent.obtain(0L, 80L, MotionEvent.ACTION_MOVE, 50f + across, 300f - upBy, 0),
+            MotionEvent.obtain(0L, 120L, MotionEvent.ACTION_UP, 50f + across, 300f - upBy, 0),
+        )
+        return steps.map { pill.onHostTouch(it).also { _ -> it.recycle() } }
+    }
+
+    private fun pillForSwipes(hides: () -> Unit): LyricsPillView {
+        val pill = LyricsPillView(context)
+        val root = laidOut(pill)
+        pill.show("one", "two", animate = false)
+        relayout(root)
+        pill.setInteractive(true)
+        pill.setHideAction(hides)
+        // The swipe starts at (50, 300): put the glass there.
+        pill.layout(0, 250, 400, 350)
+        return pill
+    }
+
+    @Test
+    fun aSwipeUpOnThePillHidesItAndTheHostMustNotPassTheRestOnToCarPlay() {
+        var hides = 0
+        val pill = pillForSwipes { hides++ }
+        val taken = swipe(pill, upBy = 150f)
+        assertEquals(1, hides)
+        assertEquals(listOf(false, true, true, true), taken)
+        assertFalse("the next touch is the host's again", swipe(pill, upBy = 5f).any { it })
+    }
+
+    @Test
+    fun aShortOrSidewaysSwipeDoesNotHide() {
+        var hides = 0
+        val pill = pillForSwipes { hides++ }
+        swipe(pill, upBy = 20f)
+        swipe(pill, upBy = 80f, across = 200f)
+        swipe(pill, upBy = -150f)
+        assertEquals(0, hides)
+    }
+
+    @Test
+    fun aSwipeUpFromOutsideThePillDoesNothing() {
+        var hides = 0
+        val pill = pillForSwipes { hides++ }
+        pill.layout(0, 0, 400, 100)
+        assertFalse(swipe(pill, upBy = 150f).any { it })
+        assertEquals(0, hides)
+    }
+
+    @Test
+    fun aPillWithoutAHideActionNeverTakesATouch() {
+        val pill = pillForSwipes { }
+        pill.setHideAction(null)
+        assertFalse(swipe(pill, upBy = 150f).any { it })
+    }
+
     @Test
     fun aPillThatIsNotInteractiveIgnoresDoubleTaps() {
         val pill = interactivePill()
@@ -714,6 +772,19 @@ class LyricsOverlayViewsTest {
         val (x, y) = centreOf(rail.pillButton)
         assertTrue(touchAt(rail, x, y))
         assertFalse(touchAt(rail, rail.width / 2f, rail.height / 2f))
+    }
+
+    @Test
+    fun theEyeButtonShowsWithAHideActionAndRunsIt() {
+        var hides = 0
+        val (rail, root) = controlledRail()
+        assertEquals(View.GONE, rail.hideButton.visibility)
+        rail.setHideAction { hides++ }
+        relayout(root)
+        assertEquals(View.VISIBLE, rail.hideButton.visibility)
+        rail.hideButton.performClick()
+        assertEquals(1, hides)
+        assertTrue("the eye sits between the two corner buttons", rail.hideButton.left > rail.pillButton.right && rail.hideButton.right < rail.gearButton.left)
     }
 
     @Test

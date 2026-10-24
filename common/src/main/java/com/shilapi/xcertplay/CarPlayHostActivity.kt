@@ -415,6 +415,7 @@ class CarPlayHostActivity : ComponentActivity() {
     private var lyricsController: LyricsController? = null
     private var lyricsRail: LyricsRailView? = null
     private var lyricsPill: LyricsPillView? = null
+    private var lyricsSwipeActive = false
     // The lyrics wait for CarPlay's first frame so they never sit over a blank screen, but never for good.
     private val lyricsGate = LyricsVideoGate(SystemClock::elapsedRealtime)
     private var lyricsGateTimeoutLogged = false
@@ -6564,7 +6565,17 @@ class CarPlayHostActivity : ComponentActivity() {
 
     private fun onHostTouch(view: View, event: MotionEvent): Boolean {
         if (menuOpen) return true
-        lyricsPill?.onHostTouch(event)
+        if (lyricsPill?.onHostTouch(event) == true) {
+            // A swipe up on the lyrics pill hides it. CarPlay has seen the start of the touch: it gets a release,
+            // and none of the rest.
+            if (!lyricsSwipeActive) {
+                lyricsSwipeActive = true
+                releaseCarPlayTouches()
+            }
+            if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) lyricsSwipeActive = false
+            return true
+        }
+        lyricsSwipeActive = false
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {

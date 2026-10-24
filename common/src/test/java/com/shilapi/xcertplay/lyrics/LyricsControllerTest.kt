@@ -565,6 +565,44 @@ class LyricsControllerTest {
     }
 
     @Test
+    fun theRailsEyeButtonHidesTheLyricsOfThisSongOnlyAndTheNextSongBringsThemBack() {
+        placement = LyricsPlacement.SIDE_RAIL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertEquals(View.VISIBLE, rail.visibility)
+        rail.hideButton.performClick()
+        advance(600L)
+        assertEquals("hidden", View.GONE, rail.visibility)
+        advance(30_000L)
+        assertEquals("it stays hidden while the song plays", View.GONE, rail.visibility)
+        publish(np("Another song", elapsed = 1_000L))
+        runJobs()
+        advance(600L)
+        assertEquals("the next song shows them again", View.VISIBLE, rail.visibility)
+        assertEquals("nothing was saved", LyricsPlacement.SIDE_RAIL, placement)
+    }
+
+    @Test
+    fun aSwipeUpOnThePillHidesTheLyricsOfThisSong() {
+        placement = LyricsPlacement.TOP_PILL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        assertEquals(View.VISIBLE, pill.visibility)
+        val down = android.view.MotionEvent.obtain(0L, 0L, android.view.MotionEvent.ACTION_DOWN, 5f, 5f, 0)
+        val move = android.view.MotionEvent.obtain(0L, 50L, android.view.MotionEvent.ACTION_MOVE, 5f, -300f, 0)
+        pill.onHostTouch(down)
+        pill.onHostTouch(move)
+        down.recycle()
+        move.recycle()
+        advance(600L)
+        assertEquals(View.GONE, pill.visibility)
+    }
+
+    @Test
     fun theRailsPillButtonSavesThePillAndShowsIt() {
         placement = LyricsPlacement.SIDE_RAIL
         controller.start()

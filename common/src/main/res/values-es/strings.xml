@@ -946,6 +946,7 @@
     <string name="lyrics_control_earlier">Antes</string>
     <string name="lyrics_control_later">Después</string>
     <string name="lyrics_control_pill">Cambiar a la cápsula</string>
+    <string name="lyrics_control_hide">Ocultar la letra de esta canción</string>
     <string name="lyrics_hint_double_tap">Toca dos veces para la vista lateral</string>
     <string name="lyrics_notice_none">♪ Sin letra</string>
     <string name="lyrics_notice_failed">♪ No se pudo cargar la letra</string>
