@@ -13,6 +13,18 @@ android {
         minSdk = 24
     }
 
+    // Matches :mobile's "vendor" dimension so `common/src/xpeng/...` can hold XPENG-only code
+    // (none exists yet). Local-only: never part of an upstream PR.
+    flavorDimensions += "vendor"
+    productFlavors {
+        create("upstream") {
+            dimension = "vendor"
+        }
+        create("xpeng") {
+            dimension = "vendor"
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
