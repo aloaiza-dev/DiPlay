@@ -68,7 +68,7 @@ class LrclibSourceTest {
     }
 
     @Test
-    fun searchPicksTheClosestDurationWithinThreeSeconds() {
+    fun searchPicksTheClosestDuration() {
         val results = "[" + listOf(
             entry("Matador", "Los Fabulosos Cadillacs", 278.5, synced = "[00:01.00] far"),
             entry("Matador", "Los Fabulosos Cadillacs", 276.4, synced = "[00:01.00] near"),
@@ -77,7 +77,24 @@ class LrclibSourceTest {
     }
 
     @Test
-    fun searchRejectsADurationMoreThanThreeSecondsAway() {
+    fun searchAcceptsAnEditThatRunsSomeSecondsShorterOrLonger() {
+        // The phone's version of a song can differ from LRCLIB's by about ten seconds: Otherside is 241 s on the
+        // car and 250 to 258 s at LRCLIB.
+        val results = "[" + entry("Matador", "Los Fabulosos Cadillacs", 290.0, synced = "[00:01.00] edit") + "]"
+        assertEquals("[00:01.00] edit", source("api/search" to results).fetch(query))
+    }
+
+    @Test
+    fun searchStillPrefersTheCloserDurationWhenSeveralAreInRange() {
+        val results = "[" + listOf(
+            entry("Matador", "Los Fabulosos Cadillacs", 290.0, synced = "[00:01.00] far"),
+            entry("Matador", "Los Fabulosos Cadillacs", 277.0, synced = "[00:01.00] near"),
+        ).joinToString(",") + "]"
+        assertEquals("[00:01.00] near", source("api/search" to results).fetch(query))
+    }
+
+    @Test
+    fun searchRejectsADurationMoreThanTwentySecondsAway() {
         val results = "[" + entry("Matador", "Los Fabulosos Cadillacs", 304.0) + "]"
         assertNull(source("api/search" to results).fetch(query))
     }

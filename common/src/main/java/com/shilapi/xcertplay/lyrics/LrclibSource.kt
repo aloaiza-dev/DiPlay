@@ -102,7 +102,8 @@ class LrclibSource(private val get: (url: String) -> String?) : LyricsSource {
     private fun encode(value: String) = URLEncoder.encode(value, "UTF-8")
 
     private companion object {
-        const val DURATION_TOLERANCE_MILLIS = 3_000L
+        // Wide on purpose: the phone's edit of a song often differs from LRCLIB's by ten seconds or more, and the closest wins.
+        const val DURATION_TOLERANCE_MILLIS = 20_000L
     }
 }
 

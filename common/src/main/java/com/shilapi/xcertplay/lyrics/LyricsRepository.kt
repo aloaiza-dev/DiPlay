@@ -97,13 +97,13 @@ class LyricsRepository(
 
     private companion object {
         const val MISS_TTL_MILLIS = 24 * 3_600_000L
-        const val DURATION_SLACK_MILLIS = 5_000L
+        const val DURATION_SLACK_MILLIS = 20_000L
         const val MAX_FILES = 200
         // A song is about 2 KB, so 200 files are well under this; it guards against an odd, huge reply.
         const val MAX_BYTES = 1_000_000L
 
         // The prefix is the cache version. A lookup that was weaker saved misses that would hide what this one
         // finds, and files without the prefix are removed.
-        const val FILE_PREFIX = "v2-"
+        const val FILE_PREFIX = "v3-"
     }
 }

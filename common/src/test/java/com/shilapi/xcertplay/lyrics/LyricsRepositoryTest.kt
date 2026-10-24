@@ -117,10 +117,10 @@ class LyricsRepositoryTest {
     }
 
     @Test
-    fun lastLineWithinFiveSecondsOfTheTrackIsAccepted() {
-        reply = { "[00:01.00]a\n[03:25.00]b" }
+    fun lastLineWithinTwentySecondsOfTheTrackIsAccepted() {
+        reply = { "[00:01.00]a\n[03:40.00]b" }
         assertNotNull(lookup(repository()))
-        reply = { "[00:01.00]a\n[03:25.50]b" }
+        reply = { "[00:01.00]a\n[03:40.50]b" }
         assertNull(lookup(repository(), query.copy(title = "Other")))
     }
 
