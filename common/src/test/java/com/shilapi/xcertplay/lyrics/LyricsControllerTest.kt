@@ -626,6 +626,7 @@ class LyricsControllerTest {
         publish(hidden.copy(elapsedMillis = 2_000L))
         runJobs()
         advance(400L)
+        assertEquals("the lyrics showed before the hide", View.VISIBLE, rail.visibility)
         rail.hideButton.performClick()
         advance(600L)
         assertEquals("the hide took effect", View.GONE, rail.visibility)
@@ -666,7 +667,6 @@ class LyricsControllerTest {
     fun commonRemasterTailsOfTheSameSongKeepItHidden() {
         for (title in listOf("Song - Mono Remaster", "Song (Deluxe Remastered Edition)", "Song (2011 Digital Remaster)",
             "Song (Digitally Remastered)", "Song – 2011 Remaster", "Song [Remastered Version]")) {
-            controller.stop()
             assertEquals(title, View.GONE, hideThenPlay(np("Song"), np(title)))
         }
     }
