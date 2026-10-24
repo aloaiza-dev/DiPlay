@@ -378,8 +378,10 @@ internal class LyricsController(
         const val MIN_WAIT_MILLIS = 16L
         const val TAG = "DiPlay-Lyrics"
         // Only a bare "(Remastered 2009)" or " - 2011 Remaster": a bracket that says more ("Live ..., Remaster") is kept.
+        private const val EDITION_WORD = """(?:\d{4}|mono|stereo|deluxe|digital|digitally|version|edition)"""
         private val REMASTER_TAIL = Regex(
-            """\s*(?:[(\[]\s*(?:\d{4}\s+)?remaster(?:ed)?(?:\s+(?:version|\d{4}))*\s*[)\]]|\s-\s+(?:\d{4}\s+)?remaster(?:ed)?(?:\s+(?:version|\d{4}))*\s*$)""",
+            """\s*(?:[(\[]\s*(?:$EDITION_WORD\s+)*remaster(?:ed)?(?:\s+$EDITION_WORD)*\s*[)\]]""" +
+                """|\s[-–]\s+(?:$EDITION_WORD\s+)*remaster(?:ed)?(?:\s+$EDITION_WORD)*\s*$)""",
             RegexOption.IGNORE_CASE,
         )
         val RETRY_DELAYS_MILLIS = listOf(3_000L, 10_000L, 30_000L, 60_000L, 60_000L)

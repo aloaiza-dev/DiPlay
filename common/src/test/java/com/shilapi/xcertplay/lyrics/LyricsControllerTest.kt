@@ -620,7 +620,7 @@ class LyricsControllerTest {
         assertEquals(View.GONE, rail.visibility)
     }
 
-    private fun hideThenPlay(hidden: CarPlayNowPlaying, next: CarPlayNowPlaying): Int {
+    private fun hideThenPlay(hidden: CarPlayNowPlaying, vararg following: CarPlayNowPlaying): Int {
         placement = LyricsPlacement.SIDE_RAIL
         controller.start()
         publish(hidden.copy(elapsedMillis = 2_000L))
@@ -629,9 +629,11 @@ class LyricsControllerTest {
         rail.hideButton.performClick()
         advance(600L)
         assertEquals("the hide took effect", View.GONE, rail.visibility)
-        publish(next.copy(elapsedMillis = 2_000L))
-        runJobs()
-        advance(600L)
+        for (next in following) {
+            publish(next.copy(elapsedMillis = 2_000L))
+            runJobs()
+            advance(600L)
+        }
         return rail.visibility
     }
 
@@ -653,7 +655,26 @@ class LyricsControllerTest {
     @Test
     fun aLiveVersionThatIsAlsoRemasteredIsStillAnotherSong() {
         assertEquals(View.VISIBLE, hideThenPlay(np("Song"), np("Song (Live at Wembley, 2011 Remaster)")))
+    }
+
+    @Test
+    fun aDashTailThatSaysMoreThanRemasterIsStillAnotherSong() {
         assertEquals(View.VISIBLE, hideThenPlay(np("Song"), np("Song - Remastered - Live")))
+    }
+
+    @Test
+    fun commonRemasterTailsOfTheSameSongKeepItHidden() {
+        for (title in listOf("Song - Mono Remaster", "Song (Deluxe Remastered Edition)", "Song (2011 Digital Remaster)",
+            "Song (Digitally Remastered)", "Song – 2011 Remaster", "Song [Remastered Version]")) {
+            controller.stop()
+            assertEquals(title, View.GONE, hideThenPlay(np("Song"), np(title)))
+        }
+    }
+
+    @Test
+    fun theHideFollowsTheLatestCreditAcrossAChain() {
+        // "A", then "A & B", then "B" alone: each step shares an artist with the one before.
+        assertEquals(View.GONE, hideThenPlay(np("Song", artist = "A"), np("Song", artist = "A & B"), np("Song", artist = "B")))
     }
 
     @Test
