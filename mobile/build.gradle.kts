@@ -41,9 +41,11 @@ android {
                 providers.environmentVariable("XPENG_KEYSTORE_PATH")
                     .getOrElse("missing-xpeng-keystore.jks"),
             )
-            storePassword = providers.environmentVariable("XPENG_KEYSTORE_PASSWORD").getOrElse("")
+            val xpengStorePassword = providers.environmentVariable("XPENG_KEYSTORE_PASSWORD").getOrElse("")
+            storePassword = xpengStorePassword
             keyAlias = providers.environmentVariable("XPENG_KEY_ALIAS").getOrElse("xpeng")
-            keyPassword = providers.environmentVariable("XPENG_KEY_PASSWORD").getOrElse("")
+            // PKCS12 keeps one password for the store and the key.
+            keyPassword = providers.environmentVariable("XPENG_KEY_PASSWORD").getOrElse(xpengStorePassword)
         }
     }
 
