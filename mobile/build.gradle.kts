@@ -52,6 +52,7 @@ android {
     productFlavors {
         create("upstream") {
             dimension = "vendor"
+            signingConfig = signingConfigs.getByName("release")
         }
         create("xpeng") {
             dimension = "vendor"
@@ -70,7 +71,8 @@ android {
             optimization {
                 enable = false
             }
-            signingConfig = signingConfigs.getByName("release")
+            // Signing comes from each flavor (xpeng/upstream), not here: a buildType-level
+            // signingConfig would override the flavor's and always win, defeating the xpeng signer.
         }
     }
     compileOptions {
