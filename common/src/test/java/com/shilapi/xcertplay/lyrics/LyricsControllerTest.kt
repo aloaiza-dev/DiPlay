@@ -585,6 +585,27 @@ class LyricsControllerTest {
     }
 
     @Test
+    fun aLateAlbumOrDurationUpdateOfTheSameSongKeepsTheLyricsHidden() {
+        placement = LyricsPlacement.SIDE_RAIL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        rail.hideButton.performClick()
+        advance(600L)
+        publish(np("Song", elapsed = 3_000L).copy(durationMillis = 201_000L, album = "Album (Deluxe)"))
+        runJobs()
+        advance(600L)
+        assertEquals("same title and artist: still hidden", View.GONE, rail.visibility)
+        publish(np("Another song", elapsed = 1_000L))
+        runJobs()
+        publish(np("Song", elapsed = 1_000L))
+        runJobs()
+        advance(600L)
+        assertEquals("another song came in between: shown again", View.VISIBLE, rail.visibility)
+    }
+
+    @Test
     fun aSwipeUpOnThePillHidesTheLyricsOfThisSong() {
         placement = LyricsPlacement.TOP_PILL
         controller.start()
