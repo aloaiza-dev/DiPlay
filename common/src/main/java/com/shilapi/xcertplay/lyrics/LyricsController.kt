@@ -47,8 +47,11 @@ internal class LyricsController(
     private var started = false
     private var nextChangeMillis: Long? = null
     private var identity: TrackQuery? = null
-    // Title and artist of the song the driver hid. An album or length update of the same song must not undo it.
-    private var hiddenSong: Pair<String, String>? = null
+    // The song the driver hid, by title and artist. An album or length update, a case change or a "(Remastered)"
+    // tail of the same song must not undo it. Music that stops ends it.
+    private var hiddenSong: Pair<String, Set<String>>? = null
+
+    private fun songKey(query: TrackQuery) = baseTitle(query.title) to artistKeys(query.artist)
     @Volatile private var generation = 0
     private var lyrics: SyncedLyrics? = null
     private var playing = false
@@ -119,7 +122,7 @@ internal class LyricsController(
 
     // Held in memory only: the next song brings the lyrics back, and nothing stays hidden for good.
     private fun hideThisSong() {
-        hiddenSong = identity?.let { it.title to it.artist }
+        hiddenSong = identity?.let(::songKey) ?: return
         render()
     }
 
@@ -175,8 +178,7 @@ internal class LyricsController(
         if (expected != null && actual != null && abs(actual - expected) > SEEK_MILLIS) jumped = true
         playing = update.playing
         if (update.playing) pausedSince = null else if (pausedSince == null) pausedSince = nowMillis()
-        // A blank update in the middle of a song leaves the hide alone; another song ends it.
-        if (query != null && query.title to query.artist != hiddenSong) hiddenSong = null
+        if (query == null || songKey(query) != hiddenSong) hiddenSong = null
         if (query == null) {
             identity = null
             lyrics = null
@@ -270,7 +272,7 @@ internal class LyricsController(
         val position = clock.positionMillis()?.let { (it + offsetMillis()).coerceAtLeast(0L) }
         val moving = gate.moving
         val hiddenForDriving = hideWhileDriving() && moving
-        val hiddenForSong = hiddenSong != null && hiddenSong == identity?.let { it.title to it.artist }
+        val hiddenForSong = hiddenSong != null && hiddenSong == identity?.let(::songKey)
         val railBlocked = mode == LyricsPlacement.SIDE_RAIL && sidePanelOpen()
         val stopped = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_HIDE_MILLIS } == true
         if (lines == null && notice != null && mode != LyricsPlacement.OFF && videoReady() && !hiddenForDriving && !hiddenForSong && !stopped) {

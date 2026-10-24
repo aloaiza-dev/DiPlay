@@ -606,6 +606,38 @@ class LyricsControllerTest {
     }
 
     @Test
+    fun aSpellingChangeOfTheSameSongKeepsItHidden() {
+        placement = LyricsPlacement.SIDE_RAIL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        rail.hideButton.performClick()
+        advance(600L)
+        publish(np("SONG (Remastered 2009)", elapsed = 3_000L, artist = "artist"))
+        runJobs()
+        advance(600L)
+        assertEquals(View.GONE, rail.visibility)
+    }
+
+    @Test
+    fun whenTheMusicStopsTheHideEndsSoTheSongComesBackNextTime() {
+        placement = LyricsPlacement.SIDE_RAIL
+        controller.start()
+        publish(np("Song", elapsed = 2_000L))
+        runJobs()
+        advance(400L)
+        rail.hideButton.performClick()
+        advance(600L)
+        publish(np(null))
+        runJobs()
+        publish(np("Song", elapsed = 1_000L))
+        runJobs()
+        advance(600L)
+        assertEquals(View.VISIBLE, rail.visibility)
+    }
+
+    @Test
     fun aSwipeUpOnThePillHidesTheLyricsOfThisSong() {
         placement = LyricsPlacement.TOP_PILL
         controller.start()
