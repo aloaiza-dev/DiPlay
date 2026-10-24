@@ -620,6 +620,35 @@ class LyricsControllerTest {
         assertEquals(View.GONE, rail.visibility)
     }
 
+    private fun hideThenPlay(hidden: CarPlayNowPlaying, next: CarPlayNowPlaying): Int {
+        placement = LyricsPlacement.SIDE_RAIL
+        controller.start()
+        publish(hidden.copy(elapsedMillis = 2_000L))
+        runJobs()
+        advance(400L)
+        rail.hideButton.performClick()
+        advance(600L)
+        publish(next)
+        runJobs()
+        advance(600L)
+        return rail.visibility
+    }
+
+    @Test
+    fun aCreditThatGrowsOrShrinksKeepsTheSongHidden() {
+        assertEquals(View.GONE, hideThenPlay(np("Song"), np("Song", artist = "Artist feat. Someone")))
+    }
+
+    @Test
+    fun aLiveOrRemixOfTheSongIsAnotherSongAndShowsItsLyrics() {
+        assertEquals(View.VISIBLE, hideThenPlay(np("Song"), np("Song (Live)")))
+    }
+
+    @Test
+    fun twoDifferentTitlesMadeOnlyOfBracketsAreNotTheSameSong() {
+        assertEquals(View.VISIBLE, hideThenPlay(np("(Intro)"), np("[Interlude]")))
+    }
+
     @Test
     fun whenTheMusicStopsTheHideEndsSoTheSongComesBackNextTime() {
         placement = LyricsPlacement.SIDE_RAIL

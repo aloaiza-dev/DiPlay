@@ -51,7 +51,16 @@ internal class LyricsController(
     // tail of the same song must not undo it. Music that stops ends it.
     private var hiddenSong: Pair<String, Set<String>>? = null
 
-    private fun songKey(query: TrackQuery) = baseTitle(query.title) to artistKeys(query.artist)
+    // Only a remaster tail is dropped from the title: a live, acoustic or remix version is another recording.
+    private fun songKey(query: TrackQuery): Pair<String, Set<String>> {
+        val title = plain(query.title.replace(REMASTER_TAIL, "")).ifEmpty { query.title.lowercase() }
+        val artists = artistKeys(query.artist).ifEmpty { setOf(query.artist.lowercase()) }
+        return title to artists
+    }
+
+    // The same song when the title matches and the credits share an artist: a feature may come or go.
+    private fun sameSong(a: Pair<String, Set<String>>?, b: Pair<String, Set<String>>?) =
+        a != null && b != null && a.first == b.first && a.second.intersect(b.second).isNotEmpty()
     @Volatile private var generation = 0
     private var lyrics: SyncedLyrics? = null
     private var playing = false
@@ -178,7 +187,7 @@ internal class LyricsController(
         if (expected != null && actual != null && abs(actual - expected) > SEEK_MILLIS) jumped = true
         playing = update.playing
         if (update.playing) pausedSince = null else if (pausedSince == null) pausedSince = nowMillis()
-        if (query == null || songKey(query) != hiddenSong) hiddenSong = null
+        if (query == null || !sameSong(songKey(query), hiddenSong)) hiddenSong = null
         if (query == null) {
             identity = null
             lyrics = null
@@ -272,7 +281,7 @@ internal class LyricsController(
         val position = clock.positionMillis()?.let { (it + offsetMillis()).coerceAtLeast(0L) }
         val moving = gate.moving
         val hiddenForDriving = hideWhileDriving() && moving
-        val hiddenForSong = hiddenSong != null && hiddenSong == identity?.let(::songKey)
+        val hiddenForSong = sameSong(hiddenSong, identity?.let(::songKey))
         val railBlocked = mode == LyricsPlacement.SIDE_RAIL && sidePanelOpen()
         val stopped = !playing && pausedSince?.let { nowMillis() - it >= PAUSE_HIDE_MILLIS } == true
         if (lines == null && notice != null && mode != LyricsPlacement.OFF && videoReady() && !hiddenForDriving && !hiddenForSong && !stopped) {
@@ -367,6 +376,7 @@ internal class LyricsController(
         const val HINT_MILLIS = 4_000L
         const val MIN_WAIT_MILLIS = 16L
         const val TAG = "DiPlay-Lyrics"
+        private val REMASTER_TAIL = Regex("""\s*(?:[(\[][^)\]]*remaster[^)\]]*[)\]]|-\s+[^-]*remaster.*$)""", RegexOption.IGNORE_CASE)
         val RETRY_DELAYS_MILLIS = listOf(3_000L, 10_000L, 30_000L, 60_000L, 60_000L)
         const val PAUSE_DIM_MILLIS = 1_000L
         const val PAUSE_HIDE_MILLIS = 4_000L

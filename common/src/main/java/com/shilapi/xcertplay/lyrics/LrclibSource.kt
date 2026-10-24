@@ -119,7 +119,7 @@ internal fun primaryArtist(credit: String): String =
     credit.split(ARTIST_SEPARATORS).firstOrNull()?.trim()?.takeIf { it.isNotEmpty() } ?: credit
 
 /** Lower case, no accents, letters and digits only. */
-private fun plain(text: String): String =
+internal fun plain(text: String): String =
     Normalizer.normalize(text, Normalizer.Form.NFD).replace(Regex("\\p{Mn}+"), "")
         .lowercase().replace(Regex("[^\\p{L}\\p{N}]+"), " ").trim()
 
