@@ -95,6 +95,18 @@ import com.shilapi.xcertplay.airplay.CarPlayMediaEngine
 import com.shilapi.xcertplay.airplay.SafeAreaRect
 import com.shilapi.xcertplay.host.R
 import com.shilapi.xcertplay.location.AndroidCarPlayLocationProvider
+import com.shilapi.xcertplay.lyrics.FrameSource
+import com.shilapi.xcertplay.lyrics.LocationLyricsSpeedSource
+import com.shilapi.xcertplay.lyrics.LrclibSource
+import com.shilapi.xcertplay.lyrics.LyricsBackdropSampler
+import com.shilapi.xcertplay.lyrics.LyricsController
+import com.shilapi.xcertplay.lyrics.LyricsLayout
+import com.shilapi.xcertplay.lyrics.LyricsNowPlayingFeed
+import com.shilapi.xcertplay.lyrics.LyricsPillView
+import com.shilapi.xcertplay.lyrics.LyricsRailView
+import com.shilapi.xcertplay.lyrics.LyricsRepository
+import com.shilapi.xcertplay.lyrics.LyricsVideoGate
+import com.shilapi.xcertplay.lyrics.lrclibHttpGet
 import com.shilapi.xcertplay.media.AndroidMediaSink
 import com.shilapi.xcertplay.media.CarPlayTouchMapper
 import com.shilapi.xcertplay.media.CarPlayVideoLayout
@@ -403,6 +415,28 @@ open class CarPlayHostActivity : ComponentActivity() {
     private var directVideoOutput = false
     // Diagnostics setting: a game-style FPS counter over the picture.
     private var fpsCounter: FpsCounterOverlay? = null
+    // Display setting: synced lyrics over the picture, as a top pill or a side rail.
+    private var lyricsController: LyricsController? = null
+    private var lyricsRail: LyricsRailView? = null
+    private var lyricsPill: LyricsPillView? = null
+    private var lyricsSwipeActive = false
+    // The lyrics wait for CarPlay's first frame so they never sit over a blank screen, but never for good.
+    private val lyricsGate = LyricsVideoGate(SystemClock::elapsedRealtime)
+    private var lyricsGateTimeoutLogged = false
+    private fun lyricsVideoReady(): Boolean = lyricsGate.ready().also {
+        if (it && lyricsGate.openedByTimeout && !lyricsGateTimeoutLogged) {
+            lyricsGateTimeoutLogged = true
+            appendLog("Lyrics: no first-frame signal arrived, showing them after the wait")
+        }
+    }
+    private val lyricsFirstFrameListener: (AirPlaySession) -> Unit = { session ->
+        runOnUiThread {
+            val opened = lyricsGate.frameDrawn(session)
+            appendLog("Lyrics: first-frame event, gate opened=$opened ready=${lyricsGate.ready()}")
+            if (opened) lyricsController?.onVideoChanged()
+        }
+    }
+    private var lyricsExecutor: ExecutorService? = null
     // Sinks whose sessions are being torn down; their decoders may still render to the current surface
     // until they have released their codecs, so a destroyed surface is detached from them too. A restart
     // and a shutdown can overlap, so this is a set.
@@ -612,6 +646,7 @@ open class CarPlayHostActivity : ComponentActivity() {
             initialNight = darkMode,
             onNightChanged = { night ->
                 darkMode = night
+                lyricsController?.onNightChanged(night)
                 if (hostAppearanceResumed) AppAppearanceRuntime.publishHost(this, night)
                 refreshAppAppearance()
                 paintWaitingScreen()
@@ -805,7 +840,10 @@ open class CarPlayHostActivity : ComponentActivity() {
             return true
         }
 
-        override fun onSurfaceTextureUpdated(texture: SurfaceTexture) = Unit
+        // The picture itself arriving is the surest sign of a first frame, whatever the AirPlay events did.
+        override fun onSurfaceTextureUpdated(texture: SurfaceTexture) {
+            if (lyricsGate.frameDrawn(null)) lyricsController?.onVideoChanged()
+        }
     }
 
     private val fallbackSurfaceCallback = object : SurfaceHolder.Callback {
@@ -1197,6 +1235,80 @@ open class CarPlayHostActivity : ComponentActivity() {
         homeScreenVisible = null
         // Read here so a change made in Settings applies when the projection comes back.
         if (AirPlayPersistence.loadFpsCounter(this)) fpsCounter?.start() else fpsCounter?.stop()
+        lyricsRail?.let(::fitLyricsRail)
+        lyricsController?.start()
+    }
+
+    // Auto puts the rail on the edge opposite CarPlay's dock. The dock follows the driving side; unverified on a car.
+    private fun lyricsRailGravity() = Gravity.CENTER_VERTICAL or
+        if (AirPlayPersistence.loadLyricsRailSide(this).onLeft(rightHandDrive)) Gravity.LEFT else Gravity.RIGHT
+
+    // A floating card: its size and its off-the-edge margin follow the window, and its side the driving side.
+    private fun fitLyricsRail(rail: LyricsRailView) {
+        val params = rail.layoutParams as? FrameLayout.LayoutParams ?: return
+        val width = rail.preferredWidthPx()
+        val height = rail.preferredHeightPx()
+        val margin = rail.edgeMarginPx()
+        if (params.width == width && params.height == height && params.leftMargin == margin &&
+            params.rightMargin == margin && params.gravity == lyricsRailGravity()) return
+        params.width = width
+        params.height = height
+        params.leftMargin = margin
+        params.rightMargin = margin
+        params.gravity = lyricsRailGravity()
+        rail.layoutParams = params
+    }
+
+    // Above the picture and the gesture layer, under the menus. Neither view takes touches.
+    private fun addLyricsOverlay(root: FrameLayout, video: TextureView) {
+        val pill = LyricsPillView(this)
+        val rail = LyricsRailView(this)
+        // A blurred copy of the picture behind the glass. It stays off on a low-memory head unit, and turns
+        // itself off if copying the picture proves slow (see LyricsBackdropSampler).
+        val backdrop = LyricsBackdropSampler(
+            FrameSource { bitmap -> video.isAvailable && video.getBitmap(bitmap) != null },
+            { video.width }, { video.height }, mainHandler,
+            enabled = { AirPlayPersistence.loadLyricsBlur(this) },
+        ).also {
+            it.addTarget(pill)
+            it.addTarget(rail)
+        }
+        root.addView(pill, FrameLayout.LayoutParams(-2, -2, Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
+            topMargin = dp(LyricsLayout.PILL_TOP_MARGIN_DP)
+        })
+        root.addView(rail, FrameLayout.LayoutParams(rail.preferredWidthPx(), rail.preferredHeightPx(), lyricsRailGravity()))
+        root.addOnLayoutChangeListener { _, left, top, right, bottom, _, _, _, _ ->
+            val density = resources.displayMetrics.density
+            pill.setWindowSizeDp((right - left) / density, (bottom - top) / density)
+            rail.setWindowSizeDp((right - left) / density, (bottom - top) / density)
+            fitLyricsRail(rail)
+        }
+        lyricsRail = rail
+        lyricsPill = pill
+        val executor = Executors.newSingleThreadExecutor { task -> Thread(task, "diplay-lyrics").apply { isDaemon = true } }
+        lyricsExecutor = executor
+        lyricsController = LyricsController(
+            pill, rail,
+            // The cache stamps files with the wall clock; the controller's timers use a monotonic one.
+            LyricsRepository(LrclibSource(::lrclibHttpGet), File(cacheDir, "lyrics"), executor, System::currentTimeMillis),
+            LocationLyricsSpeedSource(this), mainHandler,
+            observeNowPlaying = LyricsNowPlayingFeed::observe,
+            placement = { AirPlayPersistence.loadLyricsPlacement(this) },
+            hideWhileDriving = { AirPlayPersistence.loadHideLyricsWhileDriving(this) },
+            // CarPlay's own day/night state: the controller drives darkMode, appNight also follows the app setting.
+            night = { darkMode },
+            noLyricsLabel = { getString(R.string.lyrics_notice_none) },
+            failedLabel = { getString(R.string.lyrics_notice_failed) },
+            backdrop = backdrop,
+            videoReady = ::lyricsVideoReady,
+            sidePanelOpen = { sidePanel?.visibility == View.VISIBLE },
+            nowMillis = SystemClock::elapsedRealtime,
+            offsetMillis = { AirPlayPersistence.loadLyricsOffsetMillis(this).toLong() },
+            saveOffsetMillis = { AirPlayPersistence.saveLyricsOffsetMillis(this, it) },
+            savePlacement = { AirPlayPersistence.saveLyricsPlacement(this, it) },
+            switchHintCount = { AirPlayPersistence.loadLyricsSwitchHints(this) },
+            saveSwitchHintCount = { AirPlayPersistence.saveLyricsSwitchHints(this, it) },
+        )
     }
 
     override fun onResume() {
@@ -1858,6 +1970,7 @@ open class CarPlayHostActivity : ComponentActivity() {
 
     override fun onStop() {
         fpsCounter?.stop()
+        lyricsController?.stop()
         closePicturePanel()
         // The controller, USB/iAP2 link, and VPN attachment intentionally outlive the UI.
         isActivityStarted = false
@@ -1961,8 +2074,11 @@ open class CarPlayHostActivity : ComponentActivity() {
             return
         }
         CarPlayScreen.destroyed(this)
+        lyricsController?.stop()
+        lyricsExecutor?.shutdown()
         runCatching { unregisterReceiver(bluetoothOnReceiver) }
         mainHandler.removeCallbacks(hideTemporarySystemBars)
+        controller?.clearFirstFrameListener(lyricsFirstFrameListener)
         dropHeldTouch()
         discardLastPicture()
         if (pictureCopyThreadStarted) pictureCopyThread.quitSafely()
@@ -2188,6 +2304,7 @@ open class CarPlayHostActivity : ComponentActivity() {
                 setMargins(0, dp(12), dp(12), 0)
             })
         }
+        addLyricsOverlay(root, video)
         settingsMenu = buildSettingsMenu().apply { visibility = View.GONE }
         root.addView(settingsMenu, FrameLayout.LayoutParams(-1, -1))
         safeAreaEditor = buildSafeAreaEditor().apply { visibility = View.GONE }
@@ -5353,6 +5470,7 @@ open class CarPlayHostActivity : ComponentActivity() {
                     }
                     activeAirPlaySession = session
                     if (!session.hasRenderedMainFrame) clusterSurface?.let { sink?.clearSurface(SCREEN_TYPE_ALT, it) }
+                    lyricsGate.sessionStarted(session)
                     val pending = pendingIphoneCornerMask
                     if (pending?.first === session) {
                         installIphoneCornerMask(session, pending.second.first, pending.second.second)
@@ -5406,6 +5524,9 @@ open class CarPlayHostActivity : ComponentActivity() {
                     startupRetryBudget.disconnected()
                     activeAirPlaySession = null
                     clusterSurface?.let { sink?.clearSurface(SCREEN_TYPE_ALT, it) }
+                    lyricsGate.sessionEnded()
+                    lyricsGateTimeoutLogged = false
+                    lyricsController?.onVideoChanged()
                     clearIphoneCornerMask()
                     CarPlayBackgroundSession.active = false
                     callPopupSessionReady = false
@@ -5575,8 +5696,14 @@ open class CarPlayHostActivity : ComponentActivity() {
         // callback, so it takes the live session from the controller: day/night, the Siri key and the
         // wheel keys reach the iPhone through it. Restore iOS's captured mask when the controller still
         // owns that live session.
+        // The listener goes first: a frame that lands between the two calls below must not be lost.
+        snapshot.controller.setFirstFrameListener(lyricsFirstFrameListener)
         activeAirPlaySession = snapshot.controller.activeAirPlaySession()
         ensureClusterPresentation()
+        activeAirPlaySession?.let {
+            lyricsGate.sessionStarted(it)
+            if (snapshot.controller.hasRenderedFrame(it)) lyricsGate.frameDrawn(it)
+        }
         if (blackCornerRadiusDp == CarPlayBlackCornerOverlay.IPHONE_MASK) {
             snapshot.controller.activeIphoneCornerMask()?.let { (session, png, width) ->
                 activeAirPlaySession = session
@@ -6508,6 +6635,17 @@ open class CarPlayHostActivity : ComponentActivity() {
 
     private fun onHostTouch(view: View, event: MotionEvent): Boolean {
         if (menuOpen) return true
+        if (lyricsPill?.onHostTouch(event) == true) {
+            // A swipe up on the lyrics pill hides it. CarPlay has seen the start of the touch: it gets a release,
+            // and none of the rest.
+            if (!lyricsSwipeActive) {
+                lyricsSwipeActive = true
+                releaseCarPlayTouches()
+            }
+            if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) lyricsSwipeActive = false
+            return true
+        }
+        lyricsSwipeActive = false
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {

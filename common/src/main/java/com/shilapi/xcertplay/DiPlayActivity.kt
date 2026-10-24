@@ -58,6 +58,11 @@ import com.shilapi.xcertplay.backup.SettingsBackupServer
 import com.shilapi.xcertplay.backup.SettingsQrCode
 import com.shilapi.xcertplay.compat.closeCompat
 import com.shilapi.xcertplay.hud.BydAdbAccess
+import com.shilapi.xcertplay.lyrics.LocationLyricsSpeedSource
+import com.shilapi.xcertplay.lyrics.LyricsPlacement
+import com.shilapi.xcertplay.lyrics.LyricsRailSide
+import com.shilapi.xcertplay.lyrics.LyricsTiming
+import com.shilapi.xcertplay.lyrics.lyricsTimingLabel
 import com.shilapi.xcertplay.hud.BydNavigationOutputs
 import com.shilapi.xcertplay.hud.BydFieldSource
 import com.shilapi.xcertplay.hud.BydOutputSettings
@@ -120,6 +125,7 @@ internal enum class SettingsSection {
     USB_CONNECTION,
     BYD_ADB,
     DISPLAY_AND_PERFORMANCE,
+    LYRICS,
     EXPERIMENTAL_DISPLAY,
     ADVANCED_MEDIA,
     AMBIENT_LIGHTING,
@@ -146,7 +152,7 @@ internal object SettingsInformationArchitecture {
             SettingsSection.BYD_ADB,
             SettingsSection.PERMISSIONS_AND_HELP,
         ),
-        SettingsCategory.DISPLAY to setOf(SettingsSection.DISPLAY_AND_PERFORMANCE),
+        SettingsCategory.DISPLAY to setOf(SettingsSection.DISPLAY_AND_PERFORMANCE, SettingsSection.LYRICS),
         SettingsCategory.AUDIO to setOf(SettingsSection.AUDIO_ROUTING),
         SettingsCategory.NAVIGATION to setOf(SettingsSection.LOCATION, SettingsSection.BYD_NAVIGATION),
         SettingsCategory.VEHICLE to setOf(
@@ -1940,6 +1946,45 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
                 getString(R.string.settings_force_full_settings_hint), SettingsLayoutPreferences.forceFull(this)) {
                 SettingsLayoutPreferences.saveForceFull(this, it)
                 render()
+            }
+        }
+        filteredSection(content, SettingsSection.LYRICS,
+            getString(R.string.settings_lyrics_title), R.drawable.ic_dp_display) { card ->
+            val placements = LyricsPlacement.entries
+            val placementLabels = listOf(R.string.settings_lyrics_off, R.string.settings_lyrics_top_pill,
+                R.string.settings_lyrics_side_rail).map { getString(it) }
+            card.addView(label(getString(R.string.settings_lyrics_description), 14, MUTED).apply {
+                setPadding(0, 0, 0, dp(SETTINGS_BLOCK_GAP_DP))
+            })
+            card.addView(label(getString(R.string.settings_lyrics_switch_hint), 14, MUTED).apply {
+                setPadding(0, 0, 0, dp(SETTINGS_BLOCK_GAP_DP))
+            })
+            choice(card, getString(R.string.settings_lyrics_title), placementLabels,
+                placements.indexOf(AirPlayPersistence.loadLyricsPlacement(this)), reconnects = false) {
+                AirPlayPersistence.saveLyricsPlacement(this, placements[it])
+            }
+            val sides = LyricsRailSide.entries
+            choice(card, getString(R.string.settings_lyrics_rail_side), listOf(R.string.settings_lyrics_rail_side_auto,
+                R.string.settings_lyrics_rail_side_left, R.string.settings_lyrics_rail_side_right).map { getString(it) },
+                sides.indexOf(AirPlayPersistence.loadLyricsRailSide(this)), reconnects = false) {
+                AirPlayPersistence.saveLyricsRailSide(this, sides[it])
+            }
+            choice(card, getString(R.string.settings_lyrics_timing), LyricsTiming.PRESETS_MILLIS.map { lyricsTimingLabel(this, it) },
+                LyricsTiming.nearestPresetIndex(AirPlayPersistence.loadLyricsOffsetMillis(this)), reconnects = false) {
+                AirPlayPersistence.saveLyricsOffsetMillis(this, LyricsTiming.PRESETS_MILLIS[it])
+            }
+            card.addView(label(getString(R.string.settings_lyrics_timing_description), 14, MUTED).apply {
+                setPadding(0, 0, 0, dp(SETTINGS_BLOCK_GAP_DP))
+            })
+            toggle(card, getString(R.string.settings_lyrics_blur), getString(R.string.settings_lyrics_blur_description),
+                AirPlayPersistence.loadLyricsBlur(this)) { AirPlayPersistence.saveLyricsBlur(this, it) }
+            toggle(card, getString(R.string.settings_lyrics_hide_while_driving),
+                getString(R.string.settings_lyrics_hide_while_driving_description),
+                AirPlayPersistence.loadHideLyricsWhileDriving(this)) { AirPlayPersistence.saveHideLyricsWhileDriving(this, it) }
+            if (!LocationLyricsSpeedSource(this).available) {
+                card.addView(label(getString(R.string.settings_lyrics_speed_unavailable), 14, WARNING).apply {
+                    setPadding(0, dp(SETTINGS_BLOCK_GAP_DP), 0, 0)
+                })
             }
         }
         filteredSection(content, SettingsSection.EXPERIMENTAL_DISPLAY,

@@ -339,6 +339,29 @@ class CarPlayController(
     /** The live AirPlay session, for a new host that adopts the running stream without a session-active callback. */
     fun activeAirPlaySession(): AirPlaySession? = activeSession?.takeIf { !closed && !it.isClosed }
 
+    @Volatile private var framedSession: AirPlaySession? = null
+
+    @Volatile private var firstFrameListener: ((AirPlaySession) -> Unit)? = null
+
+    /** Called once per session, wireless or wired, when it draws its first video frame. */
+    fun setFirstFrameListener(listener: ((AirPlaySession) -> Unit)?) {
+        firstFrameListener = listener
+    }
+
+    /** Drops [listener] if it is still the one set: a host that is going away must not stay referenced. */
+    fun clearFirstFrameListener(listener: (AirPlaySession) -> Unit) {
+        if (firstFrameListener === listener) firstFrameListener = null
+    }
+
+    /** True once [session] has drawn its first video frame: a new host adopting it will not hear that callback. */
+    fun hasRenderedFrame(session: AirPlaySession): Boolean = framedSession === session
+
+    private fun markFramed(session: AirPlaySession) {
+        if (framedSession === session) return
+        framedSession = session
+        firstFrameListener?.invoke(session)
+    }
+
     /** The video session can outlive its Activity; the new host must be able to replay the mask. */
     fun activeIphoneCornerMask(): Triple<AirPlaySession, ByteArray, Int>? {
         val current = currentCornerMask ?: return null
@@ -348,6 +371,7 @@ class CarPlayController(
 
     private val sessionListener = object : AirPlaySessionListener {
         override fun onVideoFrameRendered(session: AirPlaySession) {
+            markFramed(session)
             if (!closed && !session.isClosed && activeSession === session) {
                 uiListener?.onVideoFrameRendered(session)
             }
@@ -1754,6 +1778,7 @@ class CarPlayController(
                         true
                     }
                 }
+                markFramed(session)
                 if (firstFrame) uiListener?.onVideoFrameRendered(session)
             }
 

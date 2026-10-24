@@ -13,6 +13,9 @@ import com.shilapi.xcertplay.airplay.AirPlayIdentity
 import com.shilapi.xcertplay.airplay.PairingStore
 import com.shilapi.xcertplay.airplay.SafeAreaCodec
 import com.shilapi.xcertplay.airplay.SafeAreaRect
+import com.shilapi.xcertplay.lyrics.LyricsPlacement
+import com.shilapi.xcertplay.lyrics.LyricsRailSide
+import com.shilapi.xcertplay.lyrics.LyricsTiming
 import com.shilapi.xcertplay.orchestration.ManualHotspotBand
 import com.shilapi.xcertplay.orchestration.ManualHotspotSecurity
 import com.shilapi.xcertplay.orchestration.MfiTarget
@@ -87,6 +90,12 @@ object AirPlayPersistence {
     private const val KEY_DIRECT_VIDEO_OUTPUT = "direct_video_output"
     private const val KEY_LOW_LATENCY_DECODER = "low_latency_decoder"
     private const val KEY_FPS_COUNTER = "fps_counter"
+    private const val KEY_LYRICS_PLACEMENT = "lyrics_placement"
+    private const val KEY_LYRICS_BLUR = "lyrics_blur"
+    private const val KEY_LYRICS_RAIL_SIDE = "lyrics_rail_side"
+    private const val KEY_LYRICS_SWITCH_HINTS = "lyrics_switch_hints"
+    private const val KEY_HIDE_LYRICS_WHILE_DRIVING = "hide_lyrics_while_driving"
+    private const val KEY_LYRICS_OFFSET_MS = "lyrics_offset_ms"
     private const val KEY_CLUSTER_MAP = "cluster_map_enabled"
 
     /**
@@ -754,6 +763,57 @@ object AirPlayPersistence {
 
     fun saveFpsCounter(context: Context, enabled: Boolean) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_FPS_COUNTER, enabled).apply()
+    }
+
+    fun loadLyricsPlacement(context: Context): LyricsPlacement = LyricsPlacement.fromKey(
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_LYRICS_PLACEMENT, null),
+    )
+
+    fun saveLyricsPlacement(context: Context, placement: LyricsPlacement) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_LYRICS_PLACEMENT, placement.key).apply()
+    }
+
+    /** How many tracks the pill has shown its double-tap hint on. */
+    fun loadLyricsSwitchHints(context: Context): Int =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_LYRICS_SWITCH_HINTS, 0)
+
+    fun saveLyricsSwitchHints(context: Context, count: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_LYRICS_SWITCH_HINTS, count).apply()
+    }
+
+    /** On unless the head unit reports itself as low on memory; a saved choice always wins. */
+    fun loadLyricsBlur(context: Context): Boolean {
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val lowRam = (context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager)?.isLowRamDevice == true
+        return prefs.getBoolean(KEY_LYRICS_BLUR, !lowRam)
+    }
+
+    fun saveLyricsBlur(context: Context, blur: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_LYRICS_BLUR, blur).apply()
+    }
+
+    fun loadLyricsRailSide(context: Context): LyricsRailSide = LyricsRailSide.fromKey(
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getString(KEY_LYRICS_RAIL_SIDE, null),
+    )
+
+    fun saveLyricsRailSide(context: Context, side: LyricsRailSide) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_LYRICS_RAIL_SIDE, side.key).apply()
+    }
+
+    /** How much earlier the lyrics show than their timestamps say, in ms; see [LyricsTiming]. */
+    fun loadLyricsOffsetMillis(context: Context): Int = LyricsTiming.clamp(
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_LYRICS_OFFSET_MS, LyricsTiming.DEFAULT_MILLIS),
+    )
+
+    fun saveLyricsOffsetMillis(context: Context, millis: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_LYRICS_OFFSET_MS, LyricsTiming.clamp(millis)).apply()
+    }
+
+    fun loadHideLyricsWhileDriving(context: Context): Boolean =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_HIDE_LYRICS_WHILE_DRIVING, false)
+
+    fun saveHideLyricsWhileDriving(context: Context, hide: Boolean) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_HIDE_LYRICS_WHILE_DRIVING, hide).apply()
     }
 
     fun loadLowLatencyDecoder(context: Context): Boolean =

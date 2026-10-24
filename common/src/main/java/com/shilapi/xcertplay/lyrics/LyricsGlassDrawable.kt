@@ -1,0 +1,95 @@
+package com.shilapi.xcertplay.lyrics
+
+import android.graphics.Bitmap
+import android.graphics.BitmapShader
+import android.graphics.Canvas
+import android.graphics.ColorFilter
+import android.graphics.LinearGradient
+import android.graphics.Matrix
+import android.graphics.Outline
+import android.graphics.Paint
+import android.graphics.PixelFormat
+import android.graphics.RectF
+import android.graphics.Shader
+import android.graphics.drawable.Drawable
+
+/**
+ * Liquid glass for a shape that floats over a moving picture: a translucent vertical gradient, a sheen that
+ * lifts its top and a specular rim that fades down the edge. When available, a sampled, blurred copy of
+ * the picture replaces the fill; otherwise the translucent gradient provides a readable fallback.
+ */
+internal class LyricsGlassDrawable : Drawable() {
+    private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val sheen = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val backdropPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val backdropMatrix = Matrix()
+    private var backdrop: Bitmap? = null
+    private val rim = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
+    private val shape = RectF()
+    private var colors = LyricsTheme.colors(true)
+    private var radius = 0f
+    private var rimWidth = 1f
+    private var shaderHeight = -1f
+
+    /** A blurred, already shaded copy of the picture behind the glass, drawn in place of the fill; null for plain glass. */
+    fun setBackdrop(bitmap: Bitmap?) {
+        if (bitmap !== backdrop) {
+            backdrop = bitmap
+            backdropPaint.shader = bitmap?.let { BitmapShader(it, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP) }
+        }
+        invalidateSelf() // the same bitmap is refilled in place
+    }
+
+    internal val hasBackdrop: Boolean get() = backdrop != null
+
+    fun update(colors: LyricsColors, radiusPx: Float, rimWidthPx: Float) {
+        this.colors = colors
+        radius = radiusPx
+        rimWidth = rimWidthPx
+        shaderHeight = -1f
+        invalidateSelf()
+    }
+
+    override fun draw(canvas: Canvas) {
+        val bounds = bounds
+        if (bounds.isEmpty) return
+        val half = rimWidth / 2f
+        shape.set(bounds.left + half, bounds.top + half, bounds.right - half, bounds.bottom - half)
+        if (shaderHeight != shape.height()) {
+            shaderHeight = shape.height()
+            fill.shader = LinearGradient(0f, shape.top, 0f, shape.bottom, colors.glassTop, colors.glassBottom, Shader.TileMode.CLAMP)
+            sheen.shader = LinearGradient(0f, shape.top, 0f, shape.top + shape.height() * SHEEN_SHARE, colors.sheen, colors.sheen and 0xFFFFFF, Shader.TileMode.CLAMP)
+            rim.strokeWidth = rimWidth
+            rim.shader = LinearGradient(0f, shape.top, 0f, shape.bottom, colors.rimTop, colors.rimBottom, Shader.TileMode.CLAMP)
+        }
+        val corner = minOf(radius, shape.height() / 2f, shape.width() / 2f)
+        val behind = backdrop
+        if (behind != null) {
+            backdropMatrix.setScale(shape.width() / behind.width, shape.height() / behind.height)
+            backdropMatrix.postTranslate(shape.left, shape.top)
+            backdropPaint.shader.setLocalMatrix(backdropMatrix)
+            canvas.drawRoundRect(shape, corner, corner, backdropPaint)
+        } else {
+            canvas.drawRoundRect(shape, corner, corner, fill)
+        }
+        // The sheen is part of the scrim's contrast guarantee, which only exists with a backdrop.
+        if (behind != null) canvas.drawRoundRect(shape, corner, corner, sheen)
+        canvas.drawRoundRect(shape, corner, corner, rim)
+    }
+
+    // The view's elevation shadow follows this outline: a soft lift off the picture, none inside the glass.
+    override fun getOutline(outline: Outline) {
+        outline.setRoundRect(bounds, minOf(radius, bounds.height() / 2f, bounds.width() / 2f))
+        outline.alpha = SHADOW_STRENGTH
+    }
+
+    override fun setAlpha(alpha: Int) = Unit
+    override fun setColorFilter(colorFilter: ColorFilter?) = Unit
+    @Deprecated("Deprecated in Java")
+    override fun getOpacity() = PixelFormat.TRANSLUCENT
+
+    private companion object {
+        const val SHADOW_STRENGTH = 0.55f
+        const val SHEEN_SHARE = 0.45f
+    }
+}
