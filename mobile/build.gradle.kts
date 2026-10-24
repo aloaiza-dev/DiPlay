@@ -35,6 +35,30 @@ android {
             keyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").getOrElse("")
             keyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").getOrElse("")
         }
+        // XPENG car-test flavor. Local-only: never part of an upstream PR.
+        create("xpeng") {
+            storeFile = file(
+                providers.environmentVariable("XPENG_KEYSTORE_PATH")
+                    .getOrElse("missing-xpeng-keystore.jks"),
+            )
+            storePassword = providers.environmentVariable("XPENG_KEYSTORE_PASSWORD").getOrElse("")
+            keyAlias = providers.environmentVariable("XPENG_KEY_ALIAS").getOrElse("xpeng")
+            keyPassword = providers.environmentVariable("XPENG_KEY_PASSWORD").getOrElse("")
+        }
+    }
+
+    // XPENG car-test flavor. Local-only: never part of an upstream PR.
+    flavorDimensions += "vendor"
+    productFlavors {
+        create("upstream") {
+            dimension = "vendor"
+        }
+        create("xpeng") {
+            dimension = "vendor"
+            applicationIdSuffix = ".xpeng"
+            versionNameSuffix = "-xpeng"
+            signingConfig = signingConfigs.getByName("xpeng")
+        }
     }
 
     buildTypes {
