@@ -26,6 +26,7 @@ object BydOutputSettings {
     private const val KEY_PHONE_AUDIO_ROUTE = "phone_audio_route_experimental"
     private const val KEY_PHONE_AUDIO_ROUTE_APPS = "phone_audio_route_apps_experimental"
     private const val KEY_FCE_CLUSTER = "fce_cluster_guidance_experimental"
+    private const val KEY_XPENG_CLUSTER = "xpeng_cluster_guidance_experimental"
     private const val KEY_OEM_CLUSTER_HOLD = "oem_cluster_hold"
     private const val KEY_LEGACY_VEHICLE_PROBE = "legacy_vehicle_probe"
     const val DEFAULT_LOW_CHARGE_PERCENT = 20
@@ -213,6 +214,18 @@ object BydOutputSettings {
 
     fun setFceCluster(context: Context, enabled: Boolean) =
         prefs(context).edit().putBoolean(KEY_FCE_CLUSTER, enabled).apply()
+
+    /** Whether the head unit has the XPeng instrument app's output API that [XpengClusterBridge] feeds. */
+    fun xpengClusterAvailable(context: Context): Boolean = XpengClusterBridge.available(context)
+
+    /**
+     * Opt-in for [XpengClusterBridge]: it drives the cluster through a shell helper and was verified
+     * on one car (G9) only, so it stays off until the driver turns it on.
+     */
+    fun xpengCluster(context: Context): Boolean = prefs(context).getBoolean(KEY_XPENG_CLUSTER, false)
+
+    fun setXpengCluster(context: Context, enabled: Boolean) =
+        prefs(context).edit().putBoolean(KEY_XPENG_CLUSTER, enabled).apply()
 
     /** Whether the head unit has a BYD navigation receiver or is a BYD head unit, so settings can show navigation/map options. */
     fun available(context: Context): Boolean =

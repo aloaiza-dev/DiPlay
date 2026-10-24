@@ -2,4 +2,8 @@
 <resources>
     <string name="carapp_hw_status_title">Стан обладнання xcertplay</string>
     <string name="carapp_hw_not_configured">Апаратний транспорт не налаштовано. Для I2C на платі потрібен шлях /dev/i2c-N і дозвіл ОС/SELinux; для CH341 потрібна конфігурація VID/PID.</string>
+    <string name="xpeng_cluster_roundabout">Кільцева розв’язка</string>
+    <string name="xpeng_cluster_roundabout_exit">Кільцева розв’язка, виїзд %1$d</string>
+    <string name="xpeng_cluster_arrive">Прибуття</string>
+    <string name="xpeng_cluster_left">Ліворуч</string>
 </resources>

@@ -874,6 +874,8 @@
     <string name="bluetooth_will_not_stay_on_hint">إذا لم يبقَ البلوتوث مُشغّلًا هناك، فهذه الوحدة تحتفظ بالبلوتوث لمكالماتها وموسيقاها فقط ولا تستطيع التطبيقات استخدامه. في هذه الحالة لا يمكن أن يعمل CarPlay اللاسلكي: استخدم كابل USB.</string>
     <string name="settings_fce_cluster_guidance">الإرشاد في عدادات FCE (تجريبي)</string>
     <string name="settings_fce_cluster_guidance_description">يعرض أسهم CarPlay ومسافة المنعطف التالي في واجهة الملاحة بلوحة العدادات على وحدات FCE، عبر الكتابة إلى خدمة المركبة في الوحدة. جُرّب على سيارة واحدة فقط؛ أوقفه إذا تصرفت لوحة العدادات بشكل غير متوقع.</string>
+    <string name="settings_xpeng_cluster_guidance">الإرشاد في عدادات XPeng (تجريبي)</string>
+    <string name="settings_xpeng_cluster_guidance_description">يعرض أسهم CarPlay وأسماء الشوارع والمسافة والوقت المتبقيين ووقت الوصول في بطاقة الاتجاهات بلوحة عدادات XPeng، عبر مساعد يستخدم رابط ADB في السيارة. يتطلب الموافقة على وصول ADB لـ DiPlay. جُرّب على سيارة واحدة فقط؛ أوقفه إذا تصرفت لوحة العدادات بشكل غير متوقع.</string>
     <string name="settings_cluster_music">الموسيقى في لوحة العدادات (تجريبي)</string>
     <string name="settings_cluster_music_description">يعرض غلافاً مربعاً فوق خريطة العدادات. اختر غلافاً مؤقتاً لمدة 8 ثوان أو دائماً؛ يظهر العنوان والفنان فوق الغلاف لمدة 8 ثوان عند تغيير الأغنية. تُطبّق تغييرات الموضع والحجم فوراً. يتطلب إسقاط الشاشة وبيانات iPhone.</string>
     <string name="settings_cluster_music_mode">ظهور غلاف الألبوم</string>
@@ -1028,4 +1030,6 @@
     <string name="settings_lyrics_blur">زجاج ضبابي</string>
     <string name="settings_lyrics_blur_description">يطمس صورة CarPlay خلف الكلمات ليأخذ الزجاج ألوانها. يستهلك قليلًا من المعالج ويتوقف تلقائيًا إذا كانت وحدة القيادة بطيئة.</string>
     <string name="settings_lyrics_switch_hint">انقر مرتين على الشريط العلوي في شاشة السيارة لفتح اللوحة الجانبية. وعلى اللوحة، انقر أيقونة الشريط للعودة. يعمل الاثنان فقط والسيارة متوقفة.</string>
+    <string name="settings_xpeng_map_window">نافذة الخريطة في لوحة XPeng (تجريبي)</string>
+    <string name="settings_xpeng_map_window_description">تعرض خريطة iPhone المستقلة في وسط اللوحة بحواف متدرجة وشفافة. تبقى البطاقات الجانبية ومؤشرات الحالة ظاهرة. تتطلب خريطة اللوحة ووحدة XPeng متوافقة. قد لا توفر بعض التطبيقات هذا الفيديو. يبدأ ويتوقف فورًا. اختبر الموضع أثناء الوقوف.</string>
 </resources>

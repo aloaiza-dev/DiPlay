@@ -874,6 +874,8 @@
     <string name="bluetooth_will_not_stay_on_hint">Si el Bluetooth no se queda activado ahí, esta unidad principal reserva el Bluetooth para sus propias llamadas y música, y las apps no pueden usarlo. En ese caso CarPlay inalámbrico no puede funcionar: usa un cable USB.</string>
     <string name="settings_fce_cluster_guidance">Indicaciones en el cuadro FCE (experimental)</string>
     <string name="settings_fce_cluster_guidance_description">Muestra las flechas de CarPlay y la distancia al próximo giro en la vista de navegación del cuadro de instrumentos en unidades FCE, escribiendo en el servicio del vehículo de la unidad. Probado solo en un coche; desactívalo si el cuadro se comporta de forma inesperada.</string>
+    <string name="settings_xpeng_cluster_guidance">Indicaciones en el cuadro XPeng (experimental)</string>
+    <string name="settings_xpeng_cluster_guidance_description">Muestra las flechas de CarPlay, los nombres de calles y la distancia, el tiempo y la llegada restantes de la ruta en la tarjeta de indicaciones del cuadro de instrumentos XPeng, mediante un ayudante que usa el enlace ADB del coche. Requiere el acceso ADB aprobado para DiPlay. Probado solo en un coche; desactívalo si el cuadro se comporta de forma inesperada.</string>
     <string name="settings_cluster_music">Música en el cuadro (experimental)</string>
     <string name="settings_cluster_music_description">Muestra la portada cuadrada sobre el mapa del cuadro. Elige portada temporal (8 segundos) o permanente; el título y artista siempre aparecen sobre ella durante 8 segundos al cambiar de canción. La posición y el tamaño se aplican al instante. Requiere proyección al cuadro y datos del iPhone.</string>
     <string name="settings_cluster_music_mode">Visibilidad de la portada</string>
@@ -979,4 +981,6 @@
     <string name="settings_lyrics_blur">Cristal difuminado</string>
     <string name="settings_lyrics_blur_description">Difumina la imagen de CarPlay detrás de la letra para que el cristal tome sus colores. Usa algo de procesador y se desactiva solo si la unidad principal es lenta.</string>
     <string name="settings_lyrics_switch_hint">Toca dos veces la cápsula en la pantalla del coche para abrir el panel lateral. En el panel, toca el icono de cápsula para volver. Ambos solo funcionan con el coche parado.</string>
+    <string name="settings_xpeng_map_window">Ventana de mapa en el cuadro XPeng (experimental)</string>
+    <string name="settings_xpeng_map_window_description">Muestra el mapa independiente del iPhone en el centro del cuadro con bordes suaves y transparentes. Las tarjetas laterales y los indicadores permanecen visibles. Requiere el mapa del cuadro y una unidad XPeng compatible. Algunas apps no ofrecen este vídeo. Se inicia y se detiene al instante. Comprueba la posición con el coche estacionado.</string>
 </resources>

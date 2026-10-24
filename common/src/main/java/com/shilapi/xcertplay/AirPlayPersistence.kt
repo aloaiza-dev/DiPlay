@@ -28,7 +28,7 @@ import java.io.File
 object AirPlayPersistence {
     /** 0 uses usage-based routing; 1–20 select stream types supported by the head unit. */
     val AUDIO_CHANNELS = 0..20
-    private const val PREFS = "xcertplay_airplay"
+    const val PREFS = "xcertplay_airplay"
     private const val KEY_IDENT_PRIVATE = "identity_private"
     private const val KEY_IDENT_PUBLIC = "identity_public"
     private const val KEY_PAIRING_ID = "pairing_id"
@@ -96,7 +96,7 @@ object AirPlayPersistence {
     private const val KEY_LYRICS_SWITCH_HINTS = "lyrics_switch_hints"
     private const val KEY_HIDE_LYRICS_WHILE_DRIVING = "hide_lyrics_while_driving"
     private const val KEY_LYRICS_OFFSET_MS = "lyrics_offset_ms"
-    private const val KEY_CLUSTER_MAP = "cluster_map_enabled"
+    const val KEY_CLUSTER_MAP = "cluster_map_enabled"
 
     /**
      * The Geely cluster projection switch is DiPlay's right now. The switch belongs to the head unit

@@ -2,4 +2,8 @@
 <resources>
     <string name="carapp_hw_status_title">Stato dell’hardware di xcertplay</string>
     <string name="carapp_hw_not_configured">Il trasporto hardware non è configurato. L’I2C della scheda richiede un percorso /dev/i2c-N e i permessi OS/SELinux; CH341 richiede una configurazione VID/PID distribuita.</string>
+    <string name="xpeng_cluster_roundabout">Rotatoria</string>
+    <string name="xpeng_cluster_roundabout_exit">Rotatoria, uscita %1$d</string>
+    <string name="xpeng_cluster_arrive">Arrivo</string>
+    <string name="xpeng_cluster_left">A sinistra</string>
 </resources>

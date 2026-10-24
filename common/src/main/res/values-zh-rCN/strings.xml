@@ -934,6 +934,8 @@
     <string name="bluetooth_will_not_stay_on_hint">如果蓝牙在那里打不开，或打开后又自己关闭，说明这台车机的蓝牙只供它自己的通话和音乐使用，应用无法使用。这种情况下无法使用无线 CarPlay，请改用 USB 线。</string>
     <string name="settings_fce_cluster_guidance">FCE 仪表导航（实验性）</string>
     <string name="settings_fce_cluster_guidance_description">在 FCE 平台车机上，通过车机的车辆服务把 CarPlay 转向箭头和到下一路口的距离显示在仪表的导航界面。仅在一辆车上测试过；如果仪表显示异常，请关闭。</string>
+    <string name="settings_xpeng_cluster_guidance">XPeng 仪表导航（实验性）</string>
+    <string name="settings_xpeng_cluster_guidance_description">通过使用车机 ADB 连接的辅助程序，把 CarPlay 转向箭头、道路名称以及路线剩余距离、时间和到达时间显示在小鹏仪表的导航卡片上。需要已为 DiPlay 批准 ADB 访问。仅在一辆车上测试过；如果仪表显示异常，请关闭。</string>
     <string name="settings_cluster_music">仪表音乐（实验性）</string>
     <string name="settings_cluster_music_description">在仪表地图上显示方形专辑封面。可选择临时（8秒）或常驻封面；切歌时，歌曲名称和艺人始终在封面上显示8秒。位置和大小更改立即生效。需要仪表投屏及iPhone歌曲信息。</string>
     <string name="settings_cluster_music_mode">封面显示模式</string>
@@ -1039,4 +1041,6 @@
     <string name="settings_lyrics_blur">模糊玻璃</string>
     <string name="settings_lyrics_blur_description">将歌词后方的 CarPlay 画面模糊，让玻璃呈现其色彩。会占用少量处理器资源，车机过慢时会自动关闭。</string>
     <string name="settings_lyrics_switch_hint">在车机屏幕上双击胶囊可打开侧边栏；在侧边栏上点按胶囊图标可返回。两者都仅在车辆静止时可用。</string>
+    <string name="settings_xpeng_map_window">XPeng 仪表地图窗口（实验性）</string>
+    <string name="settings_xpeng_map_window_description">在仪表中央显示 iPhone 独立地图，边缘平滑渐变为透明。侧边卡片和状态指示保持可见。需要启用仪表地图并使用兼容的 XPeng 主机。部分应用可能不提供此视频。立即开始和停止。请停车后检查位置。</string>
 </resources>

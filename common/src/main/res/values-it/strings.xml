@@ -1069,4 +1069,8 @@
     <string name="settings_lyrics_blur">Vetro sfocato</string>
     <string name="settings_lyrics_blur_description">Sfoca l’immagine di CarPlay dietro i testi, così il vetro ne prende i colori. Usa un po’ di processore e si disattiva da solo se l’autoradio è lenta.</string>
     <string name="settings_lyrics_switch_hint">Tocca due volte la pillola sullo schermo dell’auto per aprire la barra laterale. Sulla barra, tocca l’icona della pillola per tornare indietro. Entrambi funzionano solo ad auto ferma.</string>
+    <string name="settings_xpeng_cluster_guidance">Guida nel quadro strumenti XPeng (sperimentale)</string>
+    <string name="settings_xpeng_cluster_guidance_description">Mostra le frecce di svolta di CarPlay, i nomi delle strade e distanza, tempo e arrivo residui del percorso nella scheda delle indicazioni del quadro strumenti XPeng, tramite un helper che usa il collegamento ADB dell’auto. Richiede l’accesso ADB approvato per DiPlay. Provato su una sola auto; disattivalo se il quadro strumenti si comporta in modo anomalo.</string>
+    <string name="settings_xpeng_map_window">Finestra mappa nel quadro strumenti XPeng (sperimentale)</string>
+    <string name="settings_xpeng_map_window_description">Mostra la mappa separata dell’iPhone al centro del quadro strumenti con bordi trasparenti sfumati. Le schede laterali e le righe di stato restano visibili. Richiede la mappa del quadro strumenti qui sopra e una head unit XPeng compatibile. Alcune app di navigazione potrebbero non fornire questo video. Si avvia e si ferma subito. Verifica la posizione a veicolo fermo.</string>
 </resources>
