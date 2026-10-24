@@ -187,7 +187,8 @@ internal class LyricsController(
         if (expected != null && actual != null && abs(actual - expected) > SEEK_MILLIS) jumped = true
         playing = update.playing
         if (update.playing) pausedSince = null else if (pausedSince == null) pausedSince = nowMillis()
-        if (query == null || !sameSong(songKey(query), hiddenSong)) hiddenSong = null
+        // The hide follows the song's latest credit, so a feature that comes and goes cannot lose it.
+        hiddenSong = if (query != null && sameSong(songKey(query), hiddenSong)) songKey(query) else null
         if (query == null) {
             identity = null
             lyrics = null
@@ -376,7 +377,11 @@ internal class LyricsController(
         const val HINT_MILLIS = 4_000L
         const val MIN_WAIT_MILLIS = 16L
         const val TAG = "DiPlay-Lyrics"
-        private val REMASTER_TAIL = Regex("""\s*(?:[(\[][^)\]]*remaster[^)\]]*[)\]]|-\s+[^-]*remaster.*$)""", RegexOption.IGNORE_CASE)
+        // Only a bare "(Remastered 2009)" or " - 2011 Remaster": a bracket that says more ("Live ..., Remaster") is kept.
+        private val REMASTER_TAIL = Regex(
+            """\s*(?:[(\[]\s*(?:\d{4}\s+)?remaster(?:ed)?(?:\s+(?:version|\d{4}))*\s*[)\]]|\s-\s+(?:\d{4}\s+)?remaster(?:ed)?(?:\s+(?:version|\d{4}))*\s*$)""",
+            RegexOption.IGNORE_CASE,
+        )
         val RETRY_DELAYS_MILLIS = listOf(3_000L, 10_000L, 30_000L, 60_000L, 60_000L)
         const val PAUSE_DIM_MILLIS = 1_000L
         const val PAUSE_HIDE_MILLIS = 4_000L

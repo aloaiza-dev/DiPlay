@@ -628,7 +628,8 @@ class LyricsControllerTest {
         advance(400L)
         rail.hideButton.performClick()
         advance(600L)
-        publish(next)
+        assertEquals("the hide took effect", View.GONE, rail.visibility)
+        publish(next.copy(elapsedMillis = 2_000L))
         runJobs()
         advance(600L)
         return rail.visibility
@@ -637,6 +638,27 @@ class LyricsControllerTest {
     @Test
     fun aCreditThatGrowsOrShrinksKeepsTheSongHidden() {
         assertEquals(View.GONE, hideThenPlay(np("Song"), np("Song", artist = "Artist feat. Someone")))
+    }
+
+    @Test
+    fun aCreditThatLosesAFeatureKeepsTheSongHidden() {
+        assertEquals(View.GONE, hideThenPlay(np("Song", artist = "Artist feat. Someone"), np("Song")))
+    }
+
+    @Test
+    fun aCreditWithNoSharedArtistIsAnotherSong() {
+        assertEquals(View.VISIBLE, hideThenPlay(np("Song"), np("Song", artist = "Somebody Else")))
+    }
+
+    @Test
+    fun aLiveVersionThatIsAlsoRemasteredIsStillAnotherSong() {
+        assertEquals(View.VISIBLE, hideThenPlay(np("Song"), np("Song (Live at Wembley, 2011 Remaster)")))
+        assertEquals(View.VISIBLE, hideThenPlay(np("Song"), np("Song - Remastered - Live")))
+    }
+
+    @Test
+    fun twoTitlesThatAreOnlyARemasterTailAreToldApartByTheirText() {
+        assertEquals(View.VISIBLE, hideThenPlay(np("(Remastered)"), np("(Remastered 2011)")))
     }
 
     @Test
