@@ -7,8 +7,9 @@ import java.net.InetAddress
  * Bounds the control connections the AirPlay listener keeps open, in total and per peer.
  * At a cap an unverified connection older than [graceMillis] is dropped first, so idle sockets cannot keep a
  * new peer out. At the total cap the victim comes from the peer that holds the most connections.
- * Without such a connection the requesting peer's own oldest verified connection is dropped. A phone that
- * vanished without a reset leaves one behind, and must not lock itself out. A younger connection, or a verified
+ * Without such a connection the oldest verified connection from the requester's exact address is dropped.
+ * A phone that vanished without a reset leaves one behind, and must not lock itself out. Another address in
+ * the same IPv6 prefix cannot drop it. A younger connection, or a verified
  * connection of another peer, is never dropped: the new connection is refused instead.
  */
 internal class AirPlayConnectionLimits(
@@ -19,6 +20,7 @@ internal class AirPlayConnectionLimits(
 ) {
     class Slot internal constructor(
         internal val peer: List<Byte>,
+        internal val address: InetAddress,
         internal val createdMillis: Long,
         private val drop: () -> Unit,
     ) {
@@ -33,9 +35,9 @@ internal class AirPlayConnectionLimits(
     @Synchronized
     fun tryAcquire(address: InetAddress, drop: () -> Unit): Slot? {
         val peer = peerKey(address)
-        if (slots.count { it.peer == peer } >= maxPerPeer && !evict(peer, samePeerOnly = true)) return null
-        if (slots.size >= maxTotal && !evict(peer, samePeerOnly = false)) return null
-        return Slot(peer, clockMillis(), drop).also(slots::add)
+        if (slots.count { it.peer == peer } >= maxPerPeer && !evict(peer, address, samePeerOnly = true)) return null
+        if (slots.size >= maxTotal && !evict(peer, address, samePeerOnly = false)) return null
+        return Slot(peer, address, clockMillis(), drop).also(slots::add)
     }
 
     @Synchronized
@@ -46,14 +48,14 @@ internal class AirPlayConnectionLimits(
     @Synchronized
     fun openCount(): Int = slots.size
 
-    private fun evict(requester: List<Byte>, samePeerOnly: Boolean): Boolean {
+    private fun evict(requester: List<Byte>, address: InetAddress, samePeerOnly: Boolean): Boolean {
         val now = clockMillis()
         val victim = slots
             .filter { (!samePeerOnly || it.peer == requester) && !it.verified() && now - it.createdMillis >= graceMillis }
             .groupBy { it.peer }
             .maxByOrNull { (peer, _) -> slots.count { it.peer == peer } }
             ?.value?.first()
-            ?: slots.firstOrNull { it.peer == requester && it.verified() }
+            ?: slots.firstOrNull { it.address == address && it.verified() }
             ?: return false
         slots.remove(victim)
         victim.dropConnection()
