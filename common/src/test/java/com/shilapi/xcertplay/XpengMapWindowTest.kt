@@ -33,4 +33,13 @@ class XpengMapWindowTest {
         assertTrue(safe.top >= XpengMapMask.CLEAR_TOP)
         assertTrue(config.heightPixels - safe.bottom <= XpengMapMask.CLEAR_BOTTOM)
     }
+
+    @Test fun zoomDefaultsToNoneAndRejectsUnknownValues() {
+        val app = RuntimeEnvironment.getApplication()
+        assertEquals(100, XpengMapWindow.zoomPercent(app))
+        XpengMapWindow.saveZoomPercent(app, 150)
+        assertEquals(150, XpengMapWindow.zoomPercent(app))
+        XpengMapWindow.saveZoomPercent(app, 333)
+        assertEquals(150, XpengMapWindow.zoomPercent(app))
+    }
 }

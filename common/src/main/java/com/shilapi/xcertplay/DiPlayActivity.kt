@@ -2259,6 +2259,16 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             if (clusterMapEnabled && XpengMapWindow.available(this)) {
                 xpengMapWindowControl(card)
             }
+            if (clusterMapEnabled && (!DiLink51ClusterLayout.supported() || adbCluster)) {
+                val steps = 0..CarPlayClusterDisplay.MAX_ZOOM_STEPS
+                choice(card, getString(R.string.settings_cluster_map_zoom_steps),
+                    steps.map { if (it == 0) getString(R.string.settings_cluster_map_zoom_off) else getString(R.string.settings_cluster_map_zoom_steps_option, it) },
+                    AirPlayPersistence.loadClusterMapZoomSteps(this), reconnects = false) {
+                    AirPlayPersistence.saveClusterMapZoomSteps(this, it)
+                    markReconnectNeeded()
+                }
+                card.addView(label(getString(R.string.settings_cluster_map_zoom_steps_description), 14, MUTED))
+            }
             if (clusterMapEnabled) {
                 clusterSpeedometerControls(card)
                 clusterMusicControls(card)
@@ -6297,6 +6307,13 @@ class DiPlayActivity : ComponentActivity(), AppAppearanceOwner {
             getString(R.string.settings_xpeng_map_window_description), XpengMapWindow.enabled(this)) {
             XpengMapWindow.saveEnabled(this, it)
         }
+        val zooms = XpengMapWindow.ZOOM_PERCENTS
+        choice(card, getString(R.string.settings_xpeng_map_zoom),
+            zooms.map { getString(R.string.settings_xpeng_map_zoom_option, it) },
+            zooms.indexOf(XpengMapWindow.zoomPercent(this)).coerceAtLeast(0), reconnects = false) {
+            XpengMapWindow.saveZoomPercent(this, zooms[it])
+        }
+        card.addView(label(getString(R.string.settings_xpeng_map_zoom_description), 14, MUTED))
     }
 
     private fun reconnectingToggle(parent: LinearLayout, title: String, description: String,

@@ -983,4 +983,11 @@
     <string name="settings_lyrics_switch_hint">Toca dos veces la cápsula en la pantalla del coche para abrir el panel lateral. En el panel, toca el icono de cápsula para volver. Ambos solo funcionan con el coche parado.</string>
     <string name="settings_xpeng_map_window">Ventana de mapa en el cuadro XPeng (experimental)</string>
     <string name="settings_xpeng_map_window_description">Muestra el mapa independiente del iPhone en el centro del cuadro con bordes suaves y transparentes. Las tarjetas laterales y los indicadores permanecen visibles. Requiere el mapa del cuadro y una unidad XPeng compatible. Algunas apps no ofrecen este vídeo. Se inicia y se detiene al instante. Comprueba la posición con el coche estacionado.</string>
+    <string name="settings_xpeng_map_zoom">Zoom del mapa en el cuadro XPeng</string>
+    <string name="settings_xpeng_map_zoom_option">%1$d %%</string>
+    <string name="settings_xpeng_map_zoom_description">Amplía el mapa y el marcador del coche alrededor del marcador. Se recortan los bordes del mapa. Se aplica al instante. Pruébalo con el coche parado.</string>
+    <string name="settings_cluster_map_zoom_steps">Zoom del mapa al conectar (pasos del iPhone)</string>
+    <string name="settings_cluster_map_zoom_off">Desactivado</string>
+    <string name="settings_cluster_map_zoom_steps_option">+%1$d</string>
+    <string name="settings_cluster_map_zoom_steps_description">Amplía el propio mapa del iPhone estos pasos cada vez que arranca el mapa del cuadro. La imagen sigue nítida. El tamaño del paso no está medido, así que pruébalo con el coche parado. Se aplica en la próxima conexión. Funciona con Apple Maps. Waze y Google Maps lo ignoran.</string>
 </resources>

@@ -1073,4 +1073,11 @@
     <string name="settings_xpeng_cluster_guidance_description">Mostra le frecce di svolta di CarPlay, i nomi delle strade e distanza, tempo e arrivo residui del percorso nella scheda delle indicazioni del quadro strumenti XPeng, tramite un helper che usa il collegamento ADB dell’auto. Richiede l’accesso ADB approvato per DiPlay. Provato su una sola auto; disattivalo se il quadro strumenti si comporta in modo anomalo.</string>
     <string name="settings_xpeng_map_window">Finestra mappa nel quadro strumenti XPeng (sperimentale)</string>
     <string name="settings_xpeng_map_window_description">Mostra la mappa separata dell’iPhone al centro del quadro strumenti con bordi trasparenti sfumati. Le schede laterali e le righe di stato restano visibili. Richiede la mappa del quadro strumenti qui sopra e una head unit XPeng compatibile. Alcune app di navigazione potrebbero non fornire questo video. Si avvia e si ferma subito. Verifica la posizione a veicolo fermo.</string>
+    <string name="settings_xpeng_map_zoom">Zoom della mappa nel quadro XPeng</string>
+    <string name="settings_xpeng_map_zoom_option">%1$d %%</string>
+    <string name="settings_xpeng_map_zoom_description">Ingrandisce la mappa e il marcatore dell’auto intorno al marcatore. I bordi della mappa vengono tagliati. Si applica subito. Provalo a auto ferma.</string>
+    <string name="settings_cluster_map_zoom_steps">Zoom della mappa alla connessione (passi dell’iPhone)</string>
+    <string name="settings_cluster_map_zoom_off">Disattivato</string>
+    <string name="settings_cluster_map_zoom_steps_option">+%1$d</string>
+    <string name="settings_cluster_map_zoom_steps_description">Ingrandisce la mappa dell’iPhone di questi passi ogni volta che parte la mappa del quadro. L’immagine resta nitida. La dimensione del passo non è misurata, quindi provalo a auto ferma. Si applica alla prossima connessione. Funziona con Apple Maps. Waze e Google Maps lo ignorano.</string>
 </resources>

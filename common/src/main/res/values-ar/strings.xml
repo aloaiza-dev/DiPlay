@@ -1032,4 +1032,11 @@
     <string name="settings_lyrics_switch_hint">انقر مرتين على الشريط العلوي في شاشة السيارة لفتح اللوحة الجانبية. وعلى اللوحة، انقر أيقونة الشريط للعودة. يعمل الاثنان فقط والسيارة متوقفة.</string>
     <string name="settings_xpeng_map_window">نافذة الخريطة في لوحة XPeng (تجريبي)</string>
     <string name="settings_xpeng_map_window_description">تعرض خريطة iPhone المستقلة في وسط اللوحة بحواف متدرجة وشفافة. تبقى البطاقات الجانبية ومؤشرات الحالة ظاهرة. تتطلب خريطة اللوحة ووحدة XPeng متوافقة. قد لا توفر بعض التطبيقات هذا الفيديو. يبدأ ويتوقف فورًا. اختبر الموضع أثناء الوقوف.</string>
+    <string name="settings_xpeng_map_zoom">تكبير الخريطة في لوحة XPeng</string>
+    <string name="settings_xpeng_map_zoom_option">%1$d %%</string>
+    <string name="settings_xpeng_map_zoom_description">يكبّر الخريطة وعلامة السيارة حول العلامة. تُقص حواف الخريطة. يُطبَّق فورًا. جرّبه والسيارة متوقفة.</string>
+    <string name="settings_cluster_map_zoom_steps">تكبير الخريطة عند الاتصال (خطوات iPhone)</string>
+    <string name="settings_cluster_map_zoom_off">إيقاف</string>
+    <string name="settings_cluster_map_zoom_steps_option">+%1$d</string>
+    <string name="settings_cluster_map_zoom_steps_description">يكبّر خريطة iPhone نفسها بهذا العدد من الخطوات في كل مرة تبدأ فيها خريطة لوحة القيادة. تبقى الصورة واضحة. حجم الخطوة غير مقيس، لذا جرّبه والسيارة متوقفة. يُطبَّق عند الاتصال التالي. يعمل مع خرائط Apple. يتجاهله Waze وخرائط Google.</string>
 </resources>

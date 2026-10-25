@@ -1085,4 +1085,11 @@
     <string name="settings_lyrics_switch_hint">車の画面で上部バーをダブルタップするとサイドパネルが開きます。パネルではバーのアイコンをタップすると戻ります。どちらも停車中のみ使えます。</string>
     <string name="settings_xpeng_map_window">XPengメーターの地図ウィンドウ（実験的機能）</string>
     <string name="settings_xpeng_map_window_description">iPhoneの独立した地図をメーター中央に表示し、端を滑らかに透明化します。左右のカードと状態表示は維持されます。メーター地図の有効化と対応XPeng機器が必要です。映像を提供しないアプリもあります。すぐに開始・停止します。停車中に位置を確認してください。</string>
+    <string name="settings_xpeng_map_zoom">XPengメーターの地図ズーム</string>
+    <string name="settings_xpeng_map_zoom_option">%1$d %%</string>
+    <string name="settings_xpeng_map_zoom_description">マーカーを中心に地図と自車マーカーを拡大します。地図の端は切り取られます。すぐに反映されます。駐車中に確認してください。</string>
+    <string name="settings_cluster_map_zoom_steps">接続時の地図ズーム（iPhone のステップ）</string>
+    <string name="settings_cluster_map_zoom_off">オフ</string>
+    <string name="settings_cluster_map_zoom_steps_option">+%1$d</string>
+    <string name="settings_cluster_map_zoom_steps_description">メーターの地図が始まるたびに、iPhone の地図をこのステップ数だけ拡大します。画質は保たれます。1ステップの大きさは未測定です。駐車中に確認してください。次の接続で反映されます。 Apple マップで動作します。Waze と Google マップは無視します。</string>
 </resources>

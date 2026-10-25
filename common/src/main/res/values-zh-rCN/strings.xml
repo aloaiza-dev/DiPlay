@@ -1043,4 +1043,11 @@
     <string name="settings_lyrics_switch_hint">在车机屏幕上双击胶囊可打开侧边栏；在侧边栏上点按胶囊图标可返回。两者都仅在车辆静止时可用。</string>
     <string name="settings_xpeng_map_window">XPeng 仪表地图窗口（实验性）</string>
     <string name="settings_xpeng_map_window_description">在仪表中央显示 iPhone 独立地图，边缘平滑渐变为透明。侧边卡片和状态指示保持可见。需要启用仪表地图并使用兼容的 XPeng 主机。部分应用可能不提供此视频。立即开始和停止。请停车后检查位置。</string>
+    <string name="settings_xpeng_map_zoom">XPeng 仪表地图缩放</string>
+    <string name="settings_xpeng_map_zoom_option">%1$d %%</string>
+    <string name="settings_xpeng_map_zoom_description">以车标为中心放大地图和车标。地图边缘会被裁掉。立即生效。请在停车时测试。</string>
+    <string name="settings_cluster_map_zoom_steps">连接时的地图缩放（iPhone 步数）</string>
+    <string name="settings_cluster_map_zoom_off">关闭</string>
+    <string name="settings_cluster_map_zoom_steps_option">+%1$d</string>
+    <string name="settings_cluster_map_zoom_steps_description">每次仪表地图启动时，把 iPhone 自己的地图放大这么多步。画面保持清晰。每步的大小未测量，请在停车时测试。下次连接时生效。 适用于 Apple 地图。Waze 和 Google 地图会忽略它。</string>
 </resources>

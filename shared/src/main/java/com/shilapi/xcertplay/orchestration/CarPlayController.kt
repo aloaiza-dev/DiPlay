@@ -623,6 +623,28 @@ class CarPlayController(
         if (dashboardMapOutputVisible == next) return
         dashboardMapOutputVisible = next
         dashboardMapEpoch.incrementAndGet()
+        if (next) applyInitialDashboardZoom()
+    }
+
+    // Sent once per cluster stream, after the first map frame is on the cluster. A send at the first frame
+    // moved nothing on the XPENG cluster, so the steps wait and go one by one. The delays are guesses.
+    @Volatile private var zoomedDashboardRoute: Pair<AirPlaySession, Int>? = null
+
+    private fun applyInitialDashboardZoom() {
+        val steps = airPlayConfig.cluster?.initialZoomSteps ?: 0
+        val session = activeSession ?: return
+        val route = session to session.clusterStream
+        if (steps <= 0 || route.second <= 0 || zoomedDashboardRoute == route) return
+        zoomedDashboardRoute = route
+        for (step in 1..steps) {
+            val delay = DASHBOARD_ZOOM_DELAY_MS + (step - 1) * DASHBOARD_ZOOM_STEP_GAP_MS
+            runCatching {
+                startupTimer.schedule({
+                    val sent = zoomDashboardMap(true)
+                    Log.i(IphoneCarPlayConfiguration.TAG, "Dashboard map zoom: step $step/$steps sent=$sent")
+                }, delay, TimeUnit.MILLISECONDS)
+            }
+        }
     }
 
     /** Immutable stream geometry retained when a new host adopts this background controller. */
@@ -3217,6 +3239,8 @@ class CarPlayController(
     }
 
     companion object {
+        private const val DASHBOARD_ZOOM_DELAY_MS = 2_000L
+        private const val DASHBOARD_ZOOM_STEP_GAP_MS = 300L
         const val CONNECTION_DIAGNOSTIC_PREFIX = "CONNECTION_DIAGNOSTIC"
         // Indices in the telephony HID report (AirPlayHid.telephonyDescriptor).
         private const val TELEPHONY_HOOK_SWITCH = 1
