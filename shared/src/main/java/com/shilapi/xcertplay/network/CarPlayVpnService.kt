@@ -24,8 +24,13 @@ import java.net.InetAddress
 import java.net.NetworkInterface
 import java.net.ServerSocket
 import java.net.Socket
+import java.net.SocketException
 import java.util.Collections
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.ScheduledThreadPoolExecutor
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Hosts the AirPlay TCP listener for both NCM/VPN and local-only Wi-Fi transports.
@@ -58,6 +63,10 @@ class CarPlayVpnService : VpnService() {
 
     private val binder = LocalBinder()
     private val active = AtomicBoolean(false)
+    private val connectionLimits = AirPlayConnectionLimits()
+    private val prePairWatchdog = ScheduledThreadPoolExecutor(1) { task ->
+        Thread(task, "airplay-pre-pair-watchdog").apply { isDaemon = true }
+    }.apply { removeOnCancelPolicy = true }
     private val sessionsLock = Any()
     private val sessions = mutableSetOf<AirPlaySession>()
     @Volatile private var attachment: AirPlayAttachment? = null
@@ -183,6 +192,7 @@ class CarPlayVpnService : VpnService() {
 
     override fun onDestroy() {
         detach()
+        prePairWatchdog.shutdownNow()
         super.onDestroy()
     }
 
@@ -255,19 +265,36 @@ class CarPlayVpnService : VpnService() {
             while (active.get()) {
                 val socket: Socket = server.accept()
                 val acceptedAtNanos = System.nanoTime()
+                val peerAddress = socket.inetAddress
+                val slot = connectionLimits.tryAcquire(peerAddress) { runCatching { socket.close() } }
+                if (slot == null) {
+                    Log.w(TAG, "airplay connection from ${socket.remoteSocketAddress} refused: connection limit")
+                    socket.close()
+                    continue
+                }
                 Log.i(TAG, "airplay connection accepted from ${socket.remoteSocketAddress}")
-                socket.tcpNoDelay = true
-                socket.keepAlive = true
-                socket.setSoLinger(true, 0)
+                try {
+                    socket.tcpNoDelay = true
+                    socket.keepAlive = true
+                    socket.setSoLinger(true, 0)
+                } catch (_: SocketException) {
+                    // The peer reset the socket, or a limit eviction closed it; one bad socket must not end the loop.
+                    connectionLimits.release(slot)
+                    socket.close()
+                    continue
+                }
+                val watchdog = AtomicReference<ScheduledFuture<*>?>()
                 val session = synchronized(this) {
                     if (!active.get() || generation != attachGeneration ||
                         (serverSocket !== server && additionalServers.none { it === server })) {
                         socket.close()
+                        connectionLimits.release(slot)
                         return
                     }
                     val current = attachment
                     if (current == null) {
                         socket.close()
+                        connectionLimits.release(slot)
                         return
                     }
                     val internalPeer = isInternalAirPlayPeer(socket.inetAddress, socket.localAddress)
@@ -303,13 +330,23 @@ class CarPlayVpnService : VpnService() {
                             }
 
                             override fun onSessionEnded(session: AirPlaySession) {
+                                connectionLimits.release(slot)
+                                watchdog.get()?.cancel(false)
                                 removeSession(session)
                                 if (current.listenerIdentity == null || !internalPeer) current.listener.onSessionEnded(session)
                             }
                         },
                         media = current.media,
-                    ).also(::addSession)
+                    ).also { created ->
+                        slot.verified = { created.controllerId != null }
+                        addSession(created)
+                    }
                 }
+                watchdog.set(prePairWatchdog.schedule(
+                    { if (session.controllerId == null) session.close() },
+                    AirPlayConnectionLimits.PRE_PAIR_VERIFY_TIMEOUT_MILLIS,
+                    TimeUnit.MILLISECONDS,
+                ))
                 session.start()
             }
         } catch (error: IOException) {
