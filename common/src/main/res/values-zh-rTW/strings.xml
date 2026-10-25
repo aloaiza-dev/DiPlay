@@ -974,4 +974,11 @@
     <string name="settings_hotspot_interface_description">僅用於把熱點放在 Android 不認為是 Wi-Fi 熱點的網路介面上的車機，例如部分吉利、領克及其它高通車機上的 eth0.3。留空則自動尋找。</string>
     <string name="settings_xpeng_map_window">XPeng 儀表地圖視窗（實驗性）</string>
     <string name="settings_xpeng_map_window_description">在儀表中央顯示 iPhone 獨立地圖，邊緣平滑漸變為透明。側邊卡片與狀態指示保持可見。需要啟用儀表地圖並使用相容的 XPeng 主機。部分應用程式可能不提供此影片。立即開始與停止。請停車後檢查位置。</string>
+    <string name="settings_xpeng_map_zoom">XPeng 儀表地圖縮放</string>
+    <string name="settings_xpeng_map_zoom_option">%1$d %%</string>
+    <string name="settings_xpeng_map_zoom_description">以車標為中心放大地圖和車標。地圖邊緣會被裁掉。立即生效。請在停車時測試。</string>
+    <string name="settings_cluster_map_zoom_steps">連線時的地圖縮放（iPhone 步數）</string>
+    <string name="settings_cluster_map_zoom_off">關閉</string>
+    <string name="settings_cluster_map_zoom_steps_option">+%1$d</string>
+    <string name="settings_cluster_map_zoom_steps_description">每次儀表地圖啟動時，把 iPhone 自己的地圖放大這麼多步。畫面保持清晰。每步的大小未測量，請在停車時測試。下次連線時生效。 適用於 Apple 地圖。Waze 和 Google 地圖會忽略它。</string>
 </resources>

@@ -73,6 +73,9 @@ object CarPlayClusterDisplay {
     const val STREAM_SCALE_PERCENT = 83
     val scalePresets = listOf(100, STREAM_SCALE_PERCENT, 67, 125)
 
+    /** One step is the iPhone's own cluster zoom step; its size on the cluster map is not measured. */
+    const val MAX_ZOOM_STEPS = 4
+
     private const val WIDTH_PHYSICAL_MM = 292 // a 12.3-inch 8:3 cluster panel; Apple Maps ignores it here
     private const val FPS = 30
 
@@ -86,6 +89,7 @@ object CarPlayClusterDisplay {
         markerXPercent: Int? = null,
         markerYPercent: Int? = null,
         baseSafeArea: AirPlayInsets = SAFE_AREA_PERCENT,
+        zoomSteps: Int = 0,
     ): AirPlayDisplayConfig {
         // Height rounds to a multiple of 8 and width follows it, so the panel's aspect is kept
         // (83 % of 1920x720 gives exactly 1600x600). The cluster scales the stream to the panel.
@@ -101,6 +105,7 @@ object CarPlayClusterDisplay {
             primaryInputDevice = 0,
             features = 0,
             initialUrl = content.url,
+            initialZoomSteps = if (content == Content.TURN_CARD) 0 else zoomSteps.coerceIn(0, MAX_ZOOM_STEPS),
             safeArea = safeArea(width, height, horizontalStep, verticalStep, markerXPercent, markerYPercent, baseSafeArea),
             safeAreaDrawOutside = true,
         )

@@ -48,6 +48,15 @@ internal class XpengMapWindow(context: Context, private val onSurface: (Surface?
             }
         }
         root.addView(video, FrameLayout.LayoutParams(WIDTH, HEIGHT))
+        // Zoom around the car marker so it stays where the iPhone placed it.
+        video.pivotX = WIDTH * (BASE_SAFE_AREA.left + 100 - BASE_SAFE_AREA.right) / 200f
+        video.pivotY = HEIGHT * (BASE_SAFE_AREA.top + 100 - BASE_SAFE_AREA.bottom) / 200f
+        setZoom(zoomPercent(context))
+    }
+
+    fun setZoom(percent: Int) {
+        video.scaleX = percent / 100f
+        video.scaleY = percent / 100f
     }
 
     fun show() {
@@ -104,6 +113,15 @@ internal class XpengMapWindow(context: Context, private val onSurface: (Surface?
         fun saveEnabled(context: Context, value: Boolean) {
             context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY, value).apply()
         }
+        const val KEY_ZOOM = "xpeng_map_zoom_percent"
+        val ZOOM_PERCENTS = listOf(100, 125, 150, 175)
+        fun zoomPercent(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getInt(KEY_ZOOM, 100).takeIf { it in ZOOM_PERCENTS } ?: 100
+        fun saveZoomPercent(context: Context, percent: Int) {
+            if (percent !in ZOOM_PERCENTS) return
+            context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_ZOOM, percent).apply()
+        }
+        private val BASE_SAFE_AREA = AirPlayInsets(top = 25, bottom = 23, left = 36, right = 36)
         fun available(context: Context) = target(context) != null
 
         /** The driver switched the window on and this head unit can show it. */
@@ -115,8 +133,8 @@ internal class XpengMapWindow(context: Context, private val onSurface: (Surface?
                 it.isValid && Point().also(it::getRealSize).let { p -> p.x == 1920 && p.y == 720 }
             }
         }.getOrNull()
-        fun streamConfig() = CarPlayClusterDisplay.config(WIDTH, HEIGHT, scalePercent = 100,
+        fun streamConfig(zoomSteps: Int = 0) = CarPlayClusterDisplay.config(WIDTH, HEIGHT, scalePercent = 100,
             content = CarPlayClusterDisplay.Content.MAP,
-            baseSafeArea = AirPlayInsets(top = 25, bottom = 23, left = 36, right = 36))
+            baseSafeArea = BASE_SAFE_AREA, zoomSteps = zoomSteps)
     }
 }

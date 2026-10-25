@@ -1017,4 +1017,11 @@
     <string name="settings_hotspot_interface_description">Only for head units that run their hotspot on a network interface Android does not report as a Wi-Fi hotspot, for example eth0.3 on some Geely, Lynk &amp; Co and other Qualcomm units. Leave empty to find it automatically.</string>
     <string name="settings_xpeng_map_window">Map window in the XPeng cluster (experimental)</string>
     <string name="settings_xpeng_map_window_description">Shows the iPhone’s separate map across the cluster center with soft transparent edges. Side cards and status rows remain visible. Requires the cluster map above and a supported XPeng head unit. Some navigation apps may not provide this video. Starts and stops at once. Test placement while parked.</string>
+    <string name="settings_xpeng_map_zoom">Map zoom in the XPeng cluster</string>
+    <string name="settings_xpeng_map_zoom_option">%1$d %%</string>
+    <string name="settings_xpeng_map_zoom_description">Enlarges the map and the car marker around the marker. The edges of the map are cut. Applies at once. Test while parked.</string>
+    <string name="settings_cluster_map_zoom_steps">Map zoom at connection (iPhone steps)</string>
+    <string name="settings_cluster_map_zoom_off">Off</string>
+    <string name="settings_cluster_map_zoom_steps_option">+%1$d</string>
+    <string name="settings_cluster_map_zoom_steps_description">Zooms the iPhone’s own map in by this many steps each time the dashboard map starts. The picture stays sharp. The step size is not measured, so test while parked. Applies at the next connection. Works with Apple Maps. Waze and Google Maps ignore it.</string>
 </resources>

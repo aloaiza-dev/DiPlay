@@ -803,7 +803,9 @@ class CarPlayHostActivity : ComponentActivity() {
 
     // The XPeng cluster map starts and stops from Settings without a new CarPlay session (see clusterDisplayConfig).
     private val clusterSwitchListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (key == AirPlayPersistence.KEY_CLUSTER_MAP || key == XpengMapWindow.KEY) {
+        if (key == XpengMapWindow.KEY_ZOOM) {
+            runOnUiThread { xpengMapWindow?.setZoom(XpengMapWindow.zoomPercent(this)) }
+        } else if (key == AirPlayPersistence.KEY_CLUSTER_MAP || key == XpengMapWindow.KEY) {
             runOnUiThread { if (!isDestroyed && XpengMapWindow.available(this)) ensureClusterPresentation() }
         }
     }
@@ -1542,7 +1544,7 @@ class CarPlayHostActivity : ComponentActivity() {
         // showing or hiding the map must not need a new session. The window and showUI/stopUI do that.
         if (XpengMapWindow.available(this)) {
             clusterStreamOnDisplay = true
-            return XpengMapWindow.streamConfig().also {
+            return XpengMapWindow.streamConfig(AirPlayPersistence.loadClusterMapZoomSteps(this)).also {
                 MapMirrors.streamAspect = it.widthPixels.toDouble() / it.heightPixels
                 appendLog("XPeng map: requesting alternate map stream ${it.widthPixels}x${it.heightPixels}")
             }
@@ -1594,6 +1596,7 @@ class CarPlayHostActivity : ComponentActivity() {
                     else AirPlayPersistence.loadClusterMarkerXPercent(this),
                     markerYPercent = if (smallWindow) AirPlayPersistence.loadClusterSmallWindowMarkerYPercent(this)
                     else AirPlayPersistence.loadClusterMarkerYPercent(this),
+                    zoomSteps = AirPlayPersistence.loadClusterMapZoomSteps(this),
                 )
                 val requested = streamAt(requestedScale)
                 // The smaller-map preset enlarges the encoded canvas beyond this panel. Probe

@@ -20,6 +20,8 @@ data class AirPlayDisplayConfig(
     val safeArea: AirPlayInsets? = null,
     val safeAreaDrawOutside: Boolean? = null,
     val initialUrl: String? = null,
+    /** Zoom-in steps sent once per cluster stream, as the car's own zoom control does. */
+    val initialZoomSteps: Int = 0,
     /** Display feature bits; null keeps the main-screen default (high-fidelity touch and knobs). */
     val features: Int? = null,
     /**

@@ -926,4 +926,11 @@
     <string name="settings_hotspot_interface_description">Лише для головних пристроїв, які тримають точку доступу на мережевому інтерфейсі, що Android не вважає точкою доступу Wi-Fi, наприклад eth0.3 на деяких пристроях Geely, Lynk &amp; Co та інших Qualcomm. Залиште порожнім для автоматичного пошуку.</string>
     <string name="settings_xpeng_map_window">Вікно карти на панелі XPeng (експериментально)</string>
     <string name="settings_xpeng_map_window_description">Показує окрему карту iPhone в центрі панелі з плавними прозорими краями. Бічні картки та індикатори залишаються видимими. Потрібні карта панелі та сумісний пристрій XPeng. Деякі програми не передають це відео. Вмикається і вимикається одразу. Перевіряйте положення на стоянці.</string>
+    <string name="settings_xpeng_map_zoom">Масштаб карти на приладовій панелі XPeng</string>
+    <string name="settings_xpeng_map_zoom_option">%1$d %%</string>
+    <string name="settings_xpeng_map_zoom_description">Збільшує карту та маркер авто навколо маркера. Краї карти обрізаються. Застосовується одразу. Перевіряйте на стоянці.</string>
+    <string name="settings_cluster_map_zoom_steps">Масштаб карти під час підключення (кроки iPhone)</string>
+    <string name="settings_cluster_map_zoom_off">Вимк.</string>
+    <string name="settings_cluster_map_zoom_steps_option">+%1$d</string>
+    <string name="settings_cluster_map_zoom_steps_description">Збільшує карту iPhone на стільки кроків щоразу, коли запускається карта на панелі. Зображення лишається чітким. Розмір кроку не виміряно, перевіряйте на стоянці. Застосовується під час наступного підключення. Працює з Apple Maps. Waze і Google Maps його ігнорують.</string>
 </resources>

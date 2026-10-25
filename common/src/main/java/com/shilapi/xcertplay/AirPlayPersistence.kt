@@ -93,6 +93,7 @@ object AirPlayPersistence {
     private const val KEY_LAUNCHER_BUBBLE = "launcher_bubble"
     private const val KEY_LAUNCHER_BUBBLE_SIZE = "launcher_bubble_size"
     private const val KEY_CLUSTER_MAP_SCALE = "cluster_map_scale_percent"
+    private const val KEY_CLUSTER_MAP_ZOOM_STEPS = "cluster_map_zoom_steps"
     private const val KEY_CLUSTER_CONTENT = "cluster_content"
     private const val KEY_CLUSTER_MARKER_X = "cluster_marker_horizontal_step"
     private const val KEY_CLUSTER_MARKER_Y = "cluster_marker_vertical_step"
@@ -1260,6 +1261,15 @@ object AirPlayPersistence {
     fun saveClusterMapScalePercent(context: Context, percent: Int) {
         if (percent !in CarPlayClusterDisplay.scalePresets) return
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_CLUSTER_MAP_SCALE, percent).apply()
+    }
+
+    fun loadClusterMapZoomSteps(context: Context): Int =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_CLUSTER_MAP_ZOOM_STEPS, 0)
+            .coerceIn(0, CarPlayClusterDisplay.MAX_ZOOM_STEPS)
+
+    fun saveClusterMapZoomSteps(context: Context, steps: Int) {
+        if (steps !in 0..CarPlayClusterDisplay.MAX_ZOOM_STEPS) return
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_CLUSTER_MAP_ZOOM_STEPS, steps).apply()
     }
 
     fun loadClusterMarkerHorizontalStep(context: Context): Int =

@@ -126,4 +126,14 @@ class CarPlayClusterDisplayTest {
         assertEquals(safe.left, safe.right)
         assertEquals(safe.top, safe.bottom)
     }
+
+    @Test
+    fun zoomStepsAreBoundedAndSkipTheTurnCard() {
+        assertEquals(0, CarPlayClusterDisplay.config(1920, 720).initialZoomSteps)
+        assertEquals(2, CarPlayClusterDisplay.config(1920, 720, zoomSteps = 2).initialZoomSteps)
+        assertEquals(CarPlayClusterDisplay.MAX_ZOOM_STEPS, CarPlayClusterDisplay.config(1920, 720, zoomSteps = 99).initialZoomSteps)
+        assertEquals(0, CarPlayClusterDisplay.config(1920, 720, zoomSteps = -3).initialZoomSteps)
+        val card = CarPlayClusterDisplay.config(1920, 720, content = CarPlayClusterDisplay.Content.TURN_CARD, zoomSteps = 2)
+        assertEquals(0, card.initialZoomSteps)
+    }
 }
