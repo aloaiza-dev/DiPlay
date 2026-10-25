@@ -165,5 +165,25 @@ class AirPlayConnectionLimitsTest {
         assertEquals(listOf("idle"), dropped)
     }
 
+    @Test fun aStrangerInTheSameIpv6PrefixCannotDropTheIphonesVerifiedConnection() {
+        val limits = limits(maxTotal = 100, maxPerPeer = 3)
+        val iphone = InetAddress.getByName("2001:db8:0:1::1")
+        val stranger = InetAddress.getByName("2001:db8:0:1::99")
+        limits.acquire(iphone, "iPhone")!!.verified = { true }
+        now += 1
+        repeat(6) { limits.acquire(stranger, "stranger $it") }
+        assertTrue("the iPhone's verified connection was dropped: $dropped", "iPhone" !in dropped)
+    }
+
+    @Test fun theIphoneReconnectingFromTheSameAddressStillReplacesItsOwnZombie() {
+        val limits = limits(maxTotal = 100, maxPerPeer = 2)
+        val iphone = InetAddress.getByName("2001:db8:0:1::1")
+        limits.acquire(iphone, "zombie 1")!!.verified = { true }
+        now += 1
+        limits.acquire(iphone, "zombie 2")!!.verified = { true }
+        assertNotNull(limits.acquire(iphone, "reconnect"))
+        assertEquals(listOf("zombie 1"), dropped)
+    }
+
     private companion object { const val GRACE = 1_000L }
 }

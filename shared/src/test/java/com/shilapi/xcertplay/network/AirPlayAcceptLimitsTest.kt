@@ -14,6 +14,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import org.robolectric.util.ReflectionHelpers
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [29], manifest = Config.NONE)
@@ -42,6 +43,9 @@ class AirPlayAcceptLimitsTest {
         clients.add(Socket(loopback, service.boundPort()!!))
     }
 
+    private fun heldSlots(): Int =
+        ReflectionHelpers.getField<AirPlayConnectionLimits>(service, "connectionLimits").openCount()
+
     private fun waitFor(timeoutMillis: Long = 3_000, condition: () -> Boolean) {
         val deadline = System.nanoTime() + timeoutMillis * 1_000_000L
         while (!condition() && System.nanoTime() < deadline) Thread.sleep(20)
@@ -57,9 +61,9 @@ class AirPlayAcceptLimitsTest {
         var open = clients.size
         waitFor(timeoutMillis = 20_000) {
             open = clients.count { !isClosedByServer(it) }
-            open <= 32
+            open <= 8
         }
-        assertTrue("$open of 200 idle connections were still held", open <= 32)
+        assertEquals("idle connections still held", 8, open)
     }
 
     @Test fun idleConnectionIsClosedBeforePairingCompletes() {
@@ -89,7 +93,7 @@ class AirPlayAcceptLimitsTest {
             waitFor { accepted.size == (it + 1) * 8 }
             clients.forEach { c -> c.close() }
             clients.clear()
-            Thread.sleep(600)
+            waitFor(timeoutMillis = 10_000) { heldSlots() == 0 }
         }
         assertEquals(40, accepted.size)
     }
