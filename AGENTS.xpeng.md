@@ -28,11 +28,13 @@ Rationale: stay rebaseable onto `upstream/main`, never duplicate the whole repo.
 1. **Never push this branch, or any commit on it, to the upstream remote.**
    Upstream PRs come from fresh branches off `upstream/main` in a different
    worktree.
-2. **Never fetch, print, or log a keystore password, Keychain secret, or the
-   `offline-mfi` private key material.** If a build needs a credential from
-   Keychain, write a script for the human to run in their own shell — do not
-   run `security find-generic-password` or equivalent yourself, even if asked
-   to. This is a standing rule, not a one-time answer.
+2. **Never print or log a keystore password, Keychain secret, or the
+   `offline-mfi` private key material.** Agents MAY run `scripts/xpeng-release-build.sh`
+   themselves (the owner decided this on 2026-10-25: always run the signed build when
+   asked for an APK). The script reads the password from Keychain inside its own
+   shell. Do not run `security find-generic-password` yourself outside that script,
+   do not echo, redirect or store its value, and do not paste build output that could
+   contain it.
 3. **Never let the `offline-mfi` identity ship in a non-standalone build.**
    `rejectBundledCredentials` and `verifyStandaloneAuthentication` (in
    `mobile/build.gradle.kts`) enforce this at build time — do not weaken or
@@ -65,10 +67,9 @@ that produces `KeytoolException: Given final block not properly padded`
 
 ## Building a signed car-test APK
 
-Run `scripts/xpeng-release-build.sh` **as the human**, not as the agent — it
-pulls the keystore password from macOS Keychain (`security find-generic-password
--s diplay-xpeng-keystore -w`). An agent must never run this script or any
-equivalent command itself; ask the human to run it and paste back the output.
+When asked for a car-test APK, run `scripts/xpeng-release-build.sh` yourself and
+report the result. Check the output APK: signer `O=DiPlay XPENG` and two
+`offline-mfi` entries (`apksigner verify --print-certs`, `unzip -l | grep offline-mfi`).
 
 The script expects:
 - `XPENG_KEYSTORE_PATH` (defaults to `~/.android/diplay-xpeng.jks`)
