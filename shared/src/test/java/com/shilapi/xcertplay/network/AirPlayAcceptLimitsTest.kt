@@ -6,6 +6,7 @@ import java.net.InetAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.ScheduledThreadPoolExecutor
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -66,9 +67,13 @@ class AirPlayAcceptLimitsTest {
         assertEquals("idle connections still held", 8, open)
     }
 
-    @Test fun idleConnectionIsClosedBeforePairingCompletes() {
+    @Test fun idleConnectionIsClosedWhenThePrePairWatchdogFires() {
         connect(1)
-        val client = clients.single().apply { soTimeout = 13_000 }
+        val watchdog = ReflectionHelpers.getField<ScheduledThreadPoolExecutor>(service, "prePairWatchdog")
+        waitFor { watchdog.queue.size == 1 }
+        // The delay is pinned by AirPlayPrePairWatchdogTest; run the task now instead of waiting it out.
+        (watchdog.queue.single() as Runnable).run()
+        val client = clients.single().apply { soTimeout = 3_000 }
         val closed = try {
             client.getInputStream().read() == -1
         } catch (_: SocketTimeoutException) {
@@ -76,7 +81,7 @@ class AirPlayAcceptLimitsTest {
         } catch (_: IOException) {
             true
         }
-        assertTrue("idle unauthenticated connection was still open after 13 s", closed)
+        assertTrue("idle unauthenticated connection was still open after the watchdog ran", closed)
     }
 
     @Test fun connectionsUnderTheCapAreAcceptedAndStayOpen() {

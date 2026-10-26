@@ -84,7 +84,7 @@ internal class AirPlayConnectionLimits(
         // Real pairing finishes within about 150 ms of the first request. The grace is unmeasured on slow links.
         const val GRACE_MILLIS = 2_000L
 
-        // Real pairing finishes within about 150 ms of the first request.
-        const val PRE_PAIR_VERIFY_TIMEOUT_MILLIS = 10_000L
+        // The first pairing runs SRP-3072 and Ed25519 in Java, which takes seconds on slow head units. The wired start limit is 30 to 45 s.
+        const val PRE_PAIR_VERIFY_TIMEOUT_MILLIS = 30_000L
     }
 }
